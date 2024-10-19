@@ -2,7 +2,13 @@ const mongoose = require("mongoose");
 
 const studentSchema = new mongoose.Schema({
   auth_id: { type: String, required: true, unique: true },
-  student_id: { type: String, required: true, unique: true },
+  // student_id: { type: String, required: true, unique: true },
+  student_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+    unique: true,
+  },
   user_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

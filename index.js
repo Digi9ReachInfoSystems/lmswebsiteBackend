@@ -22,6 +22,7 @@ const createCustomPackageRoutes = require("./src/routes/createCustomPackageRoute
 const teacherRoutes = require("./src/routes/teacherRoutes");
 
 const paymentRoutes = require("./src/routes/paymentRoutes");
+const contentRoutes = require("./src/routes/contentRoutes");
 require("dotenv").config();
 
 const app = express();
@@ -64,7 +65,7 @@ app.use("/payouts", payoutRoutes);
 app.use("/packages", packageRoutes);
 app.use("/payment", paymentRoutes);
 app.use("/teachers", teacherRoutes);
-
+app.use("/contents", contentRoutes);
 // Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

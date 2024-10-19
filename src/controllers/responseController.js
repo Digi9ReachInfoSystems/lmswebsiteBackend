@@ -1,72 +1,85 @@
-// src/controllers/responseController.js
-
 const Response = require('../models/responseModel');
 const Quiz = require('../models/quizModel');
 const Student = require('../models/studentModel');
-// Submit a quiz response (Accessible to any authenticated user)
+const mongoose = require('mongoose');
+
+// Submit a quiz response
 exports.submitResponse = async (req, res) => {
-    try {
-        const { student_id, quiz_id, responses } = req.body;
+  try {
+    const { student_id, quiz_id, responses } = req.body;
 
-        // Validate required fields
-        if (
-            !student_id ||
-            !quiz_id ||
-            !responses ||
-            !Array.isArray(responses) ||
-            responses.length === 0
-        ) {
-            return res.status(400).json({ error: 'All fields are required' });
-        }
-
-        // Check if the quiz exists
-        const quiz = await Quiz.findById(quiz_id);
-        if (!quiz) {
-            return res.status(404).json({ error: 'Quiz not found' });
-        }
-
-        // Create a new response
-        const newResponse = new Response({
-            student_id,
-            quiz_id,
-            responses,
-        });
-
-        const savedResponse = await newResponse.save();
-
-        res.status(201).json({
-            message: 'Response submitted successfully',
-            response: savedResponse,
-        });
-    } catch (error) {
-        console.error('Error submitting response:', error);
-        res.status(500).json({ error: 'Server error' });
+    if (!student_id || !quiz_id || !responses || !Array.isArray(responses) || responses.length === 0) {
+      return res.status(400).json({ error: 'All fields are required' });
     }
+
+    const quiz = await Quiz.findById(quiz_id);
+    if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
+    const student = await Student.findOne({student_id: new mongoose.Types.ObjectId(student_id)});
+    if (!student) return res.status(404).json({ error: 'Student not found' });
+
+    let score = 0;
+    const evaluatedResponses = responses.map((response) => {
+      const question = quiz.questions.find(q => q.question_number === response.question_number);
+      const isCorrect = response.selected_option_id === question.correct_option_id;
+      if (isCorrect) score++;
+
+      return { ...response, is_correct: isCorrect };
+    });
+
+    const newResponse = new Response({ student_id, quiz_id, responses: evaluatedResponses, score });
+    const savedResponse = await newResponse.save();
+
+    res.status(201).json({ message: 'Response submitted successfully', response: savedResponse });
+  } catch (error) {
+    console.error('Error submitting response:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
 };
 
-// Get all responses for a quiz
+// Get all responses by quiz
 exports.getResponsesByQuiz = async (req, res) => {
-    try {
-        const { quiz_id } = req.params;
+  try {
+    const { quiz_id } = req.params;
+    const quiz = await Quiz.findById(quiz_id);
+    if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
 
-        // Check if the quiz exists
-        const quiz = await Quiz.findById(quiz_id);
-        if (!quiz) {
-            return res.status(404).json({ error: 'Quiz not found' });
-        }
+    const responses = await Response.find({ quiz_id }).populate('student_id', 'auth_id role');
+    res.status(200).json({ message: 'Responses fetched successfully', responses });
+  } catch (error) {
+    console.error('Error fetching responses:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
 
-        // Fetch responses
-        const responses = await Response.find({ quiz_id: quiz_id })
-            //   .populate('student_id', 'name email')
-            // .populate('student_id')
-                .exec();
+// Get monthly report for a student
+exports.getMonthlyReport = async (req, res) => {
+  try {
+    const { studentId, month, year } = req.params;
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 1);
 
-        res.status(200).json({
-            message: 'Responses fetched successfully',
-            responses,
-        });
-    } catch (error) {
-        console.error('Error fetching responses:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
+    const responses = await Response.find({
+      student_id: studentId,
+      submitted_at: { $gte: startDate, $lt: endDate },
+    }).populate('quiz_id', 'quiz_title');
+
+    if (!responses.length) return res.status(404).json({ message: 'No quizzes found for this month' });
+
+    const totalScore = responses.reduce((acc, res) => acc + res.score, 0);
+    const averageScore = totalScore / responses.length;
+
+    const quizDetails = responses.map(res => ({
+      quiz_title: res.quiz_id.quiz_title,
+      score: res.score,
+      submitted_at: res.submitted_at,
+    }));
+
+    res.status(200).json({
+      message: 'Monthly report fetched successfully',
+      report: { studentId, month, year, averageScore, quizDetails },
+    });
+  } catch (error) {
+    console.error('Error fetching monthly report:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
 };
