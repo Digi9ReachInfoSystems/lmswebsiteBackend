@@ -137,3 +137,31 @@ exports.getBatchForStudent = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
+// Get batches by authenticated teacher ID
+exports.getBatchesByTeacherId = async (req, res) => {
+  try {
+    // Check if the user's role is 'teacher'
+    if (req.user.role !== 'teacher') {
+      return res.status(403).json({ message: 'Access denied: Not a teacher' });
+    }
+
+    const teacherId = req.user._id; // Use authenticated user's ID
+
+    // Find batches where the teacher ID matches
+    const batches = await Batch.find({ teacher_id: teacherId })
+      .populate('students')   // Populate students details if needed
+      .exec();
+
+    // Check if any batches are found
+    if (!batches || batches.length === 0) {
+      return res.status(404).json({ message: 'No batches found for this teacher' });
+    }
+
+    // Send the found batches as a response
+    res.status(200).json(batches);
+  } catch (error) {
+    // Handle errors
+    res.status(500).json({ message: 'Server error', error });
+  }
+};

@@ -13,7 +13,7 @@ const teacherSchema = new mongoose.Schema({
 
 
 
-  
+
   qualifications: { type: String },
   bio: { type: String },
   approval_status: {
@@ -21,11 +21,13 @@ const teacherSchema = new mongoose.Schema({
     enum: ["pending", "approved", "rejected"],
     default: "pending",
   },
+
   resume_link: { type: String },
   payout_info: { type: String },
+  // Modified subject field to store both ID and name
   subject: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Subject",
+    id: { type: mongoose.Schema.Types.ObjectId, ref: "Subject" },
+    name: { type: String }
   },
   last_online: { type: Date, default: Date.now },
   experience: { type: String },

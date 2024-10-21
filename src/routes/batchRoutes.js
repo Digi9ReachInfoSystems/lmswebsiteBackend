@@ -10,6 +10,7 @@ router.post(
   authorizeRole("admin"),
   batchController.createBatch
 );
+router.get('/getBatches/teacher/:teacherId',authMiddleware, batchController.getBatchesByTeacherId);
 
 router.get("/getAllBatches", authMiddleware, batchController.getAllBatches);
 router.get(
