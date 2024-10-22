@@ -76,9 +76,9 @@ exports.updateCircularNotification = async (req, res) => {
 
 exports.createCircularNotification = async (req, res) => {
   try {
-    const { circularName, validDate, content, user_id } = req.body;
+    const { circularName, validDate, content } = req.body;
 
-    if (!circularName || !validDate || !content) {
+    if (!circularName || !validDate || !content||!req.file) {
       return res
         .status(400)
         .json({ error: "circularName, validDate, and content are required" });
