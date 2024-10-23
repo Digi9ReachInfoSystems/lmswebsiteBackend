@@ -103,7 +103,7 @@ exports.createPackage = async (req, res) => {
 
     let subjectIdsArray;
     try {
-      subjectIdsArray = JSON.parse(subject_ids);
+      subjectIdsArray = JSON.parse(subject_id);
       if (!Array.isArray(subjectIdsArray) || subjectIdsArray.length === 0) {
         return res.status(400).json({ error: "Invalid subject_ids format" });
       }
