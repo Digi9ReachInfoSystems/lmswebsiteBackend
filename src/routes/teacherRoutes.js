@@ -4,7 +4,7 @@ const express = require('express');
 const router = express.Router();
 
 // Import controller functions
-const { getTeacherById, getAllTeachers, updateTeacherDetails } = require('../controllers/teacherController');
+const { getTeacherById, getAllTeachers, updateTeacherDetails,getExperiencedTeachers } = require('../controllers/teacherController');
 
 // Import authentication middleware
 const authMiddleware = require('../middlewares/authMiddleware');
@@ -27,5 +27,8 @@ router.get('/:id',authMiddleware, getTeacherById);
 router.get('/', authMiddleware,getAllTeachers);
 
 router.put('/update/:id', authMiddleware, updateTeacherDetails);
+
+// Route to get teachers with more than 3 years of experience
+router.get("/experience/greater", getExperiencedTeachers);
 
 module.exports = router;

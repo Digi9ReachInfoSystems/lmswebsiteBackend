@@ -1,27 +1,27 @@
-// src/controllers/teacherApplicationController.js
-
 const TeacherApplication = require("../models/teacherApplicationModel");
 const User = require("../models/userModel");
-const Teacher = require("../models/teacherModel");
 const { v4: uuidv4 } = require("uuid");
+const Teacher = require("../models/teacherModel");
 const path = require("path");
-const { bucket } = require("../services/firebaseService"); // Import Firebase bucket
+const { bucket } = require("../services/firebaseService"); // Firebase bucket reference
 
 exports.createTeacherApplication = async (req, res) => {
   try {
     const userId = req.user.uid; // From auth middleware
     const { state, city, pincode, current_position, language } = req.body;
 
-    // Validate required fields
+    // Check for required fields and files
     if (
-      !req.file || 
+      !req.files || 
+      !req.files.resume || 
+      !req.files.profileImage || 
       !state || 
       !city || 
       !pincode || 
       !current_position || 
       !language
     ) {
-      return res.status(400).json({ error: "All fields are required" });
+      return res.status(400).json({ error: "All fields and files are required" });
     }
 
     // Find the user in the User collection
@@ -38,56 +38,74 @@ exports.createTeacherApplication = async (req, res) => {
       return res.status(400).json({ error: "Application already submitted" });
     }
 
-    // Generate a unique filename for Firebase Storage
-    const fileName = `resume/${uuidv4()}${path.extname(req.file.originalname)}`;
-    const file = bucket.file(fileName); // Get reference to Firebase file
+    // Generate unique filenames for Firebase Storage
+    const resumeFileName = `resume/${uuidv4()}${path.extname(req.files.resume[0].originalname)}`;
+    const profileImageFileName = `profile/${uuidv4()}${path.extname(req.files.profileImage[0].originalname)}`;
 
-    // Upload the resume file to Firebase Storage
-    const blobStream = file.createWriteStream({
-      metadata: {
-        contentType: req.file.mimetype, // Use the file’s mimetype
-        firebaseStorageDownloadTokens: uuidv4(), // Generate a unique download token
-      },
+    // Upload resume to Firebase Storage
+    const resumeUrl = await uploadFileToFirebase(req.files.resume[0], resumeFileName);
+    if (!resumeUrl) {
+      return res.status(500).json({ error: "Resume upload failed" });
+    }
+
+    // Upload profile image to Firebase Storage
+    const profileImageUrl = await uploadFileToFirebase(req.files.profileImage[0], profileImageFileName);
+    if (!profileImageUrl) {
+      return res.status(500).json({ error: "Profile image upload failed" });
+    }
+
+    // Create a new TeacherApplication in MongoDB
+    const teacherApplication = new TeacherApplication({
+      teacher_id: user._id,
+      resume_link: resumeUrl,
+      profileImage: profileImageUrl,
+      state,
+      city,
+      pincode,
+      current_position,
+      language,
     });
 
-    blobStream.on("error", (error) => {
-      console.error("Error uploading resume to Firebase:", error);
-      return res.status(500).json({ error: "File upload error" });
+    await teacherApplication.save(); // Save to MongoDB
+
+    // Return success response
+    res.status(201).json({
+      message: "Teacher application submitted successfully",
+      application: teacherApplication,
     });
-
-    blobStream.on("finish", async () => {
-      // File upload is finished, generate the public URL for the resume
-      const resumeUrl = `https://firebasestorage.googleapis.com/v0/b/${
-        bucket.name
-      }/o/${encodeURIComponent(fileName)}?alt=media`;
-
-      // Create a new TeacherApplication in MongoDB with the Firebase URL
-      const teacherApplication = new TeacherApplication({
-        teacher_id: user._id,
-        resume_link: resumeUrl, // Store the Firebase Storage URL for the resume
-        state,
-        city,
-        pincode,
-        current_position,
-        language,
-      });
-
-      await teacherApplication.save(); // Save the application to MongoDB
-
-      // Return success response
-      res.status(201).json({
-        message: "Teacher application submitted successfully",
-        application: teacherApplication,
-      });
-    });
-
-    // Write the file buffer to Firebase (upload the file)
-    blobStream.end(req.file.buffer);
   } catch (error) {
     console.error("Error submitting teacher application:", error);
     res.status(500).json({ error: "Server error" });
   }
 };
+
+// Helper function to upload a file to Firebase Storage
+async function uploadFileToFirebase(file, destination) {
+  return new Promise((resolve, reject) => {
+    const fileRef = bucket.file(destination);
+    const blobStream = fileRef.createWriteStream({
+      metadata: {
+        contentType: file.mimetype,
+        firebaseStorageDownloadTokens: uuidv4(),
+      },
+    });
+
+    blobStream.on("error", (error) => {
+      console.error(`Error uploading file to Firebase: ${error}`);
+      reject(null);
+    });
+
+    blobStream.on("finish", () => {
+      const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(
+        destination
+      )}?alt=media`;
+      resolve(publicUrl);
+    });
+
+    blobStream.end(file.buffer); // Upload the file
+  });
+}
+
 
 exports.getTeacherApplications = async (req, res) => {
   try {
@@ -158,6 +176,7 @@ exports.approveTeacherApplication = async (req, res) => {
       bio: "", // Populate as needed
       approval_status: "approved",
       resume_link: application.resume_link,
+      profile_image: application.profileImage, // Populate as needed
       payout_info: "", // Populate as needed
       subject: null, // Populate as needed
       last_online: new Date(),

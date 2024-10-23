@@ -43,6 +43,11 @@ const teacherApplicationSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+
+  profileImage:{
+    type: String,
+    required: true,
+  }
   // teacher_availability: {
   //   type: Date,
   //   required: true,

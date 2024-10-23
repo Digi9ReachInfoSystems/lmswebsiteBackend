@@ -117,3 +117,17 @@ exports.updateTeacherDetails = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+// Controller function to get teachers with more than 3 years of experience
+exports.getExperiencedTeachers = async (req, res) => {
+  try {
+    const teachers = await Teacher.find({
+      experience: { $gt: "3" } // Adjust based on the data type of experience
+    });
+
+    res.status(200).json(teachers);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};

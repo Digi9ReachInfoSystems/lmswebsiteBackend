@@ -1,40 +1,43 @@
-// src/routes/teacherApplicationRoutes.js
-
 const express = require("express");
 const router = express.Router();
 const { body } = require("express-validator");
 const authMiddleware = require("../middlewares/authMiddleware");
-const upload = require("../middlewares/uploadMiddleware"); // Import upload middleware
-const teacherApplicationController = require("../controllers/teacherApplicationController");
+const upload = require("../middlewares/uploadMiddleware");
 const authorizeRole = require("../middlewares/authorizeRole");
 
+// Import the controller functions (Ensure this matches your exports)
+const teacherApplicationController = require("../controllers/teacherApplicationController");
+
+// Routes
 router.post(
   "/apply",
   authMiddleware,
-  upload.single("resume"), // Apply upload middleware here
+  upload.fields([
+    { name: "resume", maxCount: 1 },
+    { name: "profileImage", maxCount: 1 },
+  ]),
   [
     body("state").notEmpty().withMessage("State is required"),
     body("city").notEmpty().withMessage("City is required"),
     body("pincode").isNumeric().withMessage("Pincode must be a number"),
     body("language").notEmpty().withMessage("Language is required"),
-    body("current_position")
-      .notEmpty()
-      .withMessage("Current position is required"),
+    body("current_position").notEmpty().withMessage("Current position is required"),
   ],
-  teacherApplicationController.createTeacherApplication
+  teacherApplicationController.createTeacherApplication // Correct reference
 );
+
 router.get(
   "/",
   authMiddleware,
-  authorizeRole("admin"), // Only admins can access this endpoint
-  teacherApplicationController.getTeacherApplications
+  authorizeRole("admin"),
+  teacherApplicationController.getTeacherApplications // Correct reference
 );
 
 router.put(
   "/approve/:applicationId",
   authMiddleware,
   authorizeRole("admin"),
-  teacherApplicationController.approveTeacherApplication
+  teacherApplicationController.approveTeacherApplication // Correct reference
 );
 
 module.exports = router;
