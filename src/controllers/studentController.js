@@ -55,7 +55,7 @@ exports.getStudentById = async (req, res) => {
     }
 
     try {
-        const student = await Student.findOne({student_id: id}); // Populate user data
+        const student = await Student.findOne({ student_id: id }); // Populate user data
 
         if (!student) {
             return res.status(404).json({ error: 'Student not found.' });
@@ -100,5 +100,91 @@ exports.deleteStudent = async (req, res) => {
     } catch (error) {
         console.error('Error deleting student:', error);
         res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+// Controller to get the number of students subscribed and not subscribed
+exports.getStudentSubscriptionStats = async (req, res) => {
+    try {
+        // Count students who are subscribed (is_paid: true)
+        const subscribedCount = await Student.countDocuments({ is_paid: true });
+
+        // Count students who are not subscribed (is_paid: false)
+        const notSubscribedCount = await Student.countDocuments({ is_paid: false });
+
+        // Prepare response data
+        const responseData = {
+            subscribed: subscribedCount,
+            notSubscribed: notSubscribedCount,
+        };
+
+        // Send response
+        res.status(200).json({
+            message: "Student subscription statistics fetched successfully",
+            data: responseData,
+        });
+    } catch (error) {
+        console.error('Error fetching student subscription statistics:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+
+exports.getPaymentStatusChartData = async (req, res) => {
+    try {
+        let { year, month, day } = req.query; // Extract year, month, day from query parameters
+
+        // Construct the date range based on the provided filters
+        const matchConditions = {};
+        year=year?parseInt(year):null;
+        month=month?parseInt(month):null;   
+        day=day?parseInt(day):null;
+        if (year) {
+            // year+=1;
+            matchConditions.created_at = { $gte: new Date(`${year}-01-01`), $lt: new Date(`${(year+1)}-01-01`) }; // Start of the year
+        }
+        if (year && month) {
+            matchConditions.created_at = { $gte: new Date(`${year}-${month}-01`), $lt: new Date(`${year}-${(month + 1)}-01`) }; // Start of the month
+        }
+        if (year && month && day) {
+            matchConditions.created_at = { $gte: new Date(`${year}-${month}-${day}`), $lt: new Date(`${year}-${month}-${(day + 1)}`) }; // Specific day
+        }
+
+        // Query to get the count of students created grouped by creation date
+        const studentsData = await Student.aggregate([
+            {
+                $match: matchConditions, // Match the date conditions
+            },
+            {
+                $group: {
+                    _id: {
+                        $dateToString: { format: "%Y-%m-%d", date: "$created_at" } // Group by formatted date
+                    },
+                    paidCount: { $sum: { $cond: ["$is_paid", 1, 0] } }, // Count of paid students
+                    unpaidCount: { $sum: { $cond: ["$is_paid", 0, 1] } }, // Count of unpaid students
+                },
+            },
+            {
+                $sort: { "_id": 1 } // Sort by date
+            }
+        ]);
+
+        // Prepare the response data
+        const xData = []; // Date labels
+        const yData = []; // Count of students
+
+        studentsData.forEach(item => {
+            xData.push(item._id); // Push created date
+            yData.push({ paid: item.paidCount, unpaid: item.unpaidCount }); // Push counts of paid and unpaid
+        });
+
+        res.status(200).json({
+            message: 'Chart data fetched successfully',
+            xData,
+            yData,
+        });
+    } catch (error) {
+        console.error('Error fetching payment status chart data:', error);
+        res.status(500).json({ error: 'Server error' });
     }
 };
