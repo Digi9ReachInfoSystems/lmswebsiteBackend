@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { profile } = require("winston");
 
 const teacherSchema = new mongoose.Schema({
   auth_id: { type: String, required: true, unique: true },
@@ -23,6 +24,7 @@ const teacherSchema = new mongoose.Schema({
   },
 
   resume_link: { type: String },
+  profile_image: { type: String },
   payout_info: { type: String },
   // Modified subject field to store both ID and name
   subject: {
