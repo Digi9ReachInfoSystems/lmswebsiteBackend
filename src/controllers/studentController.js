@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const Student = require('../models/studentModel');
-
+const Class = require('../models/classModel');
 
 // Create Student Controller
 exports.createStudent = async (req, res) => {
@@ -71,7 +71,10 @@ exports.getStudentById = async (req, res) => {
 // Get all students
 exports.getAllStudents = async (req, res) => {
     try {
-        const students = await Student.find(); // Populate user data
+        const students = await Student.find().populate({
+            path: 'user_id',
+            select: 'name email mobile_number role', // Specify fields to return
+          }); // Populate user data
         res.status(200).json(students);
     } catch (error) {
         console.error('Error fetching students:', error);
@@ -132,59 +135,137 @@ exports.getStudentSubscriptionStats = async (req, res) => {
 
 exports.getPaymentStatusChartData = async (req, res) => {
     try {
-        let { year, month, day } = req.query; // Extract year, month, day from query parameters
+        let { year, month, day } = req.query; // Extract year, month, and day from query parameters
 
-        // Construct the date range based on the provided filters
         const matchConditions = {};
-        year=year?parseInt(year):null;
-        month=month?parseInt(month):null;   
-        day=day?parseInt(day):null;
-        if (year) {
-            // year+=1;
-            matchConditions.created_at = { $gte: new Date(`${year}-01-01`), $lt: new Date(`${(year+1)}-01-01`) }; // Start of the year
-        }
-        if (year && month) {
-            matchConditions.created_at = { $gte: new Date(`${year}-${month}-01`), $lt: new Date(`${year}-${(month + 1)}-01`) }; // Start of the month
-        }
+        year = year ? parseInt(year) : null;
+        month = month ? parseInt(month) : null;
+        day = day ? parseInt(day) : null;
+
+        // Build the date filter conditions based on query parameters
         if (year && month && day) {
-            matchConditions.created_at = { $gte: new Date(`${year}-${month}-${day}`), $lt: new Date(`${year}-${month}-${(day + 1)}`) }; // Specific day
+            matchConditions.created_at = {
+                $gte: new Date(`${year}-${month}-${day}`),
+                $lt: new Date(`${year}-${month}-${day + 1}`),
+            };
+        } else if (year && month) {
+            matchConditions.created_at = {
+                $gte: new Date(`${year}-${month}-01`),
+                $lt: new Date(`${year}-${month + 1}-01`),
+            };
+        } else if (year) {
+            matchConditions.created_at = {
+                $gte: new Date(`${year}-01-01`),
+                $lt: new Date(`${year + 1}-01-01`),
+            };
+        } else if (month) {
+            matchConditions.created_at = {
+                $gte: new Date(`1970-${month}-01`), // Use a dummy year
+                $lt: new Date(`2300-${month + 1}-01`),
+            };
         }
 
-        // Query to get the count of students created grouped by creation date
+        // Query to aggregate student data by creation date
         const studentsData = await Student.aggregate([
-            {
-                $match: matchConditions, // Match the date conditions
-            },
+            { $match: matchConditions },
             {
                 $group: {
                     _id: {
-                        $dateToString: { format: "%Y-%m-%d", date: "$created_at" } // Group by formatted date
+                        $cond: [
+                            { $and: [year, month, day] },
+                            { $dateToString: { format: "%Y-%m-%d", date: "$created_at" } },
+                            { $cond: [
+                                { $and: [year, month] },
+                                { $dateToString: { format: "%Y-%m-%d", date: "$created_at" } },
+                                { $cond: [
+                                    year,
+                                    { $dateToString: { format: "%Y-%m", date: "$created_at" } },
+                                    { $dateToString: { format: "%m", date: "$created_at" } }
+                                ]}
+                            ]}
+                        ]
                     },
-                    paidCount: { $sum: { $cond: ["$is_paid", 1, 0] } }, // Count of paid students
-                    unpaidCount: { $sum: { $cond: ["$is_paid", 0, 1] } }, // Count of unpaid students
-                },
+                    paidCount: { $sum: { $cond: ["$is_paid", 1, 0] } },
+                    unpaidCount: { $sum: { $cond: ["$is_paid", 0, 1] } },
+                }
             },
-            {
-                $sort: { "_id": 1 } // Sort by date
-            }
+            { $sort: { "_id": 1 } }
         ]);
 
-        // Prepare the response data
-        const xData = []; // Date labels
-        const yData = []; // Count of students
+        // Prepare response data
+        const xData = studentsData.map(item => item._id); // Extract date labels
+        const yData = studentsData.map(item => ({
+            paid: item.paidCount,
+            unpaid: item.unpaidCount,
+        }));
 
-        studentsData.forEach(item => {
-            xData.push(item._id); // Push created date
-            yData.push({ paid: item.paidCount, unpaid: item.unpaidCount }); // Push counts of paid and unpaid
-        });
-
+        // Send response
         res.status(200).json({
             message: 'Chart data fetched successfully',
             xData,
-            yData,
+            yData
         });
     } catch (error) {
         console.error('Error fetching payment status chart data:', error);
         res.status(500).json({ error: 'Server error' });
     }
 };
+
+
+/**
+ * Update a student by ID and update their class by class_id.
+ * @param {Object} req - The request object containing params and body.
+ * @param {Object} res - The response object to send the result.
+ */
+exports.updateStudent = async (req, res) => {
+    const { studentId } = req.params; // Get student ID from route params
+    const { class_id, ...updateData } = req.body; // Extract class_id and other update data
+  
+    try {
+      // Find the student by ID
+      let student = await Student.findOne({user_id: studentId});
+      if (!student) {
+        return res.status(404).json({ error: "Student not found" });
+      }
+  
+      // If class_id is provided, find the class in the Class collection
+      if (class_id) {
+        const classInfo = await Class.findById(class_id);
+        if (!classInfo) {
+          return res.status(404).json({ error: "Class not found" });
+        }
+  
+        // Update the class information in the student document
+        student.class = {
+          _id: classInfo._id,
+          name: classInfo.className,
+          classLevel: classInfo.classLevel,
+        };
+      }
+  
+      // Update other fields only if provided in the request body
+      student.auth_id = updateData.auth_id || student.auth_id;
+      student.student_id = updateData.student_id || student.student_id;
+      student.user_id = updateData.user_id || student.user_id;
+      student.subscribed_Package =
+        updateData.subscribed_Package || student.subscribed_Package;
+      student.is_paid =
+        updateData.is_paid !== undefined ? updateData.is_paid : student.is_paid;
+      student.subscription_id =
+        updateData.subscription_id || student.subscription_id;
+      student.payment_id = updateData.payment_id || student.payment_id;
+      student.last_online = updateData.last_online || student.last_online;
+      student.phone_number=updateData.phone_number || student.phone_number;
+  
+      // Save the updated student
+      const updatedStudent = await student.save();
+  
+      res.status(200).json({
+        message: "Student updated successfully",
+        student: updatedStudent,
+      });
+    } catch (error) {
+      console.error("Error updating student:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  };

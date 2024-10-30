@@ -66,7 +66,7 @@ exports.signup = async (req, res) => {
 
     // If the role is 'student', create a Student document
     let student;
-    if (userRole === "student") {
+    if (userRole === "student") { 
       // Generate a unique student ID (e.g., use the user ID or a custom method)
       const studentId = new mongoose.Types.ObjectId();
 

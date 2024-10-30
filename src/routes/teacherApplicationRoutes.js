@@ -40,4 +40,9 @@ router.put(
   teacherApplicationController.approveTeacherApplication // Correct reference
 );
 
+// Route to get a single teacher application by ID
+router.get("/application/single/:id", authMiddleware,
+  authorizeRole("admin"),
+  teacherApplicationController.getTeacherApplicationById);
+
 module.exports = router;

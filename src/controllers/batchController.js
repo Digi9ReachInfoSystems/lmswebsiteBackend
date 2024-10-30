@@ -105,10 +105,15 @@ exports.getAllBatches = async (req, res) => {
 
     // Execute the query with pagination
     const batches = await Batch.paginate(query, options);
-
+     // Modify the batch response to include studentcount
+     const modifiedBatches = batches.docs.map((batch) => ({
+      ...batch.toObject(), // Convert Mongoose document to plain JS object
+      studentcount: batch.students ? batch.students.length : 0, // Add studentcount
+    }));
+   
     res.status(200).json({
       message: "Batches fetched successfully",
-      batches: batches.docs,
+      batches: modifiedBatches,
       totalPages: batches.totalPages,
       currentPage: batches.page,
     });

@@ -34,6 +34,7 @@ const teacherSchema = new mongoose.Schema({
   last_online: { type: Date, default: Date.now },
   experience: { type: String },
   no_of_classes: { type: Number },
+  phone_number: { type: String },
   available_time: { type: String },
   language: { type: String },
   is_grammar_teacher: { type: Boolean, default: false },

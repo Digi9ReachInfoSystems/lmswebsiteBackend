@@ -7,13 +7,13 @@ const batchSchema = new mongoose.Schema({
   no_of_classes: { type: Number, required: true },
   teacher_id: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Teacher",
+    ref: "User",
     required: true,
   },
   students: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Student",
+      ref: "User",
       required: true,
     },
   ],

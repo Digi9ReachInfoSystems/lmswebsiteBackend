@@ -33,4 +33,8 @@ router.get('/subscription/stats',authMiddleware,authorizeRole("admin"), getStude
 // Route to get payment status chart data
 router.get('/payment/statusChart',authMiddleware,authorizeRole("admin"), getPaymentStatusChartData);
 
+// Update student by ID
+router.put("/update/:studentId", updateStudent);
+
+
 module.exports = router;
