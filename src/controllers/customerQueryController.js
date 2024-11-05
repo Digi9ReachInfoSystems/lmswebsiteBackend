@@ -94,3 +94,31 @@ exports.getAllQueries = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
+/**
+ * Controller to get a single query by ID
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @return {Promise<void>}
+ */
+exports.getQueryById = async (req, res) => {
+  try {
+    // Get ID from route parameters
+    const queryId = req.params.id;
+    // Find the query in the database
+    const query = await Quer.findById(queryId);
+
+    if (!query) {
+      // If the query is not found, return a 404 status with a message
+      return res.status(404).json({ message: "Query not found" });
+    }
+
+    // Return the query with a 200 status
+    res.status(200).json(query);
+  } catch (error) {
+    console.error("Error fetching query:", error);
+    // If there is an error, return a 500 status with a message
+    res.status(500).json({ message: "Server error, please try again later" });
+  }
+};

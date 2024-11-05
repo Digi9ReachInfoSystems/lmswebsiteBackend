@@ -30,6 +30,8 @@ const benefitsRoutes = require('./src/routes/benefitsRoutes');
 const testimonialRoutes = require('./src/routes/testimonialRoutes');
 const chooseUsRoutes= require('./src/routes/chooseUsRoutes');
 const faqRoutes = require('./src/routes/faqRoutes');
+const tempRoutes = require('./src/routes/tempRoutes');
+const userRoutes = require('./src/routes/userRoutes');
 require("dotenv").config();
 
 const app = express();
@@ -80,6 +82,9 @@ app.use('/benefits', benefitsRoutes);
 app.use('/testimonials', testimonialRoutes);
 app.use('/chooseUs', chooseUsRoutes);
 app.use('/faqs', faqRoutes);
+app.use('/temp', tempRoutes);
+app.use('/users', userRoutes);
+
 // Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

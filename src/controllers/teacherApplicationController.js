@@ -8,7 +8,7 @@ const { bucket } = require("../services/firebaseService"); // Firebase bucket re
 exports.createTeacherApplication = async (req, res) => {
   try {
     const userId = req.user.uid; // From auth middleware
-    const { state, city, pincode, current_position, language } = req.body;
+    const { state, city, pincode, current_position, language ,phone_number,experience} = req.body;
 
     // Check for required fields and files
     if (
@@ -19,7 +19,9 @@ exports.createTeacherApplication = async (req, res) => {
       !city || 
       !pincode || 
       !current_position || 
-      !language
+      !language||
+      !phone_number||
+      !experience
     ) {
       return res.status(400).json({ error: "All fields and files are required" });
     }
@@ -64,6 +66,8 @@ exports.createTeacherApplication = async (req, res) => {
       pincode,
       current_position,
       language,
+      experience,
+      phoneNumber:phone_number
     });
 
     await teacherApplication.save(); // Save to MongoDB
@@ -180,10 +184,11 @@ exports.approveTeacherApplication = async (req, res) => {
       payout_info: "", // Populate as needed
       subject: null, // Populate as needed
       last_online: new Date(),
-      experience: "", // Populate as needed
+      experience: application.experience, // Populate as needed
       no_of_classes: 0, // Initialize to 0
       available_time: "", // Populate as needed
-      language: "", // Populate as needed
+      language: application.language, // Populate as needed
+      phone_number: application.phoneNumber, // Populate as needed
       is_grammar_teacher: false, // Default value
     });
 
@@ -196,6 +201,32 @@ exports.approveTeacherApplication = async (req, res) => {
     });
   } catch (error) {
     console.error("Error approving teacher application:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+
+// Get a single teacher application by ID
+exports.getTeacherApplicationById = async (req, res) => {
+  try {
+    const { id } = req.params; // Extract ID from the request parameters
+
+    // Find the teacher application by ID and populate the teacher details
+    const application = await TeacherApplication.findById(id).populate(
+      "teacher_id", 
+      "name email profile_picture"
+    );
+
+    if (!application) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+
+    res.status(200).json({
+      message: "Teacher application fetched successfully",
+      application,
+    });
+  } catch (error) {
+    console.error("Error fetching teacher application:", error);
     res.status(500).json({ error: "Server error" });
   }
 };

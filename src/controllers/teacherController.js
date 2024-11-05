@@ -44,7 +44,9 @@ exports.getAllTeachers = async (req, res) => {
       return res.status(403).json({ error: 'Forbidden: Access denied' });
     }
 
-    const teachers = await Teacher.find().populate('subject', 'subject_name');
+    const teachers = await Teacher.find()
+    .populate({path: "user_id", select: "name email"} )
+    
 
     res.status(200).json({ teachers });
   } catch (error) {

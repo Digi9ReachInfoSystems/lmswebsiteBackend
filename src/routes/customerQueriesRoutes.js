@@ -24,5 +24,7 @@ router.put(
   authorizeRole("admin"),
   customerQueryController.updateQueryStatus
 );
+// Route to get a single query by ID
+router.get("/query/:id", customerQueryController.getQueryById);
 
 module.exports = router;
