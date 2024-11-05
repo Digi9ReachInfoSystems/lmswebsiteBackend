@@ -5,6 +5,7 @@ const batchSchema = new mongoose.Schema({
   batch_name: { type: String, required: true },
   start_date: { type: Date, required: true },
   no_of_classes: { type: Number, required: true },
+  batch_image: { type: String },
   teacher_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

@@ -8,22 +8,31 @@ const { bucket } = require("../services/firebaseService"); // Firebase bucket re
 exports.createTeacherApplication = async (req, res) => {
   try {
     const userId = req.user.uid; // From auth middleware
-    const { state, city, pincode, current_position, language ,phone_number,experience} = req.body;
+    const {
+      state,
+      city,
+      pincode,
+      current_position,
+      language,
+      phone_number,
+      experience,
+      resume_link,
+      profileImage,
+    } = req.body;
 
-    // Check for required fields and files
+    // Check for required fields and file links
     if (
-      !req.files || 
-      !req.files.resume || 
-      !req.files.profileImage || 
-      !state || 
-      !city || 
-      !pincode || 
-      !current_position || 
-      !language||
-      !phone_number||
+      !resume_link ||
+      !profileImage ||
+      !state ||
+      !city ||
+      !pincode ||
+      !current_position ||
+      !language ||
+      !phone_number ||
       !experience
     ) {
-      return res.status(400).json({ error: "All fields and files are required" });
+      return res.status(400).json({ error: "All fields and file links are required" });
     }
 
     // Find the user in the User collection
@@ -40,34 +49,18 @@ exports.createTeacherApplication = async (req, res) => {
       return res.status(400).json({ error: "Application already submitted" });
     }
 
-    // Generate unique filenames for Firebase Storage
-    const resumeFileName = `resume/${uuidv4()}${path.extname(req.files.resume[0].originalname)}`;
-    const profileImageFileName = `profile/${uuidv4()}${path.extname(req.files.profileImage[0].originalname)}`;
-
-    // Upload resume to Firebase Storage
-    const resumeUrl = await uploadFileToFirebase(req.files.resume[0], resumeFileName);
-    if (!resumeUrl) {
-      return res.status(500).json({ error: "Resume upload failed" });
-    }
-
-    // Upload profile image to Firebase Storage
-    const profileImageUrl = await uploadFileToFirebase(req.files.profileImage[0], profileImageFileName);
-    if (!profileImageUrl) {
-      return res.status(500).json({ error: "Profile image upload failed" });
-    }
-
     // Create a new TeacherApplication in MongoDB
     const teacherApplication = new TeacherApplication({
       teacher_id: user._id,
-      resume_link: resumeUrl,
-      profileImage: profileImageUrl,
+      resume_link,
+      profileImage,
       state,
       city,
       pincode,
       current_position,
       language,
       experience,
-      phoneNumber:phone_number
+      phoneNumber: phone_number,
     });
 
     await teacherApplication.save(); // Save to MongoDB
@@ -82,6 +75,7 @@ exports.createTeacherApplication = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
 
 // Helper function to upload a file to Firebase Storage
 async function uploadFileToFirebase(file, destination) {

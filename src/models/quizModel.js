@@ -1,5 +1,3 @@
-// src/models/quizModel.js
-
 const mongoose = require('mongoose');
 
 const optionSchema = new mongoose.Schema({
@@ -12,7 +10,6 @@ const optionSchema = new mongoose.Schema({
         required: true,
     },
 });
-
 
 const questionSchema = new mongoose.Schema({
     question_number: {
@@ -38,7 +35,6 @@ const questionSchema = new mongoose.Schema({
     },
 });
 
-
 const quizSchema = new mongoose.Schema({
     quiz_title: {
         type: String,
@@ -46,23 +42,35 @@ const quizSchema = new mongoose.Schema({
     },
     teacher_id: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Teacher', // Reference to the Teacher model
+        ref: 'User', // Reference to the Teacher model
         required: true,
     },
     batch_index: {
-        type: Number,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Batch', // Reference to the Batch model
         required: true,
     },
-
     class_level: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Class', // Reference to the Teacher model
+        ref: 'Class', // Reference to the Class model
         required: true,
     },
     subject: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Subject', // Reference to the Subject model
         required: true,
+    },
+    description: {
+        type: String,
+        required: false, // Set to false if it's not mandatory
+    },
+    dueDate: {
+        type: Date,
+        required: false, // Set to true if it's mandatory
+    },
+    created_date: {
+        type: Date,
+        default: Date.now, // This will set the default to the current date/time
     },
     questions: [questionSchema],
     created_at: {

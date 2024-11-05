@@ -1,7 +1,6 @@
 // src/controllers/quizController.js
 
 const Quiz = require('../models/quizModel');
-
 // Create a new quiz (Accessible to any authenticated user)
 exports.createQuiz = async (req, res) => {
   try {
@@ -11,6 +10,8 @@ exports.createQuiz = async (req, res) => {
       batch_index,
       class_level,
       subject,
+      description,
+      dueDate,
       questions,
     } = req.body;
 
@@ -35,7 +36,10 @@ exports.createQuiz = async (req, res) => {
       batch_index,
       class_level,
       subject,
+      description, // Include the description
+      dueDate, // Include the due date
       questions,
+      created_date: Date.now(), // Automatically set the current date/time
     });
 
     const savedQuiz = await newQuiz.save();
