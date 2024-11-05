@@ -7,6 +7,7 @@ exports.createBatch = async (req, res) => {
     const {
       batch_name,
       start_date,
+      batch_image,
       no_of_classes,
       teacher_id,
       students,
@@ -16,6 +17,7 @@ exports.createBatch = async (req, res) => {
     if (
       !batch_name ||
       !start_date ||
+      !batch_image ||
       !no_of_classes ||
       !teacher_id ||
       !students ||
@@ -27,6 +29,7 @@ exports.createBatch = async (req, res) => {
     const newBatch = new Batch({
       batch_name,
       start_date,
+      batch_image,
       no_of_classes,
       teacher_id,
       students,
@@ -151,7 +154,8 @@ exports.getBatchesByTeacherId = async (req, res) => {
       return res.status(403).json({ message: 'Access denied: Not a teacher' });
     }
 
-    const teacherId = req.user._id; // Use authenticated user's ID
+    // const teacherId = req.user._id; // Use authenticated user's ID
+    const teacherId= req.params.teacherId;
 
     // Find batches where the teacher ID matches
     const batches = await Batch.find({ teacher_id: teacherId })
