@@ -126,6 +126,31 @@ exports.getAllBatches = async (req, res) => {
   }
 };
 
+
+// Controller function to get all batches without pagination
+exports.getAllBatchesNoFilter = async (req, res) => {
+  try {
+    // Fetch all batches and populate the teacher and students
+    const batches = await Batch.find()
+      .populate({ path: 'teacher_id', select: 'name email' })
+      .populate({ path: 'students', select: 'name email' })
+      .sort({ start_date: 1 }); // Sort by start_date ascending
+
+    res.status(200).json({
+      success: true,
+      message: "Batches fetched successfully",
+      data: batches,
+    });
+  } catch (error) {
+    console.error("Error fetching batches:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch batches",
+      error: error.message,
+    });
+  }
+};
+
 exports.getBatchForStudent = async (req, res) => {
   try {
     const { students} = req.params;
