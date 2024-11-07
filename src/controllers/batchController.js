@@ -25,7 +25,6 @@ exports.createBatch = async (req, res) => {
       !class_id ||
       !teacher_id ||
       !students ||
-      !contentMaterial ||
       !date
     ) {
       return res.status(400).json({ error: "All fields are required" });
@@ -132,14 +131,13 @@ exports.getAllBatches = async (req, res) => {
   }
 };
 
-
 // Controller function to get all batches without pagination
 exports.getAllBatchesNoFilter = async (req, res) => {
   try {
     // Fetch all batches and populate the teacher and students
     const batches = await Batch.find()
-      .populate({ path: 'teacher_id', select: 'name email' })
-      .populate({ path: 'students', select: 'name email' })
+      .populate({ path: "teacher_id", select: "name email" })
+      .populate({ path: "students", select: "name email" })
       .sort({ start_date: 1 }); // Sort by start_date ascending
 
     res.status(200).json({
