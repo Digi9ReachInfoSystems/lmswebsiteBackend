@@ -1,13 +1,19 @@
 // src/routes/teacherRoutes.js
 
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 
 // Import controller functions
-const { getTeacherById, getAllTeachers, updateTeacherDetails,getExperiencedTeachers } = require('../controllers/teacherController');
+const {
+  getTeacherById,
+  getAllTeachers,
+  updateTeacherDetails,
+  getExperiencedTeachers,
+  getTeachersBySubjectId,
+} = require("../controllers/teacherController");
 
 // Import authentication middleware
-const authMiddleware = require('../middlewares/authMiddleware');
+const authMiddleware = require("../middlewares/authMiddleware");
 
 // Apply authentication middleware to all routes in this router
 // router.use(authMiddleware);
@@ -17,16 +23,17 @@ const authMiddleware = require('../middlewares/authMiddleware');
  * @desc    Get a teacher by ID (accessible only by the teacher themselves)
  * @access  Private (Teacher only)
  */
-router.get('/:id',authMiddleware, getTeacherById);
+router.get("/:id", authMiddleware, getTeacherById);
 
 /**
  * @route   GET /teachers
  * @desc    Get all teachers (accessible only by admin users)
  * @access  Private (Admin only)
  */
-router.get('/', authMiddleware,getAllTeachers);
+router.get("/", authMiddleware, getAllTeachers);
+router.get("/subject/:subject_id", getTeachersBySubjectId);
 
-router.put('/update/:id', authMiddleware, updateTeacherDetails);
+router.put("/update/:id", authMiddleware, updateTeacherDetails);
 
 // Route to get teachers with more than 3 years of experience
 router.get("/experience/greater", getExperiencedTeachers);

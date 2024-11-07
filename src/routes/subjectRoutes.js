@@ -25,6 +25,8 @@ router.put(
   subjectController.updateSubjects
 );
 
+router.get("/class/:class_id", subjectController.getSubjectsByClassId);
+
 router.delete(
   "/:subject_id",
   authMiddleware,
