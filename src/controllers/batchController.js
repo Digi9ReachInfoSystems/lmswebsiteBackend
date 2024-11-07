@@ -28,7 +28,7 @@ exports.createBatch = async (req, res) => {
       !students ||
       !date
     ) {
-      return res.status(400).json({ error: error.message });
+      return res.status(400).json({ message: "All fields are required" });
     }
     const newBatch = new Batch({
       batch_name,
