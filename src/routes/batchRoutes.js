@@ -12,6 +12,8 @@ router.post(
 );
 router.get('/getBatches/teacher/:teacherId',authMiddleware, batchController.getBatchesByTeacherId);
 
+router.get('/getAllBatchesNoFilter',authMiddleware, batchController.getAllBatchesNoFilter);
+
 router.get("/getAllBatches", authMiddleware, batchController.getAllBatches);
 router.get(
   "/getBatchForStudent",
