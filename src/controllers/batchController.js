@@ -1,5 +1,6 @@
 //src/controllers/batchController.js
 
+const { error } = require("winston");
 const Batch = require("../models/batchModel");
 
 exports.createBatch = async (req, res) => {
@@ -27,7 +28,7 @@ exports.createBatch = async (req, res) => {
       !students ||
       !date
     ) {
-      return res.status(400).json({ error: "All fields are required" });
+      return res.status(400).json({ error: error.message });
     }
     const newBatch = new Batch({
       batch_name,
