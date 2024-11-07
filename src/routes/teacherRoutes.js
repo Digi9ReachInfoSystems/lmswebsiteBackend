@@ -31,7 +31,7 @@ router.get("/:id", authMiddleware, getTeacherById);
  * @access  Private (Admin only)
  */
 router.get("/", authMiddleware, getAllTeachers);
-router.get("/subject/:subject_id", getTeachersBySubjectId);
+router.get("/subject/:subject", getTeachersBySubjectId);
 
 router.put("/update/:id", authMiddleware, updateTeacherDetails);
 

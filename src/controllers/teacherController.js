@@ -1,5 +1,6 @@
 const mongoose = require("mongoose"); // Import mongoose
-const Teacher = require("../models/teacherModel"); // Import teacher model
+const Teacher = require("../models/teacherModel");
+const Subject = require("../models/subjectModel"); // Import teacher model
 
 // Get Teacher by ID
 exports.getTeacherById = async (req, res) => {
@@ -63,12 +64,13 @@ exports.getAllTeachers = async (req, res) => {
 };
 exports.getTeachersBySubjectId = async (req, res) => {
   try {
-    const { subject_id } = req.params; // Extract subject_id from URL parameters
+    const { subject } = req.params;
+    console.log("Received subject parameter:", subject); // Log the received subject ID
 
-    // Find teachers with the matching subject_id
-    const teachers = await Teacher.find({ "subject.id": subject_id })
+    // Directly match the string value of `subject` in the query
+    const teachers = await Teacher.find({ subject: subject })
       .populate("user_id", "name email") // Populate user details if needed
-      .populate("subject.id", "subject_name"); // Populate subject details if needed
+      .populate("subject", "subject_name"); // Populate subject details if needed
 
     if (!teachers || teachers.length === 0) {
       return res
@@ -82,8 +84,6 @@ exports.getTeachersBySubjectId = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
-
-const Subject = require("../models/subjectModel");
 
 // Update Teacher Details
 exports.updateTeacherDetails = async (req, res) => {
