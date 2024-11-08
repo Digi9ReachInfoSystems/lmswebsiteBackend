@@ -6,11 +6,13 @@ const batchSchema = new mongoose.Schema({
   start_date: { type: Date, required: true },
   no_of_classes: { type: Number, required: true },
   batch_image: { type: String },
-  teacher_id: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
-  },
+  teacher_id: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+  ],
   subject_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Subject",
