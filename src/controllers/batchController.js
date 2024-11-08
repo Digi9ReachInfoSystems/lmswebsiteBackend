@@ -9,7 +9,7 @@ exports.createBatch = async (req, res) => {
       batch_name,
       start_date,
       batch_image,
-      no_of_classes,
+
       subject_id,
       class_id,
       teacher_id,
@@ -21,7 +21,6 @@ exports.createBatch = async (req, res) => {
       !batch_name ||
       !start_date ||
       !batch_image ||
-      !no_of_classes ||
       !subject_id ||
       !class_id ||
       !teacher_id ||
@@ -34,7 +33,7 @@ exports.createBatch = async (req, res) => {
       batch_name,
       start_date,
       batch_image,
-      no_of_classes,
+
       subject_id,
       class_id,
       teacher_id,
