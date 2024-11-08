@@ -15,7 +15,7 @@ router.post(
 );
 
 // Get all classes (GET)
-router.get("/", authMiddleware, classController.getAllClasses);
+router.get("/", classController.getAllClasses);
 
 // Update a class (PUT)
 router.put(

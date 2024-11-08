@@ -4,11 +4,23 @@ const mongoosePaginate = require("mongoose-paginate-v2");
 const batchSchema = new mongoose.Schema({
   batch_name: { type: String, required: true },
   start_date: { type: Date, required: true },
-  no_of_classes: { type: Number, required: true },
+  // no_of_classes: { type: Number, required: true },
   batch_image: { type: String },
-  teacher_id: {
+  teacher_id: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+  ],
+  subject_id: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    ref: "Subject",
+    required: true,
+  },
+  class_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Class",
     required: true,
   },
   students: [

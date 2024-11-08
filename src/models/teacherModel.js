@@ -26,7 +26,7 @@ const teacherSchema = new mongoose.Schema({
   resume_link: { type: String },
   profile_image: { type: String },
   payout_info: { type: String },
-  // Modified subject field to store both ID and name
+  
   subject: {
     id: { type: mongoose.Schema.Types.ObjectId, ref: "Subject" },
     name: { type: String }

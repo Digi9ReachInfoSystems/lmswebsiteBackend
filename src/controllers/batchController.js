@@ -1,5 +1,6 @@
 //src/controllers/batchController.js
 
+const { error } = require("winston");
 const Batch = require("../models/batchModel");
 
 exports.createBatch = async (req, res) => {
@@ -8,7 +9,9 @@ exports.createBatch = async (req, res) => {
       batch_name,
       start_date,
       batch_image,
-      no_of_classes,
+
+      subject_id,
+      class_id,
       teacher_id,
       students,
       contentMaterial,
@@ -18,19 +21,21 @@ exports.createBatch = async (req, res) => {
       !batch_name ||
       !start_date ||
       !batch_image ||
-      !no_of_classes ||
+      !subject_id ||
+      !class_id ||
       !teacher_id ||
       !students ||
-      !contentMaterial ||
       !date
     ) {
-      return res.status(400).json({ error: "All fields are required" });
+      return res.status(400).json({ message: "All fields are required" });
     }
     const newBatch = new Batch({
       batch_name,
       start_date,
       batch_image,
-      no_of_classes,
+
+      subject_id,
+      class_id,
       teacher_id,
       students,
       contentMaterial,
@@ -108,12 +113,12 @@ exports.getAllBatches = async (req, res) => {
 
     // Execute the query with pagination
     const batches = await Batch.paginate(query, options);
-     // Modify the batch response to include studentcount
-     const modifiedBatches = batches.docs.map((batch) => ({
+    // Modify the batch response to include studentcount
+    const modifiedBatches = batches.docs.map((batch) => ({
       ...batch.toObject(), // Convert Mongoose document to plain JS object
       studentcount: batch.students ? batch.students.length : 0, // Add studentcount
     }));
-   
+
     res.status(200).json({
       message: "Batches fetched successfully",
       batches: modifiedBatches,
@@ -126,14 +131,13 @@ exports.getAllBatches = async (req, res) => {
   }
 };
 
-
 // Controller function to get all batches without pagination
 exports.getAllBatchesNoFilter = async (req, res) => {
   try {
     // Fetch all batches and populate the teacher and students
     const batches = await Batch.find()
-      .populate({ path: 'teacher_id', select: 'name email' })
-      .populate({ path: 'students', select: 'name email' })
+      .populate({ path: "teacher_id", select: "name email" })
+      .populate({ path: "students", select: "name email" })
       .sort({ start_date: 1 }); // Sort by start_date ascending
 
     res.status(200).json({
@@ -153,7 +157,7 @@ exports.getAllBatchesNoFilter = async (req, res) => {
 
 exports.getBatchForStudent = async (req, res) => {
   try {
-    const { students} = req.params;
+    const { students } = req.params;
 
     // Validate student_id
     if (!students) {
@@ -175,27 +179,29 @@ exports.getBatchForStudent = async (req, res) => {
 exports.getBatchesByTeacherId = async (req, res) => {
   try {
     // Check if the user's role is 'teacher'
-    if (req.user.role !== 'teacher') {
-      return res.status(403).json({ message: 'Access denied: Not a teacher' });
+    if (req.user.role !== "teacher") {
+      return res.status(403).json({ message: "Access denied: Not a teacher" });
     }
 
     // const teacherId = req.user._id; // Use authenticated user's ID
-    const teacherId= req.params.teacherId;
+    const teacherId = req.params.teacherId;
 
     // Find batches where the teacher ID matches
     const batches = await Batch.find({ teacher_id: teacherId })
-      .populate('students')   // Populate students details if needed
+      .populate("students") // Populate students details if needed
       .exec();
 
     // Check if any batches are found
     if (!batches || batches.length === 0) {
-      return res.status(404).json({ message: 'No batches found for this teacher' });
+      return res
+        .status(404)
+        .json({ message: "No batches found for this teacher" });
     }
 
     // Send the found batches as a response
     res.status(200).json(batches);
   } catch (error) {
     // Handle errors
-    res.status(500).json({ message: 'Server error', error });
+    res.status(500).json({ message: "Server error", error });
   }
 };

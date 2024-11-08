@@ -9,6 +9,12 @@ const studentSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+  subject_id: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Subject",
+    },
+  ],
   user_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
@@ -26,12 +32,12 @@ const studentSchema = new mongoose.Schema({
     ref: "Subscription",
   },
   class: {
-    _id: { type:  mongoose.Schema.Types.ObjectId, ref: 'Class', required: true },
+    _id: { type: mongoose.Schema.Types.ObjectId, ref: "Class", required: true },
     name: { type: String, required: true },
     classLevel: { type: Number, required: true },
   },
   phone_number: { type: String },
- 
+
   payment_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Payment",

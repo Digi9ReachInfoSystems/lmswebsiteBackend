@@ -131,6 +131,29 @@ exports.getStudentSubscriptionStats = async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 };
+exports.getStudentsBySubjectAndClassId = async (req, res) => {
+    try {
+      const { subject_id, class_id } = req.params; // Extract subject_id and class_id from URL parameters
+  
+      // Find students with the matching subject_id and class_id
+      const students = await Student.find({
+        subject_id: subject_id,               // Match subject_id in the subject_id array
+        "class._id": class_id                 // Match class_id in the class object
+      })
+      .populate("user_id", "name email")      // Populate user details if needed
+      .populate("subject_id", "subject_name") // Populate subject details if needed
+      .populate("class._id", "name classLevel"); // Populate class details if needed
+  
+      if (!students || students.length === 0) {
+        return res.status(404).json({ error: "No students found for this subject and class" });
+      }
+  
+      res.status(200).json(students);
+    } catch (error) {
+      console.error("Error fetching students by subject and class:", error);
+      res.status(500).json({ error: "Server error" });
+    }
+  };
 
 
 exports.getPaymentStatusChartData = async (req, res) => {
