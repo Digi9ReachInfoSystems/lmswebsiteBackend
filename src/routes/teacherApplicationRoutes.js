@@ -44,5 +44,7 @@ router.put(
 router.get("/application/single/:id", authMiddleware,
   authorizeRole("admin"),
   teacherApplicationController.getTeacherApplicationById);
+  router.get("/application/single/teacher/:id",
+    teacherApplicationController.getTeacherApplicationByUserId);
 
 module.exports = router;
