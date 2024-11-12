@@ -8,7 +8,7 @@ exports.createBatch = async (req, res) => {
     const {
       batch_name,
 
-      // batch_image,
+      batch_image,
 
       subject_id,
       class_id,
@@ -28,7 +28,7 @@ exports.createBatch = async (req, res) => {
     }
     const newBatch = new Batch({
       batch_name,
-
+      batch_image,
       subject_id,
       class_id,
       teacher_id,
@@ -106,6 +106,14 @@ exports.getAllBatches = async (req, res) => {
           path: "students",
           populate: { path: "user_id", select: "name email" },
         },
+        {
+          path: "subject_id",
+          populate: { path:"_id" ,select :"subject_name" },
+        },
+        {
+          path: "class_id",
+          populate: { path:"_id" ,select: "className classLevel curriculum" },
+        },
       ],
     };
 
@@ -174,33 +182,129 @@ exports.getBatchForStudent = async (req, res) => {
   }
 };
 
-// Get batches by authenticated teacher ID
 exports.getBatchesByTeacherId = async (req, res) => {
   try {
     // Check if the user's role is 'teacher'
     if (req.user.role !== "teacher") {
-      return res.status(403).json({ message: "Access denied: Not a teacher" });
+      return res.status(403).json({ success: false, message: "Access denied: Not a teacher" });
     }
 
-    // const teacherId = req.user._id; // Use authenticated user's ID
-    const teacherId = req.params.teacherId;
+    // Use authenticated user's ID as teacherId
+    const teacherId = req.user._id;
 
-    // Find batches where the teacher ID matches
-    const batches = await Batch.find({ teacher_id: teacherId })
-      .populate("students") // Populate students details if needed
-      .exec();
+    const {
+      start_date,
+      end_date,
+      students,
+      sort_by,
+      page = 1,
+      limit = 100,
+    } = req.query;
 
-    // Check if any batches are found
-    if (!batches || batches.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "No batches found for this teacher" });
+    // Build a query object, ensuring teacher_id is the specific teacher
+    let query = { teacher_id: teacherId };
+
+    // Filter by date range
+    if (start_date && end_date) {
+      query.start_date = {
+        $gte: new Date(start_date),
+        $lte: new Date(end_date),
+      };
+    } else if (start_date) {
+      query.start_date = { $gte: new Date(start_date) };
+    } else if (end_date) {
+      query.start_date = { $lte: new Date(end_date) };
     }
 
-    // Send the found batches as a response
-    res.status(200).json(batches);
+    // Filter by students if provided
+    if (students) {
+      query.students = students;
+    }
+
+    // Build sort object
+    let sort = {};
+    if (sort_by === "newest") {
+      sort.date = -1;
+    } else if (sort_by === "oldest") {
+      sort.date = 1;
+    } else if (sort_by === "start_date_asc") {
+      sort.start_date = 1;
+    } else if (sort_by === "start_date_desc") {
+      sort.start_date = -1;
+    }
+
+    // Pagination options with nested population for user details in teacher and students
+    const options = {
+      page: parseInt(page, 10),
+      limit: parseInt(limit, 10),
+      sort: sort,
+      populate: [
+        {
+          path: "teacher_id",
+          populate: { path: "user_id", select: "name email" },
+        },
+        {
+          path: "students",
+          populate: { path: "user_id", select: "name email" },
+        },
+        {
+          path: "subject_id",
+          select: "subject_name",
+        },
+        {
+          path: "class_id",
+          select: "className classLevel curriculum",
+        },
+      ],
+    };
+
+    // Execute the query with pagination
+    const batches = await Batch.paginate(query, options);
+
+    // Modify the batch response to include student count
+    const modifiedBatches = batches.docs.map((batch) => ({
+      ...batch.toObject(), // Convert Mongoose document to plain JS object
+      studentcount: batch.students ? batch.students.length : 0, // Add student count
+    }));
+
+    res.status(200).json({
+      message: "Batches fetched successfully",
+      batches: modifiedBatches,
+      totalPages: batches.totalPages,
+      currentPage: batches.page,
+    });
   } catch (error) {
-    // Handle errors
-    res.status(500).json({ message: "Server error", error });
+    console.error("Error fetching batches by teacher:", error);
+    res.status(500).json({ error: "Server error" });
   }
 };
+// // Get batches by authenticated teacher ID
+// exports.getBatchesByTeacherId = async (req, res) => {
+//   try {
+//     // Check if the user's role is 'teacher'
+//     if (req.user.role !== "teacher") {
+//       return res.status(403).json({ message: "Access denied: Not a teacher" });
+//     }
+
+//     // const teacherId = req.user._id; // Use authenticated user's ID
+//     const teacherId = req.params.teacherId;
+
+//     // Find batches where the teacher ID matches
+//     const batches = await Batch.find({ teacher_id: teacherId })
+//       .populate("students") // Populate students details if needed
+//       .exec();
+
+//     // Check if any batches are found
+//     if (!batches || batches.length === 0) {
+//       return res
+//         .status(404)
+//         .json({ message: "No batches found for this teacher" });
+//     }
+
+//     // Send the found batches as a response
+//     res.status(200).json(batches);
+//   } catch (error) {
+//     // Handle errors
+//     res.status(500).json({ message: "Server error", error });
+//   }
+// };

@@ -27,7 +27,7 @@ const User = require("../models/userModel");
  */
 exports.signup = async (req, res) => {
   const authHeader = req.headers.authorization;
-  const { role, access_token, refresh_token } = req.body; // Get role from request body
+  const { role, access_token, refresh_token,class_id,subject_id,phone_number,profile_image } = req.body; // Get role from request body
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Unauthorized: No token provided" });
@@ -62,21 +62,24 @@ exports.signup = async (req, res) => {
       approval_status: "pending",
     });
 
-    await user.save();
+    const createdUser = await user.save();
 
     // If the role is 'student', create a Student document
     let student;
     if (userRole === "student") { 
       // Generate a unique student ID (e.g., use the user ID or a custom method)
-      const studentId = new mongoose.Types.ObjectId();
+      // const studentId = new mongoose.Types.ObjectId();
 
       student = new Student({
         auth_id: uid,
-        student_id: studentId,
+        student_id: createdUser._id,
         user_id: user._id,
         role: "student",
-        access_token: access_token,
-        refresh_token: refresh_token,
+        class:class_id,
+        subject_id:subject_id,
+        phone_number:phone_number,
+        profile_image:profile_image,
+     
       });
 
       await student.save();
