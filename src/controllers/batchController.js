@@ -14,7 +14,6 @@ exports.createBatch = async (req, res) => {
       class_id,
       teacher_id,
       students,
-      contentMaterial,
       date,
     } = req.body;
     if (
@@ -34,7 +33,6 @@ exports.createBatch = async (req, res) => {
       class_id,
       teacher_id,
       students,
-      contentMaterial,
       date,
     });
     await newBatch.save();
