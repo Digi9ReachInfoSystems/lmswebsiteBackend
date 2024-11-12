@@ -6,15 +6,19 @@ const authorizeRole = require("../middlewares/authorizeRole");
 
 router.post(
   "/",
-  authMiddleware,
-  authorizeRole("admin"),
+  // authMiddleware,
+  // authorizeRole("admin"),
   batchController.createBatch
 );
-router.get('/getBatches/teacher/:teacherId',authMiddleware, batchController.getBatchesByTeacherId);
+router.get(
+  "/getBatches/teacher/:teacherId",
+  authMiddleware,
+  batchController.getBatchesByTeacherId
+);
 
-router.get('/getAllBatchesNoFilter',authMiddleware, batchController.getAllBatchesNoFilter);
+router.get("/getAllBatchesNoFilter", batchController.getAllBatchesNoFilter);
 
-router.get("/getAllBatches", authMiddleware, batchController.getAllBatches);
+router.get("/getAllBatches", batchController.getAllBatches);
 router.get(
   "/getBatchForStudent",
   authorizeRole("student"),

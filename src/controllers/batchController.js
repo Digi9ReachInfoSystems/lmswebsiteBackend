@@ -7,8 +7,8 @@ exports.createBatch = async (req, res) => {
   try {
     const {
       batch_name,
-      start_date,
-      batch_image,
+
+      // batch_image,
 
       subject_id,
       class_id,
@@ -19,8 +19,6 @@ exports.createBatch = async (req, res) => {
     } = req.body;
     if (
       !batch_name ||
-      !start_date ||
-      !batch_image ||
       !subject_id ||
       !class_id ||
       !teacher_id ||
@@ -31,8 +29,6 @@ exports.createBatch = async (req, res) => {
     }
     const newBatch = new Batch({
       batch_name,
-      start_date,
-      batch_image,
 
       subject_id,
       class_id,
@@ -60,7 +56,7 @@ exports.getAllBatches = async (req, res) => {
       students,
       sort_by,
       page = 1,
-      limit = 10,
+      limit = 100,
     } = req.query;
 
     // Build a query object
@@ -78,12 +74,10 @@ exports.getAllBatches = async (req, res) => {
       query.start_date = { $lte: new Date(end_date) };
     }
 
-    // Filter by teacher_id
+    // Filter by teacher_id and students
     if (teacher_id) {
       query.teacher_id = teacher_id;
     }
-
-    // Filter by student_id
     if (students) {
       query.students = students;
     }
@@ -91,32 +85,39 @@ exports.getAllBatches = async (req, res) => {
     // Build sort object
     let sort = {};
     if (sort_by === "newest") {
-      sort.date = -1; // Sort by creation date descending
+      sort.date = -1;
     } else if (sort_by === "oldest") {
-      sort.date = 1; // Sort by creation date ascending
+      sort.date = 1;
     } else if (sort_by === "start_date_asc") {
-      sort.start_date = 1; // Sort by start_date ascending
+      sort.start_date = 1;
     } else if (sort_by === "start_date_desc") {
-      sort.start_date = -1; // Sort by start_date descending
+      sort.start_date = -1;
     }
 
-    // Pagination options
+    // Pagination options with nested population for user details in teacher and students
     const options = {
       page: parseInt(page),
       limit: parseInt(limit),
       sort: sort,
       populate: [
-        { path: "teacher_id", select: "name email" },
-        { path: "students", select: "name email" },
+        {
+          path: "teacher_id",
+          populate: { path: "user_id", select: "name email" },
+        },
+        {
+          path: "students",
+          populate: { path: "user_id", select: "name email" },
+        },
       ],
     };
 
     // Execute the query with pagination
     const batches = await Batch.paginate(query, options);
-    // Modify the batch response to include studentcount
+
+    // Modify the batch response to include student count
     const modifiedBatches = batches.docs.map((batch) => ({
       ...batch.toObject(), // Convert Mongoose document to plain JS object
-      studentcount: batch.students ? batch.students.length : 0, // Add studentcount
+      studentcount: batch.students ? batch.students.length : 0, // Add student count
     }));
 
     res.status(200).json({
@@ -136,8 +137,8 @@ exports.getAllBatchesNoFilter = async (req, res) => {
   try {
     // Fetch all batches and populate the teacher and students
     const batches = await Batch.find()
-      .populate({ path: "teacher_id", select: "name email" })
-      .populate({ path: "students", select: "name email" })
+      .populate({ path: "teacher_id", select: "user_id.name " })
+      // .populate({ path: "students", select: "name email" })
       .sort({ start_date: 1 }); // Sort by start_date ascending
 
     res.status(200).json({
