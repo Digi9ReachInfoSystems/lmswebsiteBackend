@@ -21,6 +21,7 @@ const payoutRoutes = require("./src/routes/payoutRoutes");
 const createCustomPackageRoutes = require("./src/routes/createCustomPackageRoutes");
 const teacherRoutes = require("./src/routes/teacherRoutes");
 
+
 const paymentRoutes = require("./src/routes/paymentRoutes");
 const contentRoutes = require("./src/routes/contentRoutes");
 const studentRoutes= require("./src/routes/studentRoutes");
@@ -71,7 +72,7 @@ app.use("/zoom", zoomRoutes);
 app.use("/meetings", meetingRoutes);
 app.use("/payouts", payoutRoutes);
 app.use("/packages", packageRoutes);
-app.use("/payment", paymentRoutes);
+app.use("/        ", paymentRoutes);
 app.use("/teachers", teacherRoutes);
 app.use("/contents", contentRoutes);
 app.use("/students",studentRoutes);

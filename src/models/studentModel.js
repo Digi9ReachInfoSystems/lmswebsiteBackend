@@ -32,9 +32,9 @@ const studentSchema = new mongoose.Schema({
     ref: "Subscription",
   },
   class: {
-    _id: { type: mongoose.Schema.Types.ObjectId, ref: "Class", required: true },
-    name: { type: String, required: true },
-    classLevel: { type: Number, required: true },
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Class",
+    required: true,
   },
   phone_number: { type: String },
 
