@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { profile } = require("winston");
 
 const studentSchema = new mongoose.Schema({
   auth_id: { type: String, required: true, unique: true },
@@ -37,6 +38,7 @@ const studentSchema = new mongoose.Schema({
     required: true,
   },
   phone_number: { type: String },
+  profile_image: { type: String },
 
   payment_id: {
     type: mongoose.Schema.Types.ObjectId,
