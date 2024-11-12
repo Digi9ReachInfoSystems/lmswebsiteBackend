@@ -4,6 +4,7 @@ const { v4: uuidv4 } = require("uuid");
 const Teacher = require("../models/teacherModel");
 const path = require("path");
 const { bucket } = require("../services/firebaseService"); // Firebase bucket reference
+const mongoose = require("mongoose");
 
 exports.createTeacherApplication = async (req, res) => {
   try {
@@ -204,12 +205,28 @@ exports.approveTeacherApplication = async (req, res) => {
 exports.getTeacherApplicationById = async (req, res) => {
   try {
     const { id } = req.params; // Extract ID from the request parameters
-
     // Find the teacher application by ID and populate the teacher details
-    const application = await TeacherApplication.findById(id).populate(
-      "teacher_id", 
-      "name email profile_picture"
-    );
+    const application = await TeacherApplication.findById(id).populate('teacher_id');
+
+    if (!application) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+
+    res.status(200).json({
+      message: "Teacher application fetched successfully",
+      application,
+    });
+  } catch (error) {
+    console.error("Error fetching teacher application:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+exports.getTeacherApplicationByUserId = async (req, res) => {
+  try {
+    const { id } = req.params; // Extract ID from the request parameters
+    // Find the teacher application by ID and populate the teacher details
+    const application = await TeacherApplication.findOne({teacher_id:id}).populate('teacher_id');
 
     if (!application) {
       return res.status(404).json({ message: "Application not found" });
