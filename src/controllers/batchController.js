@@ -7,19 +7,15 @@ exports.createBatch = async (req, res) => {
   try {
     const {
       batch_name,
-      start_date,
       batch_image,
-
       subject_id,
       class_id,
       teacher_id,
       students,
-      contentMaterial,
       date,
     } = req.body;
     if (
       !batch_name ||
-      !start_date ||
       !batch_image ||
       !subject_id ||
       !class_id ||
@@ -31,14 +27,11 @@ exports.createBatch = async (req, res) => {
     }
     const newBatch = new Batch({
       batch_name,
-      start_date,
       batch_image,
-
       subject_id,
       class_id,
       teacher_id,
       students,
-      contentMaterial,
       date,
     });
     await newBatch.save();
