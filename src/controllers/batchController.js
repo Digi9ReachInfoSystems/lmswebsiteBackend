@@ -108,11 +108,11 @@ exports.getAllBatches = async (req, res) => {
         },
         {
           path: "subject_id",
-          populate: { path:"_id" ,select :"subject_name" },
+          populate: { path: "_id", select: "subject_name" },
         },
         {
           path: "class_id",
-          populate: { path:"_id" ,select: "className classLevel curriculum" },
+          populate: { path: "_id", select: "className classLevel curriculum" },
         },
       ],
     };
@@ -175,6 +175,17 @@ exports.getBatchesByTeacherId = async (req, res) => {
     // Find batches where the teacher ID matches
     const batches = await Batch.find({ teacher_id: teacherId })
       .populate("students") // Populate students details if needed
+      .populate("subject_id")
+      .populate("class_id")
+      .populate("teacher_id")
+      .populate({
+        path: "teacher_id",
+        populate: { path: "user_id", select: "name email" }
+      })
+      .populate({
+        path: "students",
+        populate: { path: "user_id", select: "name email" }
+      })
       .exec();
 
     // Check if any batches are found
