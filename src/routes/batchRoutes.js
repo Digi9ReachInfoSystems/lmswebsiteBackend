@@ -19,10 +19,10 @@ router.get(
 router.get("/getAllBatchesNoFilter", batchController.getAllBatchesNoFilter);
 
 router.get("/getAllBatches", batchController.getAllBatches);
-router.get(
-  "/getBatchForStudent",
-  authorizeRole("student"),
-  authMiddleware,
-  batchController.getBatchForStudent
-);
+// router.get(
+//   "/getBatchForStudent",
+//   authorizeRole("student"),
+//   authMiddleware,
+//   batchController.getBatchForStudent
+// );
 module.exports = router;
