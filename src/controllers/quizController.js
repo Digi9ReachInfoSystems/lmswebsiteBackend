@@ -1,5 +1,5 @@
 // src/controllers/quizController.js
-
+const mongoose = require('mongoose');
 const Quiz = require('../models/quizModel');
 // Create a new quiz (Accessible to any authenticated user)
 exports.createQuiz = async (req, res) => {
@@ -98,5 +98,79 @@ exports.getQuizById = async (req, res) => {
   } catch (error) {
     console.error('Error fetching quiz:', error);
     res.status(500).json({ error: 'Server error' });
+  }
+};
+
+
+/**
+ * Controller to get quizzes based on optional filters:
+ * - teacher_id
+ * - batch_id
+ * - class_id
+ * - subject_id
+ * 
+ * These filters are expected to be passed as query parameters.
+ * None of them are mandatory.
+ */
+exports.getQuizzesByTeacher = async (req, res) => {
+  try {
+    const { teacher_id, batch_id, class_id, subject_id } = req.query;
+
+    // Initialize an empty query object
+    let query = {};
+
+    // Validate and add teacher_id to query if provided
+    if (teacher_id) {
+      if (!mongoose.Types.ObjectId.isValid(teacher_id)) {
+        return res.status(400).json({ error: "Invalid teacher_id" });
+      }
+      query.teacher_id = teacher_id;
+    }
+
+    // Validate and add batch_id to query if provided
+    if (batch_id) {
+      if (!mongoose.Types.ObjectId.isValid(batch_id)) {
+        return res.status(400).json({ error: "Invalid batch_id" });
+      }
+      query.batch_index = batch_id;
+    }
+
+    // Validate and add class_id to query if provided
+    if (class_id) {
+      if (!mongoose.Types.ObjectId.isValid(class_id)) {
+        return res.status(400).json({ error: "Invalid class_id" });
+      }
+      query.class_level = class_id;
+    }
+
+    // Validate and add subject_id to query if provided
+    if (subject_id) {
+      if (!mongoose.Types.ObjectId.isValid(subject_id)) {
+        return res.status(400).json({ error: "Invalid subject_id" });
+      }
+      query.subject = subject_id;
+    }
+
+    // Execute the query without pagination
+    const quizzes = await Quiz.find(query)
+      .populate("teacher_id", "name email") // Populate teacher's name and email
+      .populate("batch_index", "batch_name") // Populate batch name
+      .populate("class_level", "className classLevel") // Populate class details
+      .populate({path:"subject",select: "subject_name"}) // Populate subject name
+      .exec();
+
+    // Check if any quizzes are found
+    if (!quizzes || quizzes.length === 0) {
+      return res.status(404).json({ message: "No quizzes found matching the criteria" });
+    }
+
+    // Return the quizzes
+    res.status(200).json({
+      message: "Quizzes fetched successfully",
+      quizzes,
+    });
+  } catch (error) {
+    console.error("Error fetching quizzes:", error);
+    res.status(500).json({ error: "Server error" });
   }
 };
