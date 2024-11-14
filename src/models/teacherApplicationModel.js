@@ -55,6 +55,16 @@ const teacherApplicationSchema = new mongoose.Schema({
   experience: {
     type: String,
     // required: true,
+  },
+  class_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Class",
+    required: true,
+  },
+  subject_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Subject",
+    required: true,
   }
   // teacher_availability: {
   //   type: Date,

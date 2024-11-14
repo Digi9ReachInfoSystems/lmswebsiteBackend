@@ -18,6 +18,8 @@ exports.createTeacherApplication = async (req, res) => {
       phone_number,
       experience,
       resume_link,
+      class_id,
+      subject_id,
       profileImage,
     } = req.body;
 
@@ -31,7 +33,9 @@ exports.createTeacherApplication = async (req, res) => {
       !current_position ||
       !language ||
       !phone_number ||
-      !experience
+      !experience||
+      !class_id ||
+      !subject_id
     ) {
       return res.status(400).json({ error: "All fields and file links are required" });
     }
@@ -61,6 +65,8 @@ exports.createTeacherApplication = async (req, res) => {
       current_position,
       language,
       experience,
+      class_id,
+      subject_id,
       phoneNumber: phone_number,
     });
 
@@ -177,7 +183,8 @@ exports.approveTeacherApplication = async (req, res) => {
       resume_link: application.resume_link,
       profile_image: application.profileImage, // Populate as needed
       payout_info: "", // Populate as needed
-      subject: null, // Populate as needed
+      subject: application.subject_id, // Populate as needed
+      class_id: application.class_id, // Populate as needed
       last_online: new Date(),
       experience: application.experience, // Populate as needed
       no_of_classes: 0, // Initialize to 0
