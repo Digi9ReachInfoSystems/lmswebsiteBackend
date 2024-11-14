@@ -12,7 +12,11 @@ const teacherSchema = new mongoose.Schema({
   },
   role: { type: String, enum: ["teacher", "admin"], required: true },
 
-
+class_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Class",
+    required: true,
+  },
 
 
   qualifications: { type: String },
