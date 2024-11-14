@@ -15,7 +15,7 @@ exports.getTeacherById = async (req, res) => {
     }
 
     // Find the teacher by user_id and populate subject name
-    const teacher = await Teacher.findOne({ user_id: id }).populate(
+    const teacher = await Teacher.findById(id).populate(
       "subject",
       "subject_name"
     );
@@ -157,5 +157,39 @@ exports.getExperiencedTeachers = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+/**
+ * Controller to get teacher details by auth_id from headers.
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+exports.getTeacherByAuthId = async (req, res) => {
+  try {
+    const authId = req.headers['auth_id']; // Extract auth_id from headers
+
+    if (!authId) {
+      return res.status(400).json({ message: 'auth_id header is required' });
+    }
+
+    // Find teacher by auth_id and populate related fields if necessary
+    const teacher = await Teacher.findOne({ auth_id: authId })
+      .populate('user_id', 'name email') // Populate user details excluding sensitive fields
+      .populate('class_id', 'class_name') // Example: populate class details
+      .populate('subject', 'subject_name'); // Example: populate subject details
+
+    if (!teacher) {
+      return res.status(404).json({ message: 'Teacher not found' });
+    }
+
+    res.status(200).json({
+      message: 'Teacher retrieved successfully by auth_id',
+      teacher,
+    });
+  } catch (error) {
+    console.error('Error fetching teacher by auth_id:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };

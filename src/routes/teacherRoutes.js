@@ -10,6 +10,7 @@ const {
   updateTeacherDetails,
   getExperiencedTeachers,
   getTeachersBySubjectId,
+  getTeacherByAuthId
 } = require("../controllers/teacherController");
 
 // Import authentication middleware
@@ -37,5 +38,7 @@ router.put("/update/:id", authMiddleware, updateTeacherDetails);
 
 // Route to get teachers with more than 3 years of experience
 router.get("/experience/greater", getExperiencedTeachers);
+
+router.get("/teacher/AuthId", getTeacherByAuthId);
 
 module.exports = router;
