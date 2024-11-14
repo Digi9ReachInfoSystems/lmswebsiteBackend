@@ -9,4 +9,6 @@ router.get('/profile',authMiddleware,  userController.getProfile);
 // Define route to get user details by auth_id
 router.get('/userByAuthId', userController.getUserByAuthId);
 
+router.put('/updateProfile', userController.updateUserByAuthId);
+
 module.exports = router;
