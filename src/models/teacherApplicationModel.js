@@ -56,16 +56,16 @@ const teacherApplicationSchema = new mongoose.Schema({
     type: String,
     // required: true,
   },
-  class_id: {
+  class_id:[{
     type: mongoose.Schema.Types.ObjectId,
     ref: "Class",
     required: true,
-  },
-  subject_id: {
+  }],
+  subject_id:[ {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Subject",
     required: true,
-  }
+  }]
   // teacher_availability: {
   //   type: Date,
   //   required: true,
