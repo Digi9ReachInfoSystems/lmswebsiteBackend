@@ -55,3 +55,47 @@ exports.getUserByAuthId = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+exports.updateUserByAuthId = async (req, res) => {
+  try {
+    const auth_id = req.headers['auth_id'];
+
+    if (!auth_id) {
+      return res.status(400).json({ message: "auth_id is required." });
+    }
+
+    // Extract fields from request body
+    const updateData = { ...req.body };
+
+    // If password is being updated, hash it before saving
+    // if (updateData.password) {
+    //   const saltRounds = 10;
+    //   const hashedPassword = await bcrypt.hash(updateData.password, saltRounds);
+    //   updateData.password = hashedPassword;
+    // }
+
+    // Remove fields that should not be updated via this endpoint
+    // For example, role, access_token, refresh_token, etc.
+    const immutableFields = ["role","password", "access_token", "refresh_token", "fcmToken", "approval_status", "date_joined", "auth_id"];
+    immutableFields.forEach(field => delete updateData[field]);
+
+    // Update the user document based on auth_id
+    const updatedUser = await User.findOneAndUpdate(
+      { auth_id },
+      { $set: updateData },
+      { new: true, runValidators: true }
+    ).select("-password -access_token -refresh_token"); // Exclude sensitive fields
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    res.status(200).json({
+      message: "User updated successfully.",
+      user: updatedUser
+    });
+  } catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).json({ message: "Server error while updating user." });
+  }
+};
