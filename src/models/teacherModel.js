@@ -12,11 +12,11 @@ const teacherSchema = new mongoose.Schema({
   },
   role: { type: String, enum: ["teacher", "admin"], required: true },
 
-class_id: {
+class_id: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: "Class",
     required: true,
-  },
+  }],
 
 
   qualifications: { type: String },
@@ -31,10 +31,11 @@ class_id: {
   profile_image: { type: String },
   payout_info: { type: String },
   
-  subject: {
-    id: { type: mongoose.Schema.Types.ObjectId, ref: "Subject" },
-    name: { type: String }
-  },
+  subject:[ {
+  type: mongoose.Schema.Types.ObjectId, 
+  ref: "Subject" 
+  
+  }],
   last_online: { type: Date, default: Date.now },
   experience: { type: String },
   no_of_classes: { type: Number },
