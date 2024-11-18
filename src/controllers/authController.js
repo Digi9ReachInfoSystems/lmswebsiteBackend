@@ -54,7 +54,6 @@ exports.signup = async (req, res) => {
     // Create new user
     user = new User({
       auth_id: uid,
-      student_id: uid,
       email: decodedToken.email || null,
       name: studentName ?studentName: "Anonymous",
       role: userRole,
@@ -73,6 +72,7 @@ exports.signup = async (req, res) => {
 
       student = new Student({
         auth_id: uid,
+        student_id: uid,
         user_id: user._id,
         role: "student",
         class:class_id,
