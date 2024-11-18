@@ -18,6 +18,7 @@ exports.createTeacherApplication = async (req, res) => {
       phone_number,
       experience,
       resume_link,
+      board_id,
       class_id,
       subject_id,
       profileImage,
@@ -34,6 +35,7 @@ exports.createTeacherApplication = async (req, res) => {
       !language ||
       !phone_number ||
       !experience||
+      !board_id ||
       !class_id ||
       !subject_id
     ) {
@@ -65,6 +67,7 @@ exports.createTeacherApplication = async (req, res) => {
       current_position,
       language,
       experience,
+      board_id,
       class_id,
       subject_id,
       phoneNumber: phone_number,
@@ -185,6 +188,7 @@ exports.approveTeacherApplication = async (req, res) => {
       payout_info: "", // Populate as needed
       subject: application.subject_id, // Populate as needed
       class_id: application.class_id, // Populate as needed
+      board_id: application.board_id, // Populate as needed
       last_online: new Date(),
       experience: application.experience, // Populate as needed
       no_of_classes: 0, // Initialize to 0

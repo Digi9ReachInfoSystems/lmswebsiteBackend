@@ -66,6 +66,12 @@ const teacherApplicationSchema = new mongoose.Schema({
     ref: "Subject",
     required: true,
   }]
+  ,
+  board_id:{
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: "Board",
+    required: true,
+  },
   // teacher_availability: {
   //   type: Date,
   //   required: true,
