@@ -81,7 +81,7 @@ exports.getAllClassesBoard = async (req, res) => {
 
   try {
     const { boardId } = req.params;
-    const classes = await Class.findOne({curriculum:boardId}).populate("curriculum");
+    const classes = await Class.find({curriculum:boardId}).populate("curriculum");
     res.status(200).json(classes);
   } catch (error) {
     console.error("Error fetching classes:", error);
