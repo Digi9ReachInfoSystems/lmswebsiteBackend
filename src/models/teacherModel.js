@@ -11,7 +11,11 @@ const teacherSchema = new mongoose.Schema({
     unique: true,
   },
   role: { type: String, enum: ["teacher", "admin"], required: true },
-
+  board_id:{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Board",
+    required: true,
+  },
 class_id: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: "Class",
