@@ -39,6 +39,7 @@ const studentSchema = new mongoose.Schema({
   },
   phone_number: { type: String },
   profile_image: { type: String },
+  gender: { type: String }, 
 
   payment_id: {
     type: mongoose.Schema.Types.ObjectId,
