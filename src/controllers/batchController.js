@@ -202,33 +202,60 @@ exports.getBatchesByTeacherId = async (req, res) => {
     res.status(500).json({ message: "Server error", error });
   }
 };
-// // Get batches by authenticated teacher ID
-// exports.getBatchesByTeacherId = async (req, res) => {
-//   try {
-//     // Check if the user's role is 'teacher'
-//     if (req.user.role !== "teacher") {
-//       return res.status(403).json({ message: "Access denied: Not a teacher" });
-//     }
 
-//     // const teacherId = req.user._id; // Use authenticated user's ID
-//     const teacherId = req.params.teacherId;
 
-//     // Find batches where the teacher ID matches
-//     const batches = await Batch.find({ teacher_id: teacherId })
-//       .populate("students") // Populate students details if needed
-//       .exec();
 
-//     // Check if any batches are found
-//     if (!batches || batches.length === 0) {
-//       return res
-//         .status(404)
-//         .json({ message: "No batches found for this teacher" });
-//     }
+// ... existing controller functions ...
 
-//     // Send the found batches as a response
-//     res.status(200).json(batches);
-//   } catch (error) {
-//     // Handle errors
-//     res.status(500).json({ message: "Server error", error });
-//   }
-// };
+/**
+ * Controller function to get a single batch by its ID
+ */
+exports.getBatchById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Validate the presence of the batch ID
+    if (!id) {
+      return res.status(400).json({ message: "Batch ID is required" });
+    }
+
+    // Find the batch by ID and populate related fields
+    const batch = await Batch.findById(id)
+      .populate({
+        path: "teacher_id",
+        populate: { path: "user_id", select: "name email" },
+      })
+      .populate({
+        path: "students",
+        populate: { path: "user_id", select: "name email" },
+      })
+      .populate({
+        path: "subject_id",
+        select: "subject_name",
+      })
+      .populate({
+        path: "class_id",
+        select: "className classLevel curriculum",
+      });
+
+    // If the batch is not found, return a 404 error
+    if (!batch) {
+      return res.status(404).json({ message: "Batch not found" });
+    }
+
+    // Convert the Mongoose document to a plain JavaScript object
+    const batchObj = batch.toObject();
+
+    // Add a student count to the batch object
+    batchObj.studentcount = batch.students ? batch.students.length : 0;
+
+    // Respond with the batch details
+    res.status(200).json({
+      message: "Batch fetched successfully",
+      batch: batchObj,
+    });
+  } catch (error) {
+    console.error("Error fetching batch:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
