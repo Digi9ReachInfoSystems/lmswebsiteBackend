@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const Quiz = require('../models/quizModel');
 // Create a new quiz (Accessible to any authenticated user)
 exports.createQuiz = async (req, res) => {
+  console.log(req.body);
   try {
     const {
       quiz_title,
