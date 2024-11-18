@@ -16,6 +16,8 @@ router.post(
 
 // Get all classes (GET)
 router.get("/", classController.getAllClasses);
+// getclass by board id
+router.get("/board/:boardId", classController.getAllClassesBoard);
 
 // Update a class (PUT)
 router.put(
