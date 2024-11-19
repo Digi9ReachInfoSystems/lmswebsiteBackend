@@ -22,11 +22,16 @@ const packageSchema = new mongoose.Schema({
     ref: "Class",
     required: true,
   },
-  subject_id: {
-    type: [mongoose.Schema.Types.ObjectId],
-    ref: "Subject",
+  board_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Board",
     required: true,
   },
+  subject_id:[ {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Subject",
+    required: true,
+  }],
   price: {
     type: Number,
     required: true,
