@@ -7,7 +7,7 @@ const upload = require("../middlewares/uploadMiddleware");
 
 router.post(
   "/",
-  upload.single("banner_image"),
+  // upload.single("banner_image"),
   authMiddleware,
   authorizeRole("admin"),
   bannerController.createBanner
