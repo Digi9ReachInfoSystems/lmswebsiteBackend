@@ -303,3 +303,31 @@ exports.updateStudent = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+exports.getStudentByAuthId= async (req,res)=>{
+  try{
+    const authId = req.headers['auth_id']; // Extract auth_id from headers
+
+    if (!authId) {
+      return res.status(400).json({ message: 'auth_id header is required' });
+    }
+
+    const student = await Student.findOne({ auth_id: authId })
+    .populate('user_id', 'name email') // Populate user details excluding sensitive fields  
+    .populate('class', 'className classLevel')// Example: populate class details
+    .populate('subject_id', 'subject_name') // Example: populate subject details
+    .populate('board_id', 'name') // Example: populate board details
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    res.status(200).json({
+      message: 'Student retrieved successfully by auth_id', 
+      student,
+    })
+  
+  }catch(error){
+    console.error('Error fetching student by auth_id:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}

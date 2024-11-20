@@ -9,6 +9,7 @@ const {
   getStudentSubscriptionStats,
   getPaymentStatusChartData,
   getStudentsBySubjectAndClassId,
+  getStudentByAuthId,
 } = require("../controllers/studentController");
 const authMiddleware = require("../middlewares/authMiddleware");
 const authorizeRole = require("../middlewares/authorizeRole");
@@ -35,6 +36,8 @@ router.get(
   authorizeRole("admin"),
   getStudentSubscriptionStats
 );
+ 
+router.get("/getstudent/getbyAuthId",getStudentByAuthId);
 
 // Route to get payment status chart data
 router.get(

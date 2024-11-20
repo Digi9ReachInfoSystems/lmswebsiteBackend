@@ -22,7 +22,7 @@ const createCustomPackageRoutes = require("./src/routes/createCustomPackageRoute
 const teacherRoutes = require("./src/routes/teacherRoutes");
 
 
-const paymentRoutes = require("./src/routes/paymentRoutes");
+// const paymentRoutes = require("./src/routes/paymentRoutes");
 const contentRoutes = require("./src/routes/contentRoutes");
 const studentRoutes= require("./src/routes/studentRoutes");
 const feedbackRoutes = require("./src/routes/feedbackRoutes");
@@ -33,6 +33,9 @@ const chooseUsRoutes= require('./src/routes/chooseUsRoutes');
 const faqRoutes = require('./src/routes/faqRoutes');
 const userRoutes = require('./src/routes/userRoutes');
 const boardRoutes = require('./src/routes/boardRoutes');
+const paymentRoutes= require('./src/routes/paymentRoutes');
+const bodyParser = require('body-parser');
+
 require("dotenv").config();
 
 const app = express();
@@ -41,7 +44,11 @@ const app = express();
 connectDB();
 
 // Middleware
-app.use(cors());
+// app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5173', // Replace with your frontend URL
+  credentials: true,
+}));
 app.use(express.json());
 app.use(helmet());
 
@@ -73,7 +80,6 @@ app.use("/zoom", zoomRoutes);
 app.use("/meetings", meetingRoutes);
 app.use("/payouts", payoutRoutes);
 app.use("/packages", packageRoutes);
-app.use("/        ", paymentRoutes);
 app.use("/teachers", teacherRoutes);
 app.use("/contents", contentRoutes);
 app.use("/students",studentRoutes);
@@ -85,6 +91,9 @@ app.use('/chooseUs', chooseUsRoutes);
 app.use('/faqs', faqRoutes);
 app.use('/users', userRoutes);
 app.use('/boards', boardRoutes);
+// Body parser for webhook to get raw body
+app.use('/api/payments/webhook', bodyParser.raw({ type: 'application/json' }));
+app.use('/api/payments', paymentRoutes);
 
 // Start Server
 const PORT = process.env.PORT || 5000;
