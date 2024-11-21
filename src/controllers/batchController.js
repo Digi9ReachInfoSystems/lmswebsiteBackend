@@ -133,11 +133,10 @@ exports.getAllBatches = async (req, res) => {
       currentPage: batches.page,
     });
   } catch (error) {
-    console.error("Error fetching batches:", error);
+    console.error("Error fetching batches:", error.message);
     res.status(500).json({ error: "Server error" });
   }
 };
-
 // Controller function to get all batches without pagination
 exports.getAllBatchesNoFilter = async (req, res) => {
   try {
