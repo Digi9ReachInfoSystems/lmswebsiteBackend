@@ -6,7 +6,6 @@ const customPackageSchema = new mongoose.Schema({
   user_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: true,
   },
   created_at: {
     type: Date,
@@ -42,7 +41,7 @@ const customPackageSchema = new mongoose.Schema({
   },
   subject_id: {
     type: [mongoose.Schema.Types.ObjectId],
-    ref: "subjects",
+    ref: "Subject",
     required: true,
     validate: {
       validator: function (v) {
@@ -51,6 +50,7 @@ const customPackageSchema = new mongoose.Schema({
       message: "At least 3 subjects are required.",
     },
   },
+  slots: { type:String},
 });
 
 module.exports = mongoose.model("CustomPackage", customPackageSchema);

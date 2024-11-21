@@ -50,6 +50,15 @@ const studentSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Payment",
   },
+  custom_package_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "CustomPackage",
+  },
+  custom_package_status: {
+    type: String,
+    enum: ["pending", "approved", "rejected","no_package"],
+    default: "no_package",
+  },
 
   created_at: { type: Date, default: Date.now },
   last_online: { type: Date, default: Date.now },
