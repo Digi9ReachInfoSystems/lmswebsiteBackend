@@ -2,18 +2,12 @@
 
 const CustomPackage = require("../models/customPackageModels");
 const mongoose = require("mongoose");
+const Student = require("../models/studentModel");
 
 // Controller for creating a custom package
 exports.createCustomPackage = async (req, res) => {
   try {
-    let {
-      user_id,
-      expiry_date,
-      is_active,
-      student_id,
-      subject_id,
-      // The student should not set admin-related fields
-    } = req.body;
+    let { student_id, subject_id, slots } = req.body;
 
     // Ensure subject_id is an array and has at least 3 subjects
     if (!Array.isArray(subject_id) || subject_id.length < 3) {
@@ -25,30 +19,26 @@ exports.createCustomPackage = async (req, res) => {
     // Convert subject_ids to ObjectId instances
     const objectIdSubjects = subject_id.map((subject) => {
       if (!mongoose.Types.ObjectId.isValid(subject)) {
-        throw new Error("Invalid subject ID");
+        throw new Error(`Invalid subject ID: ${subject}`);
       }
       return new mongoose.Types.ObjectId(subject);
     });
 
-    // Validate and convert user_id and student_id
-    if (!mongoose.Types.ObjectId.isValid(user_id)) {
-      throw new Error("Invalid user ID");
+    // Validate and convert student_id
+    if (!student_id || !mongoose.Types.ObjectId.isValid(student_id)) {
+      return res.status(400).json({ error: "Invalid or missing student ID" });
     }
-    const userId = new mongoose.Types.ObjectId(user_id);
+    const studentId = new mongoose.Types.ObjectId(student_id);
 
-    let studentId;
-    if (student_id) {
-      if (!mongoose.Types.ObjectId.isValid(student_id)) {
-        throw new Error("Invalid student ID");
-      }
-      studentId = new mongoose.Types.ObjectId(student_id);
+    // Check if the student exists
+    const student = await Student.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ error: "Student not found" });
     }
 
     // Create a new custom package with default values for admin-related fields
     const newCustomPackage = new CustomPackage({
-      user_id: userId,
-      expiry_date,
-      is_active,
+      is_active: false,
       student_id: studentId,
       subject_id: objectIdSubjects,
       is_approved: false,
@@ -56,13 +46,20 @@ exports.createCustomPackage = async (req, res) => {
       is_price_finalized: false,
       admin_contacted: false,
       admin_notes: "",
+      slots: slots,
     });
 
     const savedCustomPackage = await newCustomPackage.save();
 
+    // Update the student document
+    student.custom_package_id = savedCustomPackage._id;
+    student.custom_package_status = "pending";
+    await student.save();
+
     res.status(201).json({
       message: "Custom package created successfully",
       customPackage: savedCustomPackage,
+      student: student,
     });
   } catch (error) {
     console.error("Error creating custom package:", error);
@@ -118,9 +115,11 @@ exports.updateCustomPackage = async (req, res) => {
 exports.getPackages = async (req, res) => {
   try {
     const packages = await CustomPackage.find()
-      .populate("user_id", "name email")
-      .populate("student_id", "name email")
       .populate("subject_id", "subject_name")
+      .populate({
+        path: "student_id",
+        populate:("user_id"),
+      })
       .exec();
 
     res.status(200).json({
