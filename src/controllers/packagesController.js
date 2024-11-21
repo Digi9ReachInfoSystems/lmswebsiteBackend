@@ -294,3 +294,25 @@ exports.deletePackage = async (req, res) => {
     });
   }
 };
+
+exports.getPackageById = async (req, res) => {
+  try {
+    const { id } = req.params;    
+
+    // Validate ID      
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "Invalid package ID format" });
+    }       
+
+    // Find the package       
+    const package = await Package.findById(id).populate("subject_id", "subject_name");
+    if (!package) {
+      return res.status(404).json({ error: "Package not found" });
+    }   
+
+    res.status(200).json(package);    
+  } catch (error) {
+    console.error("Error fetching package by ID:", error);
+    res.status(500).json({ error: error.message || "Server error" });
+  }
+};
