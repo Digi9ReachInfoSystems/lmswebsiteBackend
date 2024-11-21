@@ -118,8 +118,7 @@ exports.getPackages = async (req, res) => {
       .populate("subject_id", "subject_name")
       .populate({
         path: "student_id",
-        populate:("user_id"),
-        populate:("class"),
+        populate:(["user_id","class"]),
       })
       .exec();
 
