@@ -10,6 +10,7 @@ const {
   getPaymentStatusChartData,
   getStudentsBySubjectAndClassId,
   getStudentByAuthId,
+  getStudentsByClassId
 } = require("../controllers/studentController");
 const authMiddleware = require("../middlewares/authMiddleware");
 const authorizeRole = require("../middlewares/authorizeRole");
@@ -54,5 +55,8 @@ router.get(
   "/subject/:subject_id/class/:class_id",
   getStudentsBySubjectAndClassId
 );
+
+router.get("/class/:class_id",
+  getStudentsByClassId);
 
 module.exports = router;
