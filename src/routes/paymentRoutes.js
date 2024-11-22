@@ -37,7 +37,8 @@ const router = express.Router();
 const {
   createOrder,
   verifyPayment,
-  handleWebhook
+  handleWebhook,
+  getAllPayments
 } = require('../controllers/paymentController');
 const authMiddleware = require('../middlewares/authMiddleware'); // Ensure you have an auth middleware
 
@@ -47,5 +48,6 @@ router.post('/verify-payment', authMiddleware, verifyPayment);
 
 // Webhook route should not be protected by auth middleware
 router.post('/webhook', handleWebhook);
+router.get('/allPayments',getAllPayments);
 
 module.exports = router;
