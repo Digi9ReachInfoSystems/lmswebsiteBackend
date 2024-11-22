@@ -34,8 +34,7 @@ const authorizeRole = require("../middlewares/authorizeRole");
  
 router.get(
   "/getMeetings",
-  authMiddleware,
-  authorizeRole("admin"),
+
   meetingController.getMeetings
 );
  
