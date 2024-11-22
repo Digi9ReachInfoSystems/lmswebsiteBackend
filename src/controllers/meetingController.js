@@ -1,5 +1,7 @@
-const Meeting = require("../models/meetingModel"); // Corrected capitalization
-
+const Meeting = require("../models/meetingModel");
+const express = require("express");
+const axios = require("axios"); // Corrected capitalization
+ 
 exports.getMeetings = async (req, res) => {
   try {
     // Extract startDate and endDate from query parameters
@@ -87,3 +89,70 @@ exports.getMeetingForStudents = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+ 
+const getAccessToken = async () => {
+  const url = `https://login.microsoftonline.com/4a18f542-e76b-4e64-b11b-22cf887e4659/oauth2/v2.0/token`;
+  const params = new URLSearchParams({
+    grant_type: "client_credentials",
+    client_id: "4374176d-7f91-4d83-a5e7-c44d06d12726",
+    client_secret: "2rY8Q~~uzeAvhdFbCjfI5TLR3T~GLdJWEAQoTdi9",
+    scope: "https://graph.microsoft.com/.default",
+  });
+ 
+  const response = await axios.post(url, params);
+  return response.data.access_token;
+};
+ 
+exports.createMeetingTeams = async (req, res) => {
+  try {
+    const { email, subject, startDate, endDate, recurrencePattern } = req.body;
+    const token = await getAccessToken();
+ 
+    const meetingDetails = {
+      startDateTime: startDate,
+      endDateTime: endDate,
+      subject: subject,
+    };
+ 
+    const graphResponse = await axios.post(
+      "https://graph.microsoft.com/v1.0/users/8dfda6bd-4440-4481-88f9-5bb5a38129a4/onlineMeetings",
+      meetingDetails,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+ 
+    res.status(200).json(graphResponse.data);
+  } catch (error) {
+    console.error("Error creating recurring meeting:", error);
+    res.status(500).json({ error: "Failed to create recurring meeting" });
+  }
+};
+ 
+exports.getJoinUrl = async (req, res) => {
+  try {
+    const { meetingId } = req.params; // Get the meeting ID from the request
+    const token = await getAccessToken();
+ 
+    const graphResponse = await axios.get(
+      `https://graph.microsoft.com/v1.0/me/onlineMeetings/${meetingId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+ 
+    const { joinUrl } = graphResponse.data;
+ 
+    res.status(200).json({ joinUrl }); // Return the join URL to the client
+  } catch (error) {
+    console.error("Error fetching join URL:", error);
+    res.status(500).json({ error: "Failed to fetch join URL" });
+  }
+};
+ 

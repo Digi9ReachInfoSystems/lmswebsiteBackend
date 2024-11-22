@@ -26,7 +26,6 @@
 // );
 
 // module.exports = router;
-
 const express = require("express");
 const router = express.Router();
 const meetingController = require("../controllers/meetingController");
@@ -63,4 +62,3 @@ router.get(
 router.post("/joinmeeting", meetingController.getJoinUrl);
  
 module.exports = router;
- 
