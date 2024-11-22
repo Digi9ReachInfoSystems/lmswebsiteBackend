@@ -286,3 +286,18 @@ exports.handleWebhook = async (req, res) => {
     res.status(200).json({ status: 'ok' });
   }
 };
+
+exports.getAllPayments = async (req, res) => {
+  try {
+    const payments = await Payment.find()
+    .populate({
+      path: 'student_id',
+      populate: { path: "user_id", select: "name email" },
+    })
+    .populate("package_id");
+    res.status(200).json(payments);
+  } catch (error) {
+    console.error('Error fetching payments:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
