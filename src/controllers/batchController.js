@@ -175,6 +175,7 @@ exports.getBatchesByTeacherId = async (req, res) => {
     // Find batches where the teacher ID matches
     const batches = await Batch.find({ teacher_id: teacherId })
       .populate("students") // Populate students details if needed
+      .populate("subject_id")
       .exec();
 
     // Check if any batches are found
