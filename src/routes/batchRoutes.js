@@ -16,7 +16,7 @@ router.get(
   batchController.getBatchesByTeacherId
 );
 
-// router.get("/:id",batchController.getBatchById);
+router.get("/:id",batchController.getBatchById);
 
 
 
