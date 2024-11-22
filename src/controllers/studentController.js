@@ -331,3 +331,31 @@ exports.getStudentByAuthId= async (req,res)=>{
     res.status(500).json({ error: 'Internal server error' });
   }
 }
+
+exports.getStudentsByClassId = async (req, res) => {
+  try {
+    const { class_id } = req.params; // Extract class_id from URL parameters
+
+    // Validate if class_id is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(class_id)) {
+      return res.status(400).json({ error: "Invalid class ID format." });
+    }
+
+    // Find students with the matching class_id
+    const students = await Student.find({ 'class': class_id })
+      .populate('user_id', 'name email') // Populate user details if needed
+      .populate('class', 'className classLevel'); // Populate class details if needed
+
+    if (!students || students.length === 0) {
+      return res.status(404).json({ error: "No students found for this class" });
+    }
+
+    res.status(200).json({
+      message: "Students retrieved successfully",
+      students,
+    });
+  } catch (error) {
+    console.error("Error fetching students by class:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};

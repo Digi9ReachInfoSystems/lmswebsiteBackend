@@ -7,7 +7,6 @@ const authorizeRole = require("../middlewares/authorizeRole");
 router.post(
   "/",
   authMiddleware,
-
   customerQueryController.createCustomPackage
 );
 router.get(
