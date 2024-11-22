@@ -22,7 +22,7 @@ router.get("/:id",batchController.getBatchById);
 
 router.get("/getAllBatchesNoFilter", batchController.getAllBatchesNoFilter);
 
-router.get("/getAllBatches", batchController.getAllBatches);
+router.get("/getAllBatches/all", batchController.getAllBatches);
 // router.get(
 //   "/getBatchForStudent",
 //   authorizeRole("student"),
