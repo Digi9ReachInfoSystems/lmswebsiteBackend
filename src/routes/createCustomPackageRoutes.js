@@ -9,5 +9,11 @@ router.post(
   authMiddleware,
   customerQueryController.createCustomPackage
 );
+router.get(
+  "/",
+  authMiddleware,
+
+  customerQueryController.getPackages
+);
 
 module.exports = router;

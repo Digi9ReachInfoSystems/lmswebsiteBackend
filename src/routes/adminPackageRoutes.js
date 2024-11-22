@@ -39,5 +39,6 @@ router.put(
   upload.single("image"),
   adminPackageController.updatePackage
 );
+router.get("/getPackageById/single/:id", adminPackageController.getPackageById);
 
 module.exports = router;
