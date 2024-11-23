@@ -151,7 +151,12 @@ exports.getExperiencedTeachers = async (req, res) => {
   try {
     const teachers = await Teacher.find({
       experience: { $gt: "3" }, // Adjust based on the data type of experience
-    });
+    })
+    .populate("user_id", "name email")
+    .populate("class_id") 
+    .populate("subject") 
+    .populate("board_id")
+    .exec(); // Populate user details if needed;
 
     res.status(200).json(teachers);
   } catch (error) {
