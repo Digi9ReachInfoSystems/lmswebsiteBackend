@@ -59,7 +59,11 @@ exports.getStudentById = async (req, res) => {
   }
 
   try {
-    const student = await Student.findOne({ student_id: id }); // Populate user data
+    const student = await Student.findById( id )
+    .populate('user_id', 'name email') // Populate user details excluding sensitive fields  
+    .populate('class', 'className classLevel')// Example: populate class details
+    .populate('subject_id', 'subject_name') // Example: populate subject details
+    .populate('board_id', 'name'); // Populate user data
 
     if (!student) {
       return res.status(404).json({ error: "Student not found." });
