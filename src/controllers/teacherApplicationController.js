@@ -183,7 +183,7 @@ exports.approveTeacherApplication = async (req, res) => {
     // Create a new Teacher document
     const teacher = new Teacher({
       auth_id: user.auth_id,
-      teacher_id: user.auth_id, // Assuming teacher_id is same as auth_id
+      teacher_id: application._id, // Assuming teacher_id is same as auth_id
       user_id: user._id,
       role: "teacher",
       qualifications: application.qualifications,
