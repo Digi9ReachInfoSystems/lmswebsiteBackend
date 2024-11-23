@@ -24,6 +24,7 @@ class_id: [{
 
 
   qualifications: { type: String },
+  dateOfBirth: { type: Date },
   bio: { type: String },
   approval_status: {
     type: String,
