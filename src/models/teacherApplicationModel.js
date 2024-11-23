@@ -56,6 +56,17 @@ const teacherApplicationSchema = new mongoose.Schema({
     type: String,
     // required: true,
   },
+  qualifications: {
+    type: String,
+    // required: true,
+  },
+  dateOfBirth: {
+    type: Date,
+  },
+  bio: {
+    type: String,
+    // required: true,
+  },
   class_id:[{
     type: mongoose.Schema.Types.ObjectId,
     ref: "Class",

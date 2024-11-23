@@ -22,6 +22,8 @@ exports.createTeacherApplication = async (req, res) => {
       class_id,
       subject_id,
       profileImage,
+      qualifications,
+      dateOfBirth
     } = req.body;
 
     // Check for required fields and file links
@@ -37,7 +39,9 @@ exports.createTeacherApplication = async (req, res) => {
       !experience||
       !board_id ||
       !class_id ||
-      !subject_id
+      !subject_id||
+      !qualifications ||
+      !dateOfBirth
     ) {
       return res.status(400).json({ error: "All fields and file links are required" });
     }
@@ -71,6 +75,8 @@ exports.createTeacherApplication = async (req, res) => {
       class_id,
       subject_id,
       phoneNumber: phone_number,
+      dateOfBirth,
+      qualifications
     });
 
     await teacherApplication.save(); // Save to MongoDB
@@ -180,7 +186,8 @@ exports.approveTeacherApplication = async (req, res) => {
       teacher_id: user.auth_id, // Assuming teacher_id is same as auth_id
       user_id: user._id,
       role: "teacher",
-      qualifications: "", // Populate as needed
+      qualifications: application.qualifications,
+      dateOfBirth: application.dateOfBirth, // Populate as needed
       bio: "", // Populate as needed
       approval_status: "approved",
       resume_link: application.resume_link,
