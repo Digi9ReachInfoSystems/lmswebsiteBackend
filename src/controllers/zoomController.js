@@ -11,7 +11,6 @@ function healthCheck() {
 }
 
 async function zoomuserinfo(req, res, next) {
-  
   try {
     const token = req.body.token;
     const email = "rsmx141@gmail.com";
@@ -179,8 +178,6 @@ async function createZoomMeeting(req, res, next) {
 
     await newMeeting.save();
 
-    // TODO: Send the join URLs to the participants securely
-
     res.json({
       meeting: result.data,
       registrants: registrantJoinUrls,
@@ -194,12 +191,21 @@ async function createZoomMeeting(req, res, next) {
   }
 }
 
-module.exports = {
-  zoomuserinfo,
-  createZoomMeeting,
-  healthCheck,
-  getMeetingParticipants,
-};
+async function getMeetingById(req, res, next) {
+  try {
+    const meetingId = req.params.id;
+    const meeting = await Meeting.findById(meetingId).populate(
+      "teacher_id batch subject students"
+    );
+    if (!meeting) {
+      return res.status(404).json({ message: "Meeting not found" });
+    }
+    res.json(meeting);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("An error occurred");
+  }
+}
 
 async function getMeetingParticipants(req, res, next) {
   try {
@@ -258,4 +264,5 @@ module.exports = {
   createZoomMeeting,
   healthCheck,
   getMeetingParticipants,
+  getMeetingById,
 };
