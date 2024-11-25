@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Student = require("../models/studentModel");
 const Class = require("../models/classModel");
+const Package = require("../models/packagesModel");
 
 // Create Student Controller
 exports.createStudent = async (req, res) => {
@@ -363,5 +364,54 @@ exports.getStudentsByClassId = async (req, res) => {
   } catch (error) {
     console.error("Error fetching students by class:", error);
     res.status(500).json({ error: "Server error" });
+  }
+};
+
+
+// Controller to get students by subject
+exports.getStudentsforBatchBySubject = async (req, res) => {
+  
+  try {
+    const { subjectId } = req.params;
+
+    // Validate subjectId
+    if (!mongoose.Types.ObjectId.isValid(subjectId)) {
+      return res.status(400).json({ error: "Invalid subject ID" });
+    }
+
+    // Step 1: Find all packages that include the given subjectId
+    const packagesWithSubject = await Package.find({
+      subject_id: subjectId,
+      // is_active: true, // Optionally filter active packages
+    }).select("_id");
+
+    if (!packagesWithSubject.length) {
+      return res.status(404).json({ message: "No packages found for this subject" });
+    }
+
+    const packageIds = packagesWithSubject.map(pkg => pkg._id);
+
+    // Step 2: Find all students who have subscribed to these packages
+    const students = await Student.find({
+      subscribed_Package: { $in: packageIds },
+      is_paid: true, // Optionally filter students who have paid
+    })
+    .populate("user_id", "name email phone_number") // Populate user details
+    .populate("subscribed_Package", "package_name"); // Populate package details
+
+    if (!students.length) {
+      return res.status(404).json({ message: "No students found for this subject" });
+    }
+
+    res.status(200).json({
+      message: "Students retrieved successfully",
+      data: students,
+    });
+
+  } catch (error) {
+    console.error("Error fetching students by subject:", error);
+    res.status(500).json({
+      error: "Internal server error",
+    });
   }
 };
