@@ -26,7 +26,7 @@ async function generateZoomSignature(req, res, next) {
 
     // Define the payload for the JWT
     const payload = {
-      sdkKey: "FjfctxsdT-6LDfWFtMbldA",
+      sdkKey: "luHcCVYlQ1Cjq1NwoAFuYg",
       meetingNumber: "75756124211",
       role: "0", // 0 for attendee, 1 for host
       iat: Math.floor(Date.now() / 1000) - 30, // Issued at time
