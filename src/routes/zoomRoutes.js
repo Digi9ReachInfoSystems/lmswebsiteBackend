@@ -7,5 +7,6 @@ router.post("/zoomuserinfo", zoomController.zoomuserinfo);
 router.post("/createZoomMeeting", zoomController.createZoomMeeting);
 router.get("/getMeetingParticipants", zoomController.getMeetingParticipants);
 router.get("/getMeetingById/:id", zoomController.getMeetingById);
+router.post("/generateSignature", zoomController.generateZoomSignature);
 
 module.exports = router;

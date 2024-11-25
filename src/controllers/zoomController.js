@@ -1,5 +1,6 @@
 const axios = require("axios");
-const Meeting = require("../models/meetingModel"); // Import the Meeting model
+const Meeting = require("../models/meetingModel");
+const jwt = require("jsonwebtoken"); // Import the Meeting model
 
 function healthCheck() {
   try {
@@ -7,6 +8,42 @@ function healthCheck() {
     return true;
   } catch (error) {
     console.log(error);
+  }
+}
+
+// server.js or your controller file
+
+async function generateZoomSignature(req, res, next) {
+  try {
+    const { meetingNumber, role } = req.body;
+
+    // Validate input
+    if (!meetingNumber || role === undefined) {
+      return res
+        .status(400)
+        .json({ error: "Missing meetingNumber or role in request body." });
+    }
+
+    // Define the payload for the JWT
+    const payload = {
+      sdkKey: "FjfctxsdT-6LDfWFtMbldA",
+      meetingNumber: "75756124211",
+      role: "0", // 0 for attendee, 1 for host
+      iat: Math.floor(Date.now() / 1000) - 30, // Issued at time
+      exp: Math.floor(Date.now() / 1000) + 60 * 60, // Expiration time (1 hour)
+    };
+
+    // Generate the JWT signature
+    const signature = jwt.sign(payload, "FjfctxsdT-6LDfWFtMbldA", {
+      algorithm: "HS256",
+    });
+
+    // Return the signature to the client
+    res.json({ signature: signature });
+  } catch (error) {
+    console.error("Error generating Zoom signature:", error);
+    res.status(500).json({ error: "Failed to generate Zoom signature." });
+    next(error);
   }
 }
 
@@ -265,4 +302,5 @@ module.exports = {
   healthCheck,
   getMeetingParticipants,
   getMeetingById,
+  generateZoomSignature,
 };
