@@ -1,21 +1,24 @@
 //src/controllers/batchController.js
-
+const mongoose = require("mongoose");
 const { error } = require("winston");
 const Batch = require("../models/batchModel");
+const Student = require("../models/studentModel");
 
 exports.createBatch = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
     const {
       batch_name,
-
-      batch_image,
-
+      batch_image, // Expected to be a string (URL or file path)
       subject_id,
       class_id,
       teacher_id,
-      students,
+      students, // Array of student IDs
       date,
     } = req.body;
+
+    // Validate required fields
     if (
       !batch_name ||
       !subject_id ||
@@ -24,8 +27,25 @@ exports.createBatch = async (req, res) => {
       !students ||
       !date
     ) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(400).json({ message: "All fields are required" });
     }
+
+    // Ensure 'students' is an array
+    if (!Array.isArray(students)) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ message: "'students' must be an array of student IDs" });
+    }
+
+    // Validate all student IDs
+    const validStudentsCount = await Student.countDocuments({ _id: { $in: students } });
+    if (validStudentsCount !== students.length) {
+      throw new Error("One or more student IDs are invalid");
+    }
+
+    // Create the new Batch
     const newBatch = new Batch({
       batch_name,
       batch_image,
@@ -35,11 +55,45 @@ exports.createBatch = async (req, res) => {
       students,
       date,
     });
-    await newBatch.save();
+
+    await newBatch.save({ session });
+
+    // Prepare the update for students using $addToSet to prevent duplicates
+    const bulkOps = students.map((studentId) => ({
+      updateOne: {
+        filter: { _id: studentId },
+        update: {
+          $addToSet: {
+            batch_creation: {
+              subject_id: subject_id,
+              status: true,
+            },
+          },
+        },
+      },
+    }));
+
+    // Execute bulk operations
+    const bulkWriteResult = await Student.bulkWrite(bulkOps, { session });
+
+    // Commit the transaction
+    await session.commitTransaction();
+    session.endSession();
+
     res.status(201).json({ message: "Batch created successfully" });
   } catch (error) {
+    // Abort the transaction in case of error
+    await session.abortTransaction();
+    session.endSession();
+
     console.error("Error creating batch:", error);
-    res.status(500).json({ error: "Server error" });
+
+    // Handle specific errors if necessary
+    if (error.name === "CastError") {
+      return res.status(400).json({ error: "Invalid ID format" });
+    }
+
+    res.status(500).json({ error: error.message || "Server error" });
   }
 };
 
