@@ -34,7 +34,7 @@ async function generateZoomSignature(req, res, next) {
     };
 
     // Generate the JWT signature
-    const signature = jwt.sign(payload, "FjfctxsdT-6LDfWFtMbldA", {
+    const signature = jwt.sign(payload, "luHcCVYlQ1Cjq1NwoAFuYg", {
       algorithm: "HS256",
     });
 
