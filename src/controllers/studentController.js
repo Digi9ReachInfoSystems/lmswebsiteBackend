@@ -82,7 +82,9 @@ exports.getAllStudents = async (req, res) => {
     const students = await Student.find().populate({
       path: "user_id",
       select: "name email mobile_number role", // Specify fields to return
-    }); // Populate user data
+    })
+    .populate('board_id')
+    .populate('class'); // Populate user data
     res.status(200).json(students);
   } catch (error) {
     console.error("Error fetching students:", error);
