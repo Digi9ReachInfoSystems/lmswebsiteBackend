@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Student = require("../models/studentModel");
 const Class = require("../models/classModel");
 const Package = require("../models/packagesModel");
+const Subject = require("../models/subjectModel");
 
 // Create Student Controller
 exports.createStudent = async (req, res) => {
@@ -370,7 +371,6 @@ exports.getStudentsByClassId = async (req, res) => {
 
 // Controller to get students by subject
 exports.getStudentsforBatchBySubject = async (req, res) => {
-  
   try {
     const { subjectId } = req.params;
 
@@ -379,7 +379,13 @@ exports.getStudentsforBatchBySubject = async (req, res) => {
       return res.status(400).json({ error: "Invalid subject ID" });
     }
 
-    // Step 1: Find all packages that include the given subjectId
+    // Step 1: Verify that the subject exists
+    const subjectExists = await Subject.exists({ _id: subjectId });
+    if (!subjectExists) {
+      return res.status(404).json({ error: "Subject not found" });
+    }
+
+    // Step 2: Find all packages that include the given subjectId
     const packagesWithSubject = await Package.find({
       subject_id: subjectId,
       // is_active: true, // Optionally filter active packages
@@ -391,16 +397,29 @@ exports.getStudentsforBatchBySubject = async (req, res) => {
 
     const packageIds = packagesWithSubject.map(pkg => pkg._id);
 
-    // Step 2: Find all students who have subscribed to these packages
+    // Step 3: Find all students who have subscribed to these packages,
+    // have paid, and either do not have the subject in batch_creation
+    // or have it with status: false
     const students = await Student.find({
       subscribed_Package: { $in: packageIds },
-      is_paid: true, // Optionally filter students who have paid
+      is_paid: true,
+      $or: [
+        { batch_creation: { $exists: false } }, // No batch_creation field
+        { batch_creation: { $size: 0 } }, // Empty batch_creation array
+        {
+          batch_creation: {
+            $not: {
+              $elemMatch: { subject_id: subjectId, status: true }
+            }
+          }
+        }
+      ]
     })
     .populate("user_id", "name email phone_number") // Populate user details
     .populate("subscribed_Package", "package_name"); // Populate package details
 
     if (!students.length) {
-      return res.status(404).json({ message: "No students found for this subject" });
+      return res.status(404).json({ message: "No eligible students found for this subject" });
     }
 
     res.status(200).json({
