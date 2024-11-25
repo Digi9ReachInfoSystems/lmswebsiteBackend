@@ -1,5 +1,7 @@
 const axios = require("axios");
-const Meeting = require("../models/meetingModel"); // Import the Meeting model
+const Meeting = require("../models/meetingModel");
+const jwt = require("jsonwebtoken");
+const KJUR = require("jsrsasign"); // Import the Meeting model
 
 function healthCheck() {
   try {
@@ -7,6 +9,58 @@ function healthCheck() {
     return true;
   } catch (error) {
     console.log(error);
+  }
+}
+
+// server.js or your controller file
+async function generateZoomSignature(req, res, next) {
+  try {
+    const { meetingNumber, role } = req.body;
+
+    // Validate input
+    if (!meetingNumber || role === undefined) {
+      return res
+        .status(400)
+        .json({ error: "Missing meetingNumber or role in request body." });
+    }
+
+    // Load SDK Key and Secret from environment variables
+    const sdkKey = "luHcCVYlQ1Cjq1NwoAFuYg";
+    const sdkSecret = "3te57W3k3uBd4CHydxU5LsOR9rvtYtQn";
+
+    if (!sdkKey || !sdkSecret) {
+      return res
+        .status(500)
+        .json({ error: "Zoom SDK Key and Secret are not configured." });
+    }
+
+    // Define the payload for the JWT
+    const iat = Math.floor(new Date().getTime() / 1000) - 30;
+    const exp = iat + 60 * 60 * 2; // Signature valid for 2 hours
+
+    const oHeader = { alg: "HS256", typ: "JWT" };
+
+    const oPayload = {
+      sdkKey: "luHcCVYlQ1Cjq1NwoAFuYg",
+      mn: meetingNumber,
+      role: 0, // 0 for attendee, 1 for host
+      iat: iat,
+      exp: exp,
+      tokenExp: exp,
+    };
+
+    const sHeader = JSON.stringify(oHeader);
+    const sPayload = JSON.stringify(oPayload);
+
+    // Generate the JWT signature
+    const signature = KJUR.jws.JWS.sign("HS256", sHeader, sPayload, sdkSecret);
+
+    // Return the signature to the client
+    res.json({ signature: signature });
+  } catch (error) {
+    console.error("Error generating Zoom signature:", error);
+    res.status(500).json({ error: "Failed to generate Zoom signature." });
+    next(error);
   }
 }
 
@@ -265,4 +319,5 @@ module.exports = {
   healthCheck,
   getMeetingParticipants,
   getMeetingById,
+  generateZoomSignature,
 };
