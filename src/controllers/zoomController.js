@@ -42,7 +42,7 @@ async function generateZoomSignature(req, res, next) {
 
     const oPayload = {
       sdkKey: "luHcCVYlQ1Cjq1NwoAFuYg",
-      mn: "75756124211",
+      mn: meetingNumber,
       role: 0, // 0 for attendee, 1 for host
       iat: iat,
       exp: exp,
