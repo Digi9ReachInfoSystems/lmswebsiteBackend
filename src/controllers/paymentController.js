@@ -194,7 +194,8 @@ exports.createOrder = async (req, res) => {
 
 exports.verifyPayment = async (req, res) => {
   const signature = req.headers['x-razorpay-signature']; // Signature sent by Razorpay
-  const generated_signature = crypto.createHmac('sha256', razorpayInstance.course_payment);
+  const secrete='FPs-kRnkuFXq8tG-course-Payment'
+  const generated_signature = crypto.createHmac('sha256', secrete);
   generated_signature.update(JSON.stringify(req.body));
   const digested_signature = generated_signature.digest('hex'); 
 
