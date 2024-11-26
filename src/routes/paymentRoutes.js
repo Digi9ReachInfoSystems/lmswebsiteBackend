@@ -38,7 +38,10 @@ const {
   createOrder,
   verifyPayment,
   handleWebhook,
-  getAllPayments
+  getAllPayments,
+  createCustomPackageOrder,
+  customPackageWebhookHandle,
+
 } = require('../controllers/paymentController');
 const authMiddleware = require('../middlewares/authMiddleware'); // Ensure you have an auth middleware
 
@@ -49,5 +52,12 @@ router.post('/verify-payment', authMiddleware, verifyPayment);
 // Webhook route should not be protected by auth middleware
 router.post('/webhook', handleWebhook);
 router.get('/allPayments',getAllPayments);
+
+// Route to create Razorpay order and send payment link via email
+router.post('/customPackage/create-order', createCustomPackageOrder);
+
+// Webhook route to verify payment status
+router.post('/customPackage/webhook', express.raw({ type: 'application/json' }), customPackageWebhookHandle);
+
 
 module.exports = router;

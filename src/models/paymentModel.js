@@ -52,7 +52,11 @@ const paymentSchema = new mongoose.Schema({
   package_id: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: "Package", 
-    required: true 
+    // required: true 
+  },
+  custom_package_id: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: "CustomPackage",  // Link to the custom package
   },
   payment_method: { type: String },
   description: { type: String },
