@@ -18,6 +18,8 @@ router.get(
 
 router.get("/:id",batchController.getBatchById);
 
+router.get("/getAllBatches/student/:studentId", batchController.getBatchesByStudentId);
+
 
 
 router.get("/getAllBatchesNoFilter", batchController.getAllBatchesNoFilter);
