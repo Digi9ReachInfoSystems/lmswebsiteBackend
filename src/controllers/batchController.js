@@ -231,6 +231,10 @@ exports.getBatchesByTeacherId = async (req, res) => {
       .populate("students") // Populate students details if needed
       .populate("subject_id")
       .populate("class_id")
+      .populate({
+        path: "teacher_id",
+        populate: { path: "user_id", select: "name email" },
+      })
       .exec();
 
     // Check if any batches are found
