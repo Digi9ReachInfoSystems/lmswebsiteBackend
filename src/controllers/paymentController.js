@@ -99,6 +99,7 @@ exports.verifyPayment = async (req, res) => {
       console.log("Valid signature inside payment.link.paid",req.body);
       // Payment is valid
       const payment = await Payment.findOne({ order_id: req.body.payload.order.entity.id });
+      console.log("payment",payment);
       if (!payment) {
         return res.status(400).json({ error: 'Payment not found' });
       }
