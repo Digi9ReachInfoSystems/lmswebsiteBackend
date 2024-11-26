@@ -162,11 +162,11 @@ exports.getAllBatches = async (req, res) => {
         },
         {
           path: "subject_id",
-          populate: { path:"_id" ,select :"subject_name" },
+          populate: { path: "_id", select: "subject_name" },
         },
         {
           path: "class_id",
-          populate: { path:"_id" ,select: "className classLevel curriculum" },
+          populate: { path: "_id", select: "className classLevel curriculum" },
         },
       ],
     };
@@ -250,19 +250,19 @@ exports.getBatchesByTeacherId = async (req, res) => {
 
 
 
- 
+
 /**
  * Controller function to get a single batch by its ID
 // */
 exports.getBatchById = async (req, res) => {
   try {
     const { id } = req.params;
- 
+
     // Validate the presence of the batch ID
     if (!id) {
       return res.status(400).json({ message: "Batch ID is required" });
     }
- 
+
     // Find the batch by ID and populate related fields
     const batch = await Batch.findById(id)
       .populate({
@@ -281,18 +281,18 @@ exports.getBatchById = async (req, res) => {
         path: "class_id",
         select: "className classLevel curriculum",
       });
- 
+
     // If the batch is not found, return a 404 error
     if (!batch) {
       return res.status(404).json({ message: "Batch not found" });
     }
- 
+
     // Convert the Mongoose document to a plain JavaScript object
     const batchObj = batch.toObject();
- 
+
     // Add a student count to the batch object
     batchObj.studentcount = batch.students ? batch.students.length : 0;
- 
+
     // Respond with the batch details
     res.status(200).json({
       message: "Batch fetched successfully",
@@ -303,9 +303,34 @@ exports.getBatchById = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
- 
- 
- 
+
+//  get bathes by student id
+exports.getBatchesByStudentId = async (req, res) => {
+  try {
+    const studentId = req.params.studentId;
+
+    // Find batches where the student ID is in the students array
+    const batches = await Batch.find({ students: studentId })
+      .populate({
+        path: "teacher_id",
+        populate: { path: "user_id", select: "name email" },
+      })
+      .populate("subject_id")
+      .populate("class_id")
+      .populate({
+        path: "students",
+        populate: { path: "user_id", select: "name email" },
+      })
+      .exec();
+
+    // Send the found batches as a response
+    res.status(200).json(batches);
+  } catch (error) {
+    // Handle errors
+    res.status(500).json({ message: "Server error", error });
+  }
+};
+
 // // Get batches by authenticated teacher ID
 // exports.getBatchesByTeacherId = async (req, res) => {
 //   try {
