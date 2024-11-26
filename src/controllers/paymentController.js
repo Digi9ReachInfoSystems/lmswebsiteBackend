@@ -80,6 +80,7 @@ exports.verifyPayment = async (req, res) => {
   if (digested_signature === signature) {
     console.log("Valid signature",req.body);
     if (req.body.event == "payment.captured") {
+      console.log("Valid signature inside payment.captured",req.body);
       // Payment is valid
       const payment = await Payment.findOne({ order_id: req.body.payload.payment.entity.order_id });
       if (!payment) {
@@ -95,6 +96,7 @@ exports.verifyPayment = async (req, res) => {
       });
 
     }else if (req.body.event == "payment_link.paid") {
+      console.log("Valid signature inside payment.link.paid",req.body);
       // Payment is valid
       const payment = await Payment.findOne({ order_id: req.body.payload.payment.entity.order_id });
       if (!payment) {
