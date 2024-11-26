@@ -192,59 +192,75 @@ exports.createOrder = async (req, res) => {
   }
 };
 
-// Verify Payment
 exports.verifyPayment = async (req, res) => {
-  const {
-    razorpay_order_id,
-    razorpay_payment_id,
-    razorpay_signature,
-  } = req.body;
+  const signature = req.headers['x-razorpay-signature']; // Signature sent by Razorpay
+  const generated_signature = crypto.createHmac('sha256', razorpayInstance.course_payment);
+  generated_signature.update(JSON.stringify(req.body));
+  const digested_signature = generated_signature.digest('hex'); 
 
-  // Validate input
-  if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-    return res.status(400).json({ error: 'Missing required payment details' });
+  if (digested_signature === signature) {
+          console.log(req.body);
+  } else {
+
   }
 
-  try {
-    const payment = await Payment.findOne({ order_id: razorpay_order_id });
+  res.json({ status: "ok" });
+}
 
-    if (!payment) {
-      return res.status(400).json({ error: 'Payment not found' });
-    }
 
-    // Generate signature to verify
-    const generated_signature = crypto
-      .createHmac('sha256', razorpayInstance.key_secret)
-      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-      .digest('hex');
+// Verify Payment
+// exports.verifyPayment = async (req, res) => {
+//   const {
+//     razorpay_order_id,
+//     razorpay_payment_id,
+//     razorpay_signature,
+//   } = req.body;
 
-    if (generated_signature === razorpay_signature) {
-      // Update payment details
-      payment.payment_id = razorpay_payment_id;
-      payment.razorpay_signature = razorpay_signature;
-      payment.status = 'paid';
-      await payment.save();
+//   // Validate input
+//   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+//     return res.status(400).json({ error: 'Missing required payment details' });
+//   }
 
-      // Add package to student's purchased courses and payment reference
-      // await Student.findByIdAndUpdate(payment.student_id, {
-      //   $addToSet: { subscribed_Package: payment.package_id, payment_id: payment._id , is_paid: true },
-      // });
-      await Student.findByIdAndUpdate(payment.student_id, {
-        subscribed_Package: payment.package_id, payment_id: payment._id, is_paid: true,
-      });
+//   try {
+//     const payment = await Payment.findOne({ order_id: razorpay_order_id });
 
-      res.status(200).json({ message: 'Payment verified successfully' });
-    } else {
-      // Invalid signature
-      payment.status = 'failed';
-      await payment.save();
-      res.status(400).json({ error: 'Invalid signature' });
-    }
-  } catch (error) {
-    console.error('Error verifying payment:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
+//     if (!payment) {
+//       return res.status(400).json({ error: 'Payment not found' });
+//     }
+
+//     // Generate signature to verify
+//     const generated_signature = crypto
+//       .createHmac('sha256', razorpayInstance.key_secret)
+//       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+//       .digest('hex');
+
+//     if (generated_signature === razorpay_signature) {
+//       // Update payment details
+//       payment.payment_id = razorpay_payment_id;
+//       payment.razorpay_signature = razorpay_signature;
+//       payment.status = 'paid';
+//       await payment.save();
+
+//       // Add package to student's purchased courses and payment reference
+//       // await Student.findByIdAndUpdate(payment.student_id, {
+//       //   $addToSet: { subscribed_Package: payment.package_id, payment_id: payment._id , is_paid: true },
+//       // });
+//       await Student.findByIdAndUpdate(payment.student_id, {
+//         subscribed_Package: payment.package_id, payment_id: payment._id, is_paid: true,
+//       });
+
+//       res.status(200).json({ message: 'Payment verified successfully' });
+//     } else {
+//       // Invalid signature
+//       payment.status = 'failed';
+//       await payment.save();
+//       res.status(400).json({ error: 'Invalid signature' });
+//     }
+//   } catch (error) {
+//     console.error('Error verifying payment:', error);
+//     res.status(500).json({ error: 'Internal server error' });
+//   }
+// };
 
 // Handle Webhook (Optional but Recommended)
 exports.handleWebhook = async (req, res) => {
@@ -410,7 +426,7 @@ exports.verifyCustomPackagePayment = async (req, res) => {
   }
 };
 
-exports.customPackageWebhookHandle =  (req, res) => {
+exports.customPackageWebhookHandle = (req, res) => {
   const webhookSecret = 'your_webhook_secret'; // Replace this with your Razorpay Webhook Secret
   const signature = req.headers['x-razorpay-signature']; // Signature sent by Razorpay
   const body = JSON.stringify(req.body);
@@ -442,7 +458,7 @@ exports.customPackageWebhookHandle =  (req, res) => {
 
       // Example: update the payment status in your database
       // await Student.updateOne({ _id: student_id }, { paymentStatus: 'paid' });
-      
+
       // Respond with a 200 status to acknowledge the receipt of the webhook
       return res.status(200).send('Event received');
     } else {
@@ -522,7 +538,7 @@ exports.createCustomPackageOrder = async (req, res) => {
       },
     };
     const order = await razorpayInstance.orders.create(orderOptions);
-    console.log(order);
+
 
     // Save order details in Payment model
     const payment = new Payment({

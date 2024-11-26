@@ -47,7 +47,7 @@ const authMiddleware = require('../middlewares/authMiddleware'); // Ensure you h
 
 // Apply authentication middleware to protect these routes except for webhook
 router.post('/create-order', authMiddleware, createOrder);
-router.post('/verify-payment', authMiddleware, verifyPayment);
+router.post('/verify-payment-webhook', verifyPayment);
 
 // Webhook route should not be protected by auth middleware
 router.post('/webhook', handleWebhook);
