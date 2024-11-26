@@ -180,7 +180,8 @@ exports.createOrder = async (req, res) => {
       student_id: studentId,
       package_id: packageId,
       description: description || 'Payment for course package',
-      receipt: order.receipt
+      receipt: order.receipt,
+      razorpay_signature: order.razorpay_signature
     });
 
     await payment.save();
@@ -194,18 +195,31 @@ exports.createOrder = async (req, res) => {
 
 exports.verifyPayment = async (req, res) => {
   const signature = req.headers['x-razorpay-signature']; // Signature sent by Razorpay
-  const secrete='FPs-kRnkuFXq8tG-course-Payment'
+  const secrete = 'FPs-kRnkuFXq8tG-course-Payment'
   const generated_signature = crypto.createHmac('sha256', secrete);
   generated_signature.update(JSON.stringify(req.body));
-  const digested_signature = generated_signature.digest('hex'); 
+  const digested_signature = generated_signature.digest('hex');
 
   if (digested_signature === signature) {
-          console.log("Hello World",req.body);
-  } else {
+    console.log("Hello World", req.body.payload.payment.entity);
+    const payment = await Payment.findOne({ order_id: req.body.payload.payment.entity.order_id });
+    if (!payment) {
+      return res.status(400).json({ error: 'Payment not found' });
+    }
+    // Update payment details
+    payment.payment_id = req.body.payload.payment.entity.id;
+    payment.status = 'paid';
+    await payment.save();
+    // Update student details
+    await Student.findByIdAndUpdate(payment.student_id, {
+      subscribed_Package: payment.package_id, payment_id: payment._id, is_paid: true,
+    });
+  
+} else {
+    console.log("Invalid signature");
+}
 
-  }
-
-  res.json({ status: "ok" });
+res.json({ status: "ok" });
 }
 
 
@@ -236,19 +250,19 @@ exports.verifyPayment = async (req, res) => {
 //       .digest('hex');
 
 //     if (generated_signature === razorpay_signature) {
-//       // Update payment details
-//       payment.payment_id = razorpay_payment_id;
-//       payment.razorpay_signature = razorpay_signature;
-//       payment.status = 'paid';
-//       await payment.save();
+// // Update payment details
+// payment.payment_id = razorpay_payment_id;
+// payment.razorpay_signature = razorpay_signature;
+// payment.status = 'paid';
+// await payment.save();
 
-//       // Add package to student's purchased courses and payment reference
-//       // await Student.findByIdAndUpdate(payment.student_id, {
-//       //   $addToSet: { subscribed_Package: payment.package_id, payment_id: payment._id , is_paid: true },
-//       // });
-//       await Student.findByIdAndUpdate(payment.student_id, {
-//         subscribed_Package: payment.package_id, payment_id: payment._id, is_paid: true,
-//       });
+// // Add package to student's purchased courses and payment reference
+// // await Student.findByIdAndUpdate(payment.student_id, {
+// //   $addToSet: { subscribed_Package: payment.package_id, payment_id: payment._id , is_paid: true },
+// // });
+// await Student.findByIdAndUpdate(payment.student_id, {
+//   subscribed_Package: payment.package_id, payment_id: payment._id, is_paid: true,
+// });
 
 //       res.status(200).json({ message: 'Payment verified successfully' });
 //     } else {
