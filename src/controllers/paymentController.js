@@ -99,7 +99,7 @@ exports.verifyPayment = async (req, res) => {
       console.log("Valid signature inside payment.link.paid",req.body);
       console.log("request",req.body.payload.order.entity);
       // Payment is valid
-      const payment = await Payment.findOne({ order_id: req.body.payload.order.entity.id });
+      const payment = await Payment.findOne({ receipt: req.body.payload.order.entity.receipt });
       console.log("payment",payment);
       if (!payment) {
         return res.status(400).json({ error: 'Payment not found' });
@@ -181,7 +181,7 @@ exports.createCustomPackageOrder = async (req, res) => {
         accept_partial: true,
         first_min_partial_amount: 100, // Optional, for partial payments
         expire_by: Math.floor(Date.now() / 1000) + 3600, // Set expiry to 1 hour from now
-        reference_id: `TSsd${Math.floor(Math.random() * 1000)}`, // Reference ID for tracking
+        reference_id: order.receipt, // Reference ID for tracking
         description: `Payment for Custom Package - Package ID: ${package_id}`,
         customer: {
           name: 'Gaurav Kumar', // You can replace this with dynamic name if needed
