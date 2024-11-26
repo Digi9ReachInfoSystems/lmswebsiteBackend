@@ -78,25 +78,28 @@ exports.verifyPayment = async (req, res) => {
   const digested_signature = generated_signature.digest('hex');
 
   if (digested_signature === signature) {
-    // Payment is valid
-    const payment = await Payment.findOne({ order_id: req.body.payload.payment.entity.order_id });
-    if (!payment) {
-      return res.status(400).json({ error: 'Payment not found' });
-    }
-    // Update payment details
-    payment.payment_id = req.body.payload.payment.entity.id;
-    payment.status = 'paid';
-    await payment.save();
-    // Update student details
-    await Student.findByIdAndUpdate(payment.student_id, {
-      subscribed_Package: payment.package_id, payment_id: payment._id, is_paid: true,
-    });
-  
-} else {
-    console.log("Invalid signature");
-}
+    if (req.body.event == "payment.captured") {
+      // Payment is valid
+      const payment = await Payment.findOne({ order_id: req.body.payload.payment.entity.order_id });
+      if (!payment) {
+        return res.status(400).json({ error: 'Payment not found' });
+      }
+      // Update payment details
+      payment.payment_id = req.body.payload.payment.entity.id;
+      payment.status = 'paid';
+      await payment.save();
+      // Update student details
+      await Student.findByIdAndUpdate(payment.student_id, {
+        subscribed_Package: payment.package_id, payment_id: payment._id, is_paid: true,
+      });
 
-res.json({ status: "ok" });
+    }
+
+  } else {
+    console.log("Invalid signature");
+  }
+
+  res.json({ status: "ok" });
 }
 
 
@@ -200,26 +203,27 @@ exports.verifyCustomPackagePayment = async (req, res) => {
   const digested_signature = generated_signature.digest('hex');
 
   if (digested_signature === signature) {
-
-     // Payment is valid
-     const payment = await Payment.findOne({ order_id: req.body.payload.payment.entity.order_id });
-     if (!payment) {
-       return res.status(400).json({ error: 'Payment not found' });
-     }
-     // Update payment details
-     payment.payment_id = req.body.payload.payment.entity.id;
-     payment.status = 'paid';
-     await payment.save();
+    if (req.body.event == "payment_link.paid") {
+      // Payment is valid
+      const payment = await Payment.findOne({ order_id: req.body.payload.payment.entity.order_id });
+      if (!payment) {
+        return res.status(400).json({ error: 'Payment not found' });
+      }
+      // Update payment details
+      payment.payment_id = req.body.payload.payment.entity.id;
+      payment.status = 'paid';
+      await payment.save();
       // Update student details
-    await Student.findByIdAndUpdate(payment.student_id, {
-      custom_package_id: payment.custom_package_id, payment_id: payment._id, custom_package_status: "approved",
-    });
-    // update custom package details
-    await CustomPackage.findByIdAndUpdate(payment.custom_package_id, {
-      is_active: true , is_approved: true,is_price_finalized:true,admin_contacted:true,package_price:payment.amount,
-    });
-  }else{
-
+      await Student.findByIdAndUpdate(payment.student_id, {
+        custom_package_id: payment.custom_package_id, payment_id: payment._id, custom_package_status: "approved",
+      });
+      // update custom package details
+      await CustomPackage.findByIdAndUpdate(payment.custom_package_id, {
+        is_active: true, is_approved: true, is_price_finalized: true, admin_contacted: true, package_price: payment.amount,
+      });
+    }
+  } else {
+    console.log("Invalid signature");
   }
   res.json({ status: "ok" });
 }
