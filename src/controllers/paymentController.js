@@ -78,7 +78,6 @@ exports.verifyPayment = async (req, res) => {
   const digested_signature = generated_signature.digest('hex');
 
   if (digested_signature === signature) {
-    console.log("Valid signature",req.body);
     if (req.body.event == "payment.captured") {
       console.log("Valid signature inside payment.captured",req.body);
       // Payment is valid
@@ -127,7 +126,7 @@ exports.verifyPayment = async (req, res) => {
 
 
 exports.createCustomPackageOrder = async (req, res) => {
-  const { amount, student_email, package_id, student_id } = req.body;
+  const { amount, package_id, student_id } = req.body;
   try {
     // Create Razorpay order
     // Validate input
@@ -135,7 +134,7 @@ exports.createCustomPackageOrder = async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields: studentId, packageId, amount' });
     }
     // Check if student exists
-    const student = await Student.findById(student_id);
+    const student = await Student.findById(student_id).populate("user_id");
     if (!student) {
       return res.status(404).json({ error: 'Student not found' });
     }
@@ -184,9 +183,9 @@ exports.createCustomPackageOrder = async (req, res) => {
         reference_id: order.receipt, // Reference ID for tracking
         description: `Payment for Custom Package - Package ID: ${package_id}`,
         customer: {
-          name: 'Gaurav Kumar', // You can replace this with dynamic name if needed
-          contact: '+919000090000', // You can replace with dynamic contact if needed
-          email: student_email, // Student's email
+          name: student.user_id.name, // You can replace this with dynamic name if needed
+          contact: student.phone_number, // You can replace with dynamic contact if needed
+          email: student.user_id.email, // Student's email
         },
         notify: {
           sms: true,
@@ -194,7 +193,7 @@ exports.createCustomPackageOrder = async (req, res) => {
         },
         reminder_enable: true,
         notes: {
-          policy_name: "Jeevan Bima", // Add your custom notes here
+          policy_name: "Topper Academy Payament", // Add your custom notes here
         },
         callback_url: 'http://localhost:5000/api/payments/customPackage/webhook', // Callback URL
         callback_method: 'get', // HTTP method for the callback
@@ -218,38 +217,6 @@ exports.createCustomPackageOrder = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-exports.verifyCustomPackagePayment = async (req, res) => {
-  const signature = req.headers['x-razorpay-signature']; // Signature sent by Razorpay
-  const secrete = 'bq3es79LTfQn.SH-custom-package'
-  const generated_signature = crypto.createHmac('sha256', secrete);
-  generated_signature.update(JSON.stringify(req.body));
-  const digested_signature = generated_signature.digest('hex');
-
-  if (digested_signature === signature) {
-    if (req.body.event == "payment_link.paid") {
-      // Payment is valid
-      const payment = await Payment.findOne({ order_id: req.body.payload.payment.entity.order_id });
-      if (!payment) {
-        return res.status(400).json({ error: 'Payment not found' });
-      }
-      // Update payment details
-      payment.payment_id = req.body.payload.payment.entity.id;
-      payment.status = 'paid';
-      await payment.save();
-      // Update student details
-      await Student.findByIdAndUpdate(payment.student_id, {
-        custom_package_id: payment.custom_package_id, payment_id: payment._id, custom_package_status: "approved",
-      });
-      // update custom package details
-      await CustomPackage.findByIdAndUpdate(payment.custom_package_id, {
-        is_active: true, is_approved: true, is_price_finalized: true, admin_contacted: true, package_price: payment.amount,
-      });
-    }
-  } else {
-    console.log("Invalid signature");
-  }
-  res.json({ status: "ok" });
-}
 
 
 exports.getAllPayments = async (req, res) => {
