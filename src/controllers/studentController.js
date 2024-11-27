@@ -3,6 +3,7 @@ const Student = require("../models/studentModel");
 const Class = require("../models/classModel");
 const Package = require("../models/packagesModel");
 const Subject = require("../models/subjectModel");
+const CustomPackage = require("../models/customPackageModels");
 
 // Create Student Controller
 exports.createStudent = async (req, res) => {
@@ -368,7 +369,6 @@ exports.getStudentsByClassId = async (req, res) => {
   }
 };
 
-
 // Controller to get students by subject
 exports.getStudentsforBatchBySubject = async (req, res) => {
   try {
@@ -388,45 +388,55 @@ exports.getStudentsforBatchBySubject = async (req, res) => {
     // Step 2: Find all packages that include the given subjectId
     const packagesWithSubject = await Package.find({
       subject_id: subjectId,
-      // is_active: true, // Optionally filter active packages
     }).select("_id");
 
-    if (!packagesWithSubject.length) {
-      return res.status(404).json({ message: "No packages found for this subject" });
-    }
+    // Step 3: Find all custom packages that include the subjectId
+    const customPackagesWithSubject = await CustomPackage.find({
+      subject_id: subjectId,
+      is_approved: true, // Only approved custom packages
+    }).select("student_id");
 
-    const packageIds = packagesWithSubject.map(pkg => pkg._id);
+    // Extract package IDs and student IDs from custom packages
+    const packageIds = packagesWithSubject.map((pkg) => pkg._id);
+    const customPackageStudentIds = customPackagesWithSubject.map(
+      (pkg) => pkg.student_id
+    );
 
-    // Step 3: Find all students who have subscribed to these packages,
-    // have paid, and either do not have the subject in batch_creation
-    // or have it with status: false
+    // Step 4: Find all students who:
+    // - Have subscribed to a package with the given subject ID and paid
+    // - Or have an approved custom package that includes the subject ID
+    // - And do not already have the subject in batch_creation with status: true
     const students = await Student.find({
-      subscribed_Package: { $in: packageIds },
-      is_paid: true,
+      $or: [
+        { subscribed_Package: { $in: packageIds }, is_paid: true },
+        { _id: { $in: customPackageStudentIds }, custom_package_status: "approved" },
+      ],
       $or: [
         { batch_creation: { $exists: false } }, // No batch_creation field
         { batch_creation: { $size: 0 } }, // Empty batch_creation array
         {
           batch_creation: {
             $not: {
-              $elemMatch: { subject_id: subjectId, status: true }
-            }
-          }
-        }
-      ]
+              $elemMatch: { subject_id: subjectId, status: true },
+            },
+          },
+        },
+      ],
     })
-    .populate("user_id", "name email phone_number") // Populate user details
-    .populate("subscribed_Package", "package_name"); // Populate package details
+      .populate("user_id", "name email phone_number") // Populate user details
+      .populate("subscribed_Package", "package_name") // Populate package details
+      .populate("custom_package_id", "subject_id slots package_price"); // Populate custom package details
 
     if (!students.length) {
-      return res.status(404).json({ message: "No eligible students found for this subject" });
+      return res
+        .status(404)
+        .json({ message: "No eligible students found for this subject" });
     }
 
     res.status(200).json({
       message: "Students retrieved successfully",
       data: students,
     });
-
   } catch (error) {
     console.error("Error fetching students by subject:", error);
     res.status(500).json({
