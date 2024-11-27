@@ -12,6 +12,14 @@ exports.submitResponse = async (req, res) => {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
+
+  // Check if a response already exists
+  const existingResponse = await Response.findOne({ student_id, quiz_id });
+  if (existingResponse) {
+    return res.status(400).json({ error: 'Response already submitted for this quiz.' });
+  }
+  
+
     const quiz = await Quiz.findById(quiz_id);
     if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
     const student = await Student.findById(student_id);
