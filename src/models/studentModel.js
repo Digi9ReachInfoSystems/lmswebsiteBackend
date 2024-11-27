@@ -56,10 +56,22 @@ const studentSchema = new mongoose.Schema({
   },
   custom_package_status: {
     type: String,
-    enum: ["pending", "approved", "rejected","no_package"],
+    enum: ["pending", "approved", "rejected", "no_package"],
     default: "no_package",
   },
+  batch_creation: [{
+    subject_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Subject",
+    },
+    status: {
+      type: Boolean,
 
+    }
+  }
+]
+
+  ,
   created_at: { type: Date, default: Date.now },
   last_online: { type: Date, default: Date.now },
 

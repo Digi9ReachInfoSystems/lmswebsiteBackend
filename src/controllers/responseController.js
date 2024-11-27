@@ -12,9 +12,17 @@ exports.submitResponse = async (req, res) => {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
+
+  // Check if a response already exists
+  const existingResponse = await Response.findOne({ student_id, quiz_id });
+  if (existingResponse) {
+    return res.status(400).json({ error: 'Response already submitted for this quiz.' });
+  }
+  
+
     const quiz = await Quiz.findById(quiz_id);
     if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
-    const student = await Student.findOne({student_id: new mongoose.Types.ObjectId(student_id)});
+    const student = await Student.findById(student_id);
     if (!student) return res.status(404).json({ error: 'Student not found' });
 
     let score = 0;
@@ -80,6 +88,17 @@ exports.getMonthlyReport = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching monthly report:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+exports.getscoreforstudent = async (req, res) => {
+  try {
+    const { student_id,quiz_id } = req.params;
+    const responses = await Response.find({ student_id:student_id ,quiz_id:quiz_id});
+    res.status(200).json({ message: 'Score fetched successfully', data:responses });
+  } catch (error) {
+    console.error('Error fetching score:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };

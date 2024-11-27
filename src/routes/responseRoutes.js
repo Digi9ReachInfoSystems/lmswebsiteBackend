@@ -6,12 +6,15 @@ const responseController = require('../controllers/responseController');
 const authMiddleware = require('../middlewares/authMiddleware');
 
 // Submit a quiz response (Accessible to any authenticated user)
-router.post('/response', authMiddleware, responseController.submitResponse);
+router.post('/response',responseController.submitResponse);
 
 // Get all responses for a quiz
 router.get('/quiz/:quiz_id', authMiddleware, responseController.getResponsesByQuiz);
 
 // Get monthly report for a student
 router.get('/:studentId/report/:month/:year', responseController.getMonthlyReport);
+
+// Get score for a student  
+router.get('/score/:student_id/:quiz_id', responseController.getscoreforstudent);
 
 module.exports = router;
