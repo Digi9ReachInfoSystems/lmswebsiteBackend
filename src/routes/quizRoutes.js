@@ -25,4 +25,6 @@ router.get('/:quiz_id', authMiddleware, quizController.getQuizById);
  */
 router.get("/Teacher/quizzes", quizController.getQuizzesByTeacher);
 
+router.get("/subject/:subject_id", quizController.getQuizBySubjectId);
+
 module.exports = router;
