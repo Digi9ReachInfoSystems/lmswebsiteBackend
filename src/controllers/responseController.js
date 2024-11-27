@@ -91,3 +91,14 @@ exports.getMonthlyReport = async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
+
+exports.getscoreforstudent = async (req, res) => {
+  try {
+    const { student_id,quiz_id } = req.params;
+    const responses = await Response.find({ student_id:student_id ,quiz_id:quiz_id});
+    res.status(200).json({ message: 'Score fetched successfully', data:responses });
+  } catch (error) {
+    console.error('Error fetching score:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
