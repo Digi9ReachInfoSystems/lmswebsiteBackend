@@ -5,16 +5,12 @@ const meetingSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Teacher",
   },
-  batch: {
+  batch_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Batch",
     required: true,
   },
-  subject: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Subject",
-    required: true,
-  },
+
   meeting_link: {
     type: String,
     required: true,

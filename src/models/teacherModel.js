@@ -11,17 +11,18 @@ const teacherSchema = new mongoose.Schema({
     unique: true,
   },
   role: { type: String, enum: ["teacher", "admin"], required: true },
-  board_id:{
+  board_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Board",
     required: true,
   },
-class_id: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Class",
-    required: true,
-  }],
-
+  class_id: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Class",
+      required: true,
+    },
+  ],
 
   qualifications: { type: String },
   dateOfBirth: { type: Date },
@@ -31,16 +32,33 @@ class_id: [{
     enum: ["pending", "approved", "rejected"],
     default: "pending",
   },
-
+  schedule: [
+    {
+      date: { type: Date }, 
+      meeting_url: { type: String }, 
+      meeting_title: { type: String }, 
+    },
+  ],
   resume_link: { type: String },
   profile_image: { type: String },
   payout_info: { type: String },
-  
-  subject:[ {
-  type: mongoose.Schema.Types.ObjectId, 
-  ref: "Subject" 
-  
-  }],
+
+  subject: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Subject",
+    },
+  ],
+  microsoft_id: {
+    type: String,
+  },
+  microsoft_password: {
+    type: String,
+  },
+  microsoft_principle_name: {
+    type: String,
+  },
+
   last_online: { type: Date, default: Date.now },
   experience: { type: String },
   no_of_classes: { type: Number },

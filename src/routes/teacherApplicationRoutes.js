@@ -21,7 +21,9 @@ router.post(
     body("city").notEmpty().withMessage("City is required"),
     body("pincode").isNumeric().withMessage("Pincode must be a number"),
     body("language").notEmpty().withMessage("Language is required"),
-    body("current_position").notEmpty().withMessage("Current position is required"),
+    body("current_position")
+      .notEmpty()
+      .withMessage("Current position is required"),
   ],
   teacherApplicationController.createTeacherApplication // Correct reference
 );
@@ -35,16 +37,21 @@ router.get(
 
 router.put(
   "/approve/:applicationId",
-  authMiddleware,
-  authorizeRole("admin"),
+  // authMiddleware,
+  // authorizeRole("admin"),
   teacherApplicationController.approveTeacherApplication // Correct reference
 );
 
 // Route to get a single teacher application by ID
-router.get("/application/single/:id", authMiddleware,
+router.get(
+  "/application/single/:id",
+  authMiddleware,
   authorizeRole("admin"),
-  teacherApplicationController.getTeacherApplicationById);
-  router.get("/application/single/teacher/:id",
-    teacherApplicationController.getTeacherApplicationByUserId);
+  teacherApplicationController.getTeacherApplicationById
+);
+router.get(
+  "/application/single/teacher/:id",
+  teacherApplicationController.getTeacherApplicationByUserId
+);
 
 module.exports = router;

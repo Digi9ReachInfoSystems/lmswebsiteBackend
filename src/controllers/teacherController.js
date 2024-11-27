@@ -84,6 +84,39 @@ exports.getTeachersBySubjectId = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+exports.getTeacherSchedule = async (req, res) => {
+  try {
+    const { id } = req.params; // Extract teacher ID from request parameters
+
+    // Find the teacher by their ID and select the 'schedule' field
+    const teacher = await Teacher.findById(id).select("schedule");
+
+    if (!teacher) {
+      return res.status(404).json({ error: "Teacher not found" });
+    }
+
+    // Check if the schedule array exists and has data
+    if (!teacher.schedule || teacher.schedule.length === 0) {
+      return res.status(200).json({
+        message: "No schedule found for the teacher",
+        schedule: [],
+      });
+    }
+
+    // Return the updated schedule with meeting details
+    res.status(200).json({
+      message: "Teacher schedule fetched successfully",
+      schedule: teacher.schedule.map((item) => ({
+        date: item.date,
+        meeting_url: item.meeting_url,
+        meeting_title: item.meeting_title,
+      })),
+    });
+  } catch (error) {
+    console.error("Error fetching teacher schedule:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
 
 // Update Teacher Details
 exports.updateTeacherDetails = async (req, res) => {
@@ -152,11 +185,11 @@ exports.getExperiencedTeachers = async (req, res) => {
     const teachers = await Teacher.find({
       experience: { $gt: "3" }, // Adjust based on the data type of experience
     })
-    .populate("user_id", "name email")
-    .populate("class_id") 
-    .populate("subject") 
-    .populate("board_id")
-    .exec(); // Populate user details if needed;
+      .populate("user_id", "name email")
+      .populate("class_id")
+      .populate("subject")
+      .populate("board_id")
+      .exec(); // Populate user details if needed;
 
     res.status(200).json(teachers);
   } catch (error) {
@@ -165,7 +198,6 @@ exports.getExperiencedTeachers = async (req, res) => {
   }
 };
 
-
 /**
  * Controller to get teacher details by auth_id from headers.
  * @param {Object} req - Express request object
@@ -173,28 +205,28 @@ exports.getExperiencedTeachers = async (req, res) => {
  */
 exports.getTeacherByAuthId = async (req, res) => {
   try {
-    const authId = req.headers['auth_id']; // Extract auth_id from headers
+    const authId = req.headers["auth_id"]; // Extract auth_id from headers
 
     if (!authId) {
-      return res.status(400).json({ message: 'auth_id header is required' });
+      return res.status(400).json({ message: "auth_id header is required" });
     }
 
     // Find teacher by auth_id and populate related fields if necessary
     const teacher = await Teacher.findOne({ auth_id: authId })
-      .populate('user_id', 'name email') // Populate user details excluding sensitive fields
-      .populate('class_id', 'class_name') // Example: populate class details
-      .populate('subject', 'subject_name'); // Example: populate subject details
+      .populate("user_id", "name email") // Populate user details excluding sensitive fields
+      .populate("class_id", "class_name") // Example: populate class details
+      .populate("subject", "subject_name"); // Example: populate subject details
 
     if (!teacher) {
-      return res.status(404).json({ message: 'Teacher not found' });
+      return res.status(404).json({ message: "Teacher not found" });
     }
 
     res.status(200).json({
-      message: 'Teacher retrieved successfully by auth_id',
+      message: "Teacher retrieved successfully by auth_id",
       teacher,
     });
   } catch (error) {
-    console.error('Error fetching teacher by auth_id:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Error fetching teacher by auth_id:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };

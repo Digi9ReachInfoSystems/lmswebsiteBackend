@@ -5,6 +5,7 @@ const Teacher = require("../models/teacherModel");
 const path = require("path");
 const { bucket } = require("../services/firebaseService"); // Firebase bucket reference
 const mongoose = require("mongoose");
+const axios = require("axios");
 
 exports.createTeacherApplication = async (req, res) => {
   try {
@@ -23,7 +24,7 @@ exports.createTeacherApplication = async (req, res) => {
       subject_id,
       profileImage,
       qualifications,
-      dateOfBirth
+      dateOfBirth,
     } = req.body;
 
     // Check for required fields and file links
@@ -36,14 +37,16 @@ exports.createTeacherApplication = async (req, res) => {
       !current_position ||
       !language ||
       !phone_number ||
-      !experience||
+      !experience ||
       !board_id ||
       !class_id ||
-      !subject_id||
+      !subject_id ||
       !qualifications ||
       !dateOfBirth
     ) {
-      return res.status(400).json({ error: "All fields and file links are required" });
+      return res
+        .status(400)
+        .json({ error: "All fields and file links are required" });
     }
 
     // Find the user in the User collection
@@ -76,7 +79,7 @@ exports.createTeacherApplication = async (req, res) => {
       subject_id,
       phoneNumber: phone_number,
       dateOfBirth,
-      qualifications
+      qualifications,
     });
 
     await teacherApplication.save(); // Save to MongoDB
@@ -91,7 +94,6 @@ exports.createTeacherApplication = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
-
 
 // Helper function to upload a file to Firebase Storage
 async function uploadFileToFirebase(file, destination) {
@@ -110,16 +112,15 @@ async function uploadFileToFirebase(file, destination) {
     });
 
     blobStream.on("finish", () => {
-      const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(
-        destination
-      )}?alt=media`;
+      const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${
+        bucket.name
+      }/o/${encodeURIComponent(destination)}?alt=media`;
       resolve(publicUrl);
     });
 
     blobStream.end(file.buffer); // Upload the file
   });
 }
-
 
 exports.getTeacherApplications = async (req, res) => {
   try {
@@ -148,6 +149,22 @@ exports.getTeacherApplications = async (req, res) => {
     console.error("Error fetching teacher applications:", error);
     res.status(500).json({ error: "Server error" });
   }
+};
+
+const getAccessToken = async () => {
+  const url = `https://login.microsoftonline.com/4a18f542-e76b-4e64-b11b-22cf887e4659/oauth2/v2.0/token`;
+  const params = new URLSearchParams({
+    grant_type: "client_credentials",
+    client_id: "4374176d-7f91-4d83-a5e7-c44d06d12726",
+    client_secret: "2rY8Q~~uzeAvhdFbCjfI5TLR3T~GLdJWEAQoTdi9",
+    scope: "https://graph.microsoft.com/.default",
+  });
+
+  const response = await axios.post(url, params);
+
+  // Clean the token
+  const token = response.data.access_token.trim().replace(/[\r\n]/g, "");
+  return token;
 };
 
 exports.approveTeacherApplication = async (req, res) => {
@@ -180,37 +197,76 @@ exports.approveTeacherApplication = async (req, res) => {
         .json({ error: "Teacher profile already exists for this user" });
     }
 
+    const token = await getAccessToken();
+
     // Create a new Teacher document
     const teacher = new Teacher({
       auth_id: user.auth_id,
-      teacher_id: application._id, // Assuming teacher_id is same as auth_id
+      teacher_id: application._id,
       user_id: user._id,
       role: "teacher",
       qualifications: application.qualifications,
-      dateOfBirth: application.dateOfBirth, // Populate as needed
-      bio: "", // Populate as needed
+      dateOfBirth: application.dateOfBirth,
+      bio: "",
       approval_status: "approved",
       resume_link: application.resume_link,
-      profile_image: application.profileImage, // Populate as needed
-      payout_info: "", // Populate as needed
-      subject: application.subject_id, // Populate as needed
-      class_id: application.class_id, // Populate as needed
-      board_id: application.board_id, // Populate as needed
+      profile_image: application.profileImage,
+      payout_info: "",
+      subject: application.subject_id,
+      class_id: application.class_id,
+      board_id: application.board_id,
       last_online: new Date(),
-      experience: application.experience, // Populate as needed
-      no_of_classes: 0, // Initialize to 0
-      available_time: "", // Populate as needed
-      language: application.language, // Populate as needed
-      phone_number: application.phoneNumber, // Populate as needed
-      is_grammar_teacher: false, // Default value
+      experience: application.experience,
+      no_of_classes: 0,
+      available_time: "",
+      language: application.language,
+      phone_number: application.phoneNumber,
+      is_grammar_teacher: false,
     });
 
     await teacher.save();
 
+    // Generate Microsoft user credentials
+
+    // Update teacher document with Microsoft Teams credentials
+
+    const password = "securePassword123#@!"; // Generate a secure password or use a custom logic
+    const userPrincipalName = `${user.name}` + `@roycareersolutions.com`; // Replace domain with your tenant domain
+
+    const teamsUserData = {
+      accountEnabled: true,
+      displayName: user.name, // Full name of the user
+      mailNickname: user.name, // Nickname without spaces or special characters
+      userPrincipalName: userPrincipalName, // Must be a valid email format
+      passwordProfile: {
+        forceChangePasswordNextSignIn: true,
+        password: password, // Ensure this meets password policy requirements
+      },
+    };
+
+    const teamsResponse = await axios.post(
+      "https://graph.microsoft.com/v1.0/users",
+      teamsUserData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    teacher.microsoft_id = teamsResponse.data.id;
+    teacher.microsoft_password = password; // Save the password used to create the user
+    teacher.microsoft_principle_name = userPrincipalName;
+
+    await teacher.save();
+
     res.status(200).json({
-      message: "Application approved and teacher profile created successfully",
+      message:
+        "Application approved, teacher profile created, and Teams user created successfully",
       application,
       teacher,
+      teamsUser: teamsResponse.data,
     });
   } catch (error) {
     console.error("Error approving teacher application:", error);
@@ -218,13 +274,14 @@ exports.approveTeacherApplication = async (req, res) => {
   }
 };
 
-
 // Get a single teacher application by ID
 exports.getTeacherApplicationById = async (req, res) => {
   try {
     const { id } = req.params; // Extract ID from the request parameters
     // Find the teacher application by ID and populate the teacher details
-    const application = await TeacherApplication.findById(id).populate('teacher_id');
+    const application = await TeacherApplication.findById(id).populate(
+      "teacher_id"
+    );
 
     if (!application) {
       return res.status(404).json({ message: "Application not found" });
@@ -244,7 +301,9 @@ exports.getTeacherApplicationByUserId = async (req, res) => {
   try {
     const { id } = req.params; // Extract ID from the request parameters
     // Find the teacher application by ID and populate the teacher details
-    const application = await TeacherApplication.findOne({teacher_id:id}).populate('teacher_id');
+    const application = await TeacherApplication.findOne({
+      teacher_id: id,
+    }).populate("teacher_id");
 
     if (!application) {
       return res.status(404).json({ message: "Application not found" });
