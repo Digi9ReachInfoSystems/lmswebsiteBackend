@@ -69,9 +69,15 @@ const studentSchema = new mongoose.Schema({
 
     }
   }
-]
+  ],
+  schedule: [
+    {
+      date: { type: Date },
+      meeting_url: { type: String },
+      meeting_title: { type: String },
+    },
+  ],
 
-  ,
   created_at: { type: Date, default: Date.now },
   last_online: { type: Date, default: Date.now },
 
