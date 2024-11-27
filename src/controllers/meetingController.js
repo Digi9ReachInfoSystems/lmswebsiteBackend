@@ -143,7 +143,7 @@ exports.createMeetingTeams = async (req, res) => {
       endDate: endDate,
       teacher_id: teacher_id,
       batch_id: batch_id,
-      students: students, // Assuming students is an array of student ObjectIds
+      students: students, 
       recurrencePattern: recurrencePattern,
       meeting_link: joinWebUrl, // Store the meeting link correctly
       meetingId: id, // Store meeting ID for future reference
@@ -206,3 +206,5 @@ exports.getJoinUrl = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch join URL" });
   }
 };
+
+
