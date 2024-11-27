@@ -77,6 +77,21 @@ const quizSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
+    answered_by:[
+        {
+            student_id: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Student', // Reference to the Student model
+            },
+            score: {
+                type: Number,
+            },
+            created_at: {
+                type: Date,
+                default: Date.now,
+            },
+        }
+    ]
 });
 
 module.exports = mongoose.model('Quiz', quizSchema);

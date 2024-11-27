@@ -4,6 +4,7 @@ const axios = require("axios"); // Corrected capitalization
 const batch = require("../models/batchModel");
 const Subject = require("../models/subjectModel");
 const Teacher = require("../models/teacherModel");
+const Student = require("../models/studentModel");
 exports.getMeetings = async (req, res) => {
   try {
     // Extract startDate and endDate from query parameters
@@ -143,7 +144,7 @@ exports.createMeetingTeams = async (req, res) => {
       endDate: endDate,
       teacher_id: teacher_id,
       batch_id: batch_id,
-      students: students, 
+      students: students,
       recurrencePattern: recurrencePattern,
       meeting_link: joinWebUrl, // Store the meeting link correctly
       meetingId: id, // Store meeting ID for future reference
@@ -171,6 +172,21 @@ exports.createMeetingTeams = async (req, res) => {
     );
 
     await meeting.save();
+
+   students.forEach(async (student) => {
+      await Student.findByIdAndUpdate(student,
+        {
+          $push: {
+            schedule: {
+              date: new Date(startDate),
+              meeting_url: joinWebUrl,
+              meeting_title: title,
+            },
+          },
+        },
+        { new: true }
+      );
+    })
 
     res.status(200).json({
       message: "Meeting created successfully",

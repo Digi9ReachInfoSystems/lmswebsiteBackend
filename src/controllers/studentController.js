@@ -556,3 +556,38 @@ exports.getStudentsforBatchBySubject = async (req, res) => {
     });
   }
 };
+
+
+exports.getStudentSchedule = async (req, res) => {
+  try {
+    const { id } = req.params; // Extract teacher ID from request parameters
+
+    // Find the teacher by their ID and select the 'schedule' field
+    const student = await Student.findById(id).select("schedule");
+
+    if (!student) {
+      return res.status(404).json({ error: "student not found" });
+    }
+
+    // Check if the schedule array exists and has data
+    if (!student.schedule || student.schedule.length === 0) {
+      return res.status(200).json({
+        message: "No schedule found for the student",
+        schedule: [],
+      });
+    }
+
+    // Return the updated schedule with meeting details
+    res.status(200).json({
+      message: "student schedule fetched successfully",
+      schedule: student.schedule.map((item) => ({
+        date: item.date,
+        meeting_url: item.meeting_url,
+        meeting_title: item.meeting_title,
+      })),
+    });
+  } catch (error) {
+    console.error("Error fetching student schedule:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
