@@ -111,6 +111,7 @@ exports.getTeacherSchedule = async (req, res) => {
         date: item.date,
         meeting_url: item.meeting_url,
         meeting_title: item.meeting_title,
+        meeting_id: item.meeting_id,
       })),
     });
   } catch (error) {
@@ -235,7 +236,6 @@ exports.clockIn = async (req, res) => {
   const { teacherId, meetingId } = req.body;
 
   try {
-    // Validate ObjectId format
     if (
       !mongoose.Types.ObjectId.isValid(teacherId) ||
       !mongoose.Types.ObjectId.isValid(meetingId)
