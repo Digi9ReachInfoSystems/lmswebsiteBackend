@@ -14,4 +14,7 @@ router.get('/quiz/:quiz_id', authMiddleware, responseController.getResponsesByQu
 // Get monthly report for a student
 router.get('/:studentId/report/:month/:year', responseController.getMonthlyReport);
 
+// Get score for a student  
+router.get('/score/:student_id/:quiz_id', responseController.getscoreforstudent);
+
 module.exports = router;
