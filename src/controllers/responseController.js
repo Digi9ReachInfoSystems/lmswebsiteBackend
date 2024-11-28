@@ -14,7 +14,7 @@ exports.submitResponse = async (req, res) => {
 
     const quiz = await Quiz.findById(quiz_id);
     if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
-    const student = await Student.findOne({student_id: new mongoose.Types.ObjectId(student_id)});
+    const student = await Student.findById(student_id);
     if (!student) return res.status(404).json({ error: 'Student not found' });
 
     let score = 0;

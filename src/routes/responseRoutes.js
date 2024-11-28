@@ -6,7 +6,7 @@ const responseController = require('../controllers/responseController');
 const authMiddleware = require('../middlewares/authMiddleware');
 
 // Submit a quiz response (Accessible to any authenticated user)
-router.post('/response', authMiddleware, responseController.submitResponse);
+router.post('/response',responseController.submitResponse);
 
 // Get all responses for a quiz
 router.get('/quiz/:quiz_id', authMiddleware, responseController.getResponsesByQuiz);
