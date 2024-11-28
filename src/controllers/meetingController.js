@@ -105,6 +105,19 @@ const getAccessToken = async () => {
   const response = await axios.post(url, params);
   return response.data.access_token;
 };
+/**
+ * Creates a recurring meeting on Microsoft Teams and stores the meeting details in MongoDB
+ * @param {Object} req.body - Body of the request
+ * @param {string} req.body.email - Email of the user creating the meeting
+ * @param {string} req.body.startDate - Start date of the meeting in ISO format
+ * @param {string} req.body.endDate - End date of the meeting in ISO format
+ * @param {string} req.body.recurrencePattern - Recurrence pattern for the meeting
+ * @param {string} req.body.teacher_id - Teacher ID of the teacher creating the meeting
+ * @param {string} req.body.batch_id - Batch ID of the batch for which the meeting is created
+ * @param {Array<string>} req.body.students - Array of student IDs for which the meeting is created
+ * @param {string} req.body.title - Title of the meeting
+ * @return {Promise<Object>} - Promise resolved with the meeting ID and join URL
+ */
 exports.createMeetingTeams = async (req, res) => {
   try {
     const {
@@ -115,7 +128,7 @@ exports.createMeetingTeams = async (req, res) => {
       teacher_id,
       batch_id,
       students,
-      title, // Include the title for the meeting
+      title, 
     } = req.body;
 
     const token = await getAccessToken();
@@ -123,7 +136,7 @@ exports.createMeetingTeams = async (req, res) => {
     const meetingDetails = {
       startDateTime: startDate,
       endDateTime: endDate,
-      subject: title, // Add the meeting title to the Microsoft Graph API request
+      subject: title, 
     };
 
     const graphResponse = await axios.post(
@@ -146,9 +159,21 @@ exports.createMeetingTeams = async (req, res) => {
       batch_id: batch_id,
       students: students,
       recurrencePattern: recurrencePattern,
-      meeting_link: joinWebUrl, // Store the meeting link correctly
-      meetingId: id, // Store meeting ID for future reference
+      meeting_link: joinWebUrl, 
+      meetingId: id, 
     };
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    // Calculate the duration in minutes
+    const meetingDurationMinutes = Math.floor((end - start) / 60000); // Duration in minutes
+
+    // Alternatively, calculate duration in hours
+    const meetingDurationHours = (end - start) / 3600000; // Duration in hours
+
+    // Use `meetingDurationMinutes` or `meetingDurationHours` as per your requirement
+    const meetingTime = meetingDurationMinutes; // or meetingDurationHours for hours
 
     // Save meeting details to MongoDB
     const meeting = new Meeting(meetingData);
@@ -156,6 +181,8 @@ exports.createMeetingTeams = async (req, res) => {
     await batch.findByIdAndUpdate(batch_id, {
       $set: { meeting_link: joinWebUrl },
     });
+
+    const duration = new Date(endDate) - new Date(startDate); // Duration in milliseconds
 
     await Teacher.findByIdAndUpdate(
       teacher_id,
@@ -165,6 +192,8 @@ exports.createMeetingTeams = async (req, res) => {
             date: new Date(startDate),
             meeting_url: joinWebUrl,
             meeting_title: title,
+            meeting_time: meetingTime,
+            meeting_id: meeting._id,
           },
         },
       },
@@ -223,4 +252,4 @@ exports.getJoinUrl = async (req, res) => {
   }
 };
 
-
+exports.getAttendance = async (req, res) => {};

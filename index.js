@@ -37,7 +37,7 @@ const paymentRoutes= require('./src/routes/paymentRoutes');
 const bodyParser = require('body-parser');
 const refreshTokenRoutes = require('./src/routes/refreshTokenRoutes');
 const adminDasboardRoutes = require('./src/routes/adminDashboardRoutes');
-
+const teacherDashboardRoutes = require('./src/routes/teacherDashboardRoutes');
 require("dotenv").config();
 
 const app = express();
@@ -97,7 +97,6 @@ app.use('/boards', boardRoutes);
 app.use('/api/payments/webhook', bodyParser.raw({ type: 'application/json' }));
 app.use('/api/payments', paymentRoutes);
 app.use("/refreshToken",refreshTokenRoutes);
-app.use('/adminDashboard', adminDasboardRoutes);
 
 // Start Server
 const PORT = process.env.PORT || 5000;

@@ -16,6 +16,17 @@ const teacherSchema = new mongoose.Schema({
     ref: "Board",
     required: true,
   },
+
+  attendance: [
+    {
+      clock_in_time: { type: Date },
+      clock_out_time: { type: Date },
+      Date: { type: Date },
+      Meeting_attended: { type: Boolean },
+      meeting_id: { type: mongoose.Schema.Types.ObjectId, ref: "Meeting" },
+      Meeting_completed: { type: Boolean },
+    },
+  ],
   class_id: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -34,9 +45,14 @@ const teacherSchema = new mongoose.Schema({
   },
   schedule: [
     {
-      date: { type: Date }, 
-      meeting_url: { type: String }, 
-      meeting_title: { type: String }, 
+      date: { type: Date },
+      meeting_url: { type: String },
+      meeting_title: { type: String },
+      clock_in_time: { type: Date },
+      clock_out_time: { type: Date },
+      meeting_completed: { type: Boolean },
+      meeting_time: { type: String },
+      meeting_id: { type: mongoose.Schema.Types.ObjectId, ref: "Meeting" },
     },
   ],
   resume_link: { type: String },
@@ -63,6 +79,9 @@ const teacherSchema = new mongoose.Schema({
   experience: { type: String },
   no_of_classes: { type: Number },
   phone_number: { type: String },
+  worked_hours: {
+    type: Number,
+  },
   available_time: { type: String },
   language: { type: String },
   is_grammar_teacher: { type: Boolean, default: false },
