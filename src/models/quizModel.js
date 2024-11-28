@@ -42,7 +42,7 @@ const quizSchema = new mongoose.Schema({
     },
     teacher_id: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User', // Reference to the Teacher model
+        ref: 'Teacher', // Reference to the Teacher model
         required: true,
     },
     batch_index: {
