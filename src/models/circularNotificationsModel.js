@@ -25,7 +25,11 @@ const circularNotificationsSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-
+  role: {
+    type: String,
+    enum: ["student", "teacher", "all"],
+    required: true
+  },
   user_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

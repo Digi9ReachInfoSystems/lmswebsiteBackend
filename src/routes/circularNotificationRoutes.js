@@ -17,7 +17,7 @@ router.post(
 
 // Get all circular notifications (Authenticated users)
 router.get(
-  "/",
+  "/all",
   authMiddleware,
   circularNotificationController.getAllCircularNotifications
 );
