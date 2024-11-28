@@ -157,7 +157,11 @@ exports.getQuizzesByTeacher = async (req, res) => {
       .populate("teacher_id", "name email") // Populate teacher's name and email
       .populate("batch_index", "batch_name") // Populate batch name
       .populate("class_level", "className classLevel") // Populate class details
-      .populate({path:"subject",select: "subject_name"}) // Populate subject name
+      .populate({ path: "subject", select: "subject_name" }) // Populate subject name
+      .populate({
+        path: 'answered_by.student_id',
+        populate: { path: 'user_id', select: 'name email' },
+      })
       .exec();
 
     // Check if any quizzes are found
