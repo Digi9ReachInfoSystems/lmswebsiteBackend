@@ -1,133 +1,15 @@
-// // src/controllers/paymentController.js
 
-// const mongoose = require("mongoose"); // Ensure mongoose is imported
-// const Payment = require("../models/paymentModel");
-// const { v4: uuidv4 } = require("uuid"); // Use destructuring for clarity
-
-// const Student = require("../models/studentModel");
-
-// // Create a new payment
-// exports.createPayment = async (req, res) => {
-//   const { amount, student_id, package_id, payment_method } = req.body;
-//   const payment_id = uuidv4(); // Use uuidv4 for generating unique payment IDs
-//   try {
-//     const newPayment = new Payment({
-//       amount,
-//       payment_id,
-//       student_id,
-//       package_id,
-//       payment_method,
-//       is_paid: false,
-//     });
-//     const savedPayment = await newPayment.save();
-//     res.status(201).json(savedPayment);
-//   } catch (error) {
-//     console.error("Error creating payment:", error);
-//     res.status(500).json({ error: "Server error" });
-//   }
-// };
-
-// // Delete a payment by ID
-// exports.deletePayment = async (req, res) => {
-//   try {
-//     const deletedPayment = await Payment.findByIdAndDelete(req.params.id);
-//     if (!deletedPayment)
-//       return res.status(404).json({ message: "Payment not found" });
-//     res.status(200).json({ message: "Payment deleted successfully" });
-//   } catch (error) {
-//     console.error("Error deleting payment:", error);
-//     res.status(500).json({ error: error.message });
-//   }
-// };
-
-// // Get all payments with optional filters
-// exports.getAllPayments = async (req, res) => {
-//   const { student_id, payment_id, page = 1, limit = 10 } = req.query;
-
-//   console.log("Received getAllPayments request with:", req.query); // Debug log
-
-//   // Build the filter object based on provided query parameters
-//   let filter = {};
-//   if (student_id) {
-//     if (!mongoose.Types.ObjectId.isValid(student_id)) {
-//       console.log("Invalid student_id format:", student_id); // Debug log
-//       return res.status(400).json({ error: "Invalid student ID format" });
-//     }
-//     filter.student_id = student_id;
-//   }
-//   if (payment_id) {
-//     filter.payment_id = payment_id;
-//   }
-
-//   console.log("Filter applied:", filter); // Debug log
-
-//   try {
-//     const payments = await Payment.find(filter)
-//       .populate({
-//         path: "student_id",
-//         populate: {
-//           path: "user_id",
-//           select: "name", // Only select the 'name' field from User
-//         },
-//       })
-//       .populate("package_id", "package_name") // Populate package details
-//       .skip((page - 1) * limit) // Pagination
-//       .limit(parseInt(limit))
-//       .exec();
-
-//     const total = await Payment.countDocuments(filter); // Total count for pagination
-
-//     console.log("Fetched payments:", payments); // Debug log
-
-//     res.status(200).json({
-//       total,
-//       page: parseInt(page),
-//       pageSize: payments.length,
-//       payments,
-//     });
-//   } catch (error) {
-//     console.error("Error fetching payments:", error);
-//     res.status(500).json({ error: "Server error" });
-//   }
-// };
-
-// // Get payment details by payment_id
-// exports.getPaymentDetails = async (req, res) => {
-//   const { payment_id } = req.params;
-//   try {
-//     const payment = await Payment.findOne({ payment_id })
-//       .populate({
-//         path: "student_id",
-//         populate: {
-//           path: "user_id",
-//           select: "name",
-//         },
-//       })
-//       .populate({
-//         path: "package_id",
-//         populate: {
-//           path: "package_name",
-//         },
-//       })
-//       .exec();
-//     if (!payment) {
-//       return res.status(404).json({ error: "Payment not found" });
-//     }
-//     res.status(200).json(payment);
-//   } catch (error) {
-//     console.error("Error fetching payment details:", error);
-//     res.status(500).json({ error: "Server error" });
-//   }
-// };
-
-
-// controllers/paymentController.js
 
 const razorpayInstance = require('../services/razorpayService');
 const crypto = require('crypto');
 const Payment = require('../models/paymentModel');
 const Student = require('../models/studentModel');
 const Package = require('../models/packagesModel');
+const CustomPackage = require('../models/customPackageModels');
+const nodemailer = require('nodemailer');
+const axios = require('axios');
+
+
 
 // Create Razorpay Order
 exports.createOrder = async (req, res) => {
@@ -175,7 +57,8 @@ exports.createOrder = async (req, res) => {
       student_id: studentId,
       package_id: packageId,
       description: description || 'Payment for course package',
-      receipt: order.receipt
+      receipt: order.receipt,
+      razorpay_signature: order.razorpay_signature
     });
 
     await payment.save();
@@ -187,117 +70,167 @@ exports.createOrder = async (req, res) => {
   }
 };
 
-// Verify Payment
 exports.verifyPayment = async (req, res) => {
-  const {
-    razorpay_order_id,
-    razorpay_payment_id,
-    razorpay_signature,
-  } = req.body;
+  const signature = req.headers['x-razorpay-signature']; // Signature sent by Razorpay
+  const secrete = 'FPs-kRnkuFXq8tG-course-Payment'
+  const generated_signature = crypto.createHmac('sha256', secrete);
+  generated_signature.update(JSON.stringify(req.body));
+  const digested_signature = generated_signature.digest('hex');
 
-  // Validate input
-  if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-    return res.status(400).json({ error: 'Missing required payment details' });
-  }
-
-  try {
-    const payment = await Payment.findOne({ order_id: razorpay_order_id });
-
-    if (!payment) {
-      return res.status(400).json({ error: 'Payment not found' });
-    }
-
-    // Generate signature to verify
-    const generated_signature = crypto
-      .createHmac('sha256', razorpayInstance.key_secret)
-      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-      .digest('hex');
-
-    if (generated_signature === razorpay_signature) {
+  if (digested_signature === signature) {
+    if (req.body.event == "payment.captured") {
+      console.log("Valid signature inside payment.captured",req.body);
+      // Payment is valid
+      const payment = await Payment.findOne({ order_id: req.body.payload.payment.entity.order_id });
+      if (!payment) {
+        return res.status(400).json({ error: 'Payment not found' });
+      }
       // Update payment details
-      payment.payment_id = razorpay_payment_id;
-      payment.razorpay_signature = razorpay_signature;
+      payment.payment_id = req.body.payload.payment.entity.id;
       payment.status = 'paid';
       await payment.save();
-
-      // Add package to student's purchased courses and payment reference
-      // await Student.findByIdAndUpdate(payment.student_id, {
-      //   $addToSet: { subscribed_Package: payment.package_id, payment_id: payment._id , is_paid: true },
-      // });
-       await Student.findByIdAndUpdate(payment.student_id, {
-         subscribed_Package: payment.package_id, payment_id: payment._id , is_paid: true ,
+      // Update student details
+      await Student.findByIdAndUpdate(payment.student_id, {
+        subscribed_Package: payment.package_id, payment_id: payment._id, is_paid: true,
       });
 
-      res.status(200).json({ message: 'Payment verified successfully' });
-    } else {
-      // Invalid signature
-      payment.status = 'failed';
-      await payment.save();
-      res.status(400).json({ error: 'Invalid signature' });
-    }
-  } catch (error) {
-    console.error('Error verifying payment:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-// Handle Webhook (Optional but Recommended)
-exports.handleWebhook = async (req, res) => {
-  const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
-  const receivedSignature = req.headers['x-razorpay-signature'];
-  const payload = req.body; // Already in raw format due to middleware
-
-  // Generate signature
-  const generatedSignature = crypto
-    .createHmac('sha256', webhookSecret)
-    .update(JSON.stringify(payload))
-    .digest('hex');
-
-  if (generatedSignature !== receivedSignature) {
-    return res.status(400).json({ error: 'Invalid signature' });
-  }
-
-  const event = payload.event;
-  const paymentEntity = payload.payload.payment.entity;
-
-  if (event === 'payment.captured') {
-    try {
-      const payment = await Payment.findOne({ order_id: paymentEntity.order_id });
-
-      if (payment && payment.status !== 'paid') {
-        payment.payment_id = paymentEntity.id;
-        payment.razorpay_signature = paymentEntity.signature || paymentEntity.id; // Adjust as per actual data
-        payment.status = 'paid';
-        await payment.save();
-
-        // Update student's purchased courses and add payment reference
-        await Student.findByIdAndUpdate(payment.student_id, {
-          $addToSet: { subscribed_Package: payment.package_id, payment_id: payment._id , is_paid: true},
-        });
+    }else if (req.body.event == "payment_link.paid") {
+      console.log("Valid signature inside payment.link.paid",req.body);
+      console.log("request",req.body.payload.order.entity);
+      // Payment is valid
+      const payment = await Payment.findOne({ receipt: req.body.payload.order.entity.receipt });
+      console.log("payment",payment);
+      if (!payment) {
+        return res.status(400).json({ error: 'Payment not found' });
       }
-
-      res.status(200).json({ status: 'ok' });
-    } catch (error) {
-      console.error('Webhook processing error:', error);
-      res.status(500).json({ error: 'Server error' });
+      // Update payment details
+      payment.payment_id = req.body.payload.payment.id;
+      payment.status = 'paid';
+      await payment.save();
+      // Update student details
+      await Student.findByIdAndUpdate(payment.student_id, {
+        custom_package_id: payment.custom_package_id, payment_id: payment._id, custom_package_status: "approved",
+      });
+      // update custom package details
+      await CustomPackage.findByIdAndUpdate(payment.custom_package_id, {
+        is_active: true, is_approved: true, is_price_finalized: true, admin_contacted: true, package_price: payment.amount,
+      });
     }
+
   } else {
-    // Handle other event types if necessary
-    res.status(200).json({ status: 'ok' });
+    console.log("Invalid signature");
+  }
+
+  res.json({ status: "ok" });
+}
+
+
+exports.createCustomPackageOrder = async (req, res) => {
+  const { amount, package_id, student_id } = req.body;
+  try {
+    // Create Razorpay order
+    // Validate input
+    if (!student_id || !package_id || !amount) {
+      return res.status(400).json({ error: 'Missing required fields: studentId, packageId, amount' });
+    }
+    // Check if student exists
+    const student = await Student.findById(student_id).populate("user_id");
+    if (!student) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+    // Check if package exists
+    const package = await CustomPackage.findById(package_id);
+    if (!package) {
+      return res.status(404).json({ error: 'Package not found' });
+      // Create Razorpay order
+
+    }
+    const orderOptions = {
+      amount: amount * 100, // Amount in paise
+      currency: 'INR',
+      receipt: `receipt_${Date.now()}`,
+      payment_capture: 1, // Auto-capture
+      notes: {
+        student_id: student_id,
+        package_id: package_id,
+        description: 'Payment for course package'
+      },
+    };
+    const order = await razorpayInstance.orders.create(orderOptions);
+
+
+    // Save order details in Payment model
+    const payment = new Payment({
+      amount: amount,
+      currency: order.currency,
+      status: 'created',
+      order_id: order.id,
+      student_id: student_id,
+      custom_package_id: order.notes.package_id,
+      description: 'Payment for course package',
+      receipt: order.receipt
+    });
+    // // callback_url: 'https://example-callback-url.com/',
+    await payment.save();
+    const paymentLinkResponse = await axios.post(
+      'https://api.razorpay.com/v1/payment_links',
+      {
+        amount: amount * 100, // Amount in paise (1 INR = 100 paise)
+        currency: 'INR',
+        accept_partial: true,
+        first_min_partial_amount: 100, // Optional, for partial payments
+        expire_by: Math.floor(Date.now() / 1000) + 3600, // Set expiry to 1 hour from now
+        reference_id: order.receipt, // Reference ID for tracking
+        description: `Payment for Custom Package - Package ID: ${package_id}`,
+        customer: {
+          name: student.user_id.name, // You can replace this with dynamic name if needed
+          contact: student.phone_number, // You can replace with dynamic contact if needed
+          email: student.user_id.email, // Student's email
+        },
+        notify: {
+          sms: true,
+          email: true,
+        },
+        reminder_enable: true,
+        notes: {
+          policy_name: "Topper Academy Payament", // Add your custom notes here
+        },
+        callback_url: 'http://localhost:5000/api/payments/customPackage/webhook', // Callback URL
+        callback_method: 'get', // HTTP method for the callback
+      },
+      {
+        auth: {
+          username: razorpayInstance.key_id, // Razorpay Key ID
+          password: razorpayInstance.key_secret, // Razorpay Key Secret
+        },
+      }
+    );
+    const paymentLink = paymentLinkResponse.data.short_url;
+    // Respond with success
+    res.json({
+      success: true,
+      message: 'Payment link sent to the student email.',
+      paymentLink: paymentLink
+    });
+  } catch (error) {
+    console.error('Error creating Razorpay payment link or sending email:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 exports.getAllPayments = async (req, res) => {
   try {
     const payments = await Payment.find()
-    .populate({
-      path: 'student_id',
-      populate: { path: "user_id", select: "name email" },
-    })
-    .populate("package_id");
+      .populate({
+        path: 'student_id',
+        populate: { path: "user_id", select: "name email" },
+      })
+      .populate("package_id");
     res.status(200).json(payments);
   } catch (error) {
     console.error('Error fetching payments:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };
+
