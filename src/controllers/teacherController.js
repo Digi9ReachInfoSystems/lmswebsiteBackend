@@ -231,45 +231,63 @@ exports.getTeacherByAuthId = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
 exports.clockIn = async (req, res) => {
-  const { teacherId, meetingId } = req.body; // Get teacherId and meetingId from request body
+  const { teacherId, meetingId } = req.body;
+
   try {
-    const teacher = await Teacher.findById(teacherId); // Find teacher by ID
+    // Validate ObjectId format
+    if (
+      !mongoose.Types.ObjectId.isValid(teacherId) ||
+      !mongoose.Types.ObjectId.isValid(meetingId)
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Invalid teacherId or meetingId format" });
+    }
+
+    const teacher = await Teacher.findById(teacherId);
 
     if (!teacher) {
       return res.status(404).json({ error: "Teacher not found" });
     }
 
-    // Add new attendance record with clock_in_time
-    const newAttendance = {
-      clock_in_time: moment().toDate(), // Set the current time as clock_in_time
-      Date: moment().toDate(), // Current date
-      meeting_id: meetingId,
-    };
+    const attendance = teacher.attendance.find(
+      (record) =>
+        record.meeting_id.toString() === meetingId.toString() &&
+        !record.clock_in_time
+    );
 
-    teacher.attendance.push(newAttendance); // Add the attendance record to the teacher's attendance array
-    await teacher.save(); // Save the updated teacher document
+    if (!attendance) {
+      return res
+        .status(404)
+        .json({ error: "Attendance record not found or already clocked in" });
+    }
+
+    attendance.clock_in_time = moment().toDate();
+
+    await teacher.save();
 
     res.status(200).json({
       message: "Clock-in successful",
-      attendance: newAttendance, // Return the new attendance record
+      attendance,
     });
   } catch (error) {
     console.error("Error during clock-in:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
 // Clock-Out Method
 exports.clockOut = async (req, res) => {
   const { teacherId, meetingId } = req.body; // Get teacherId and meetingId from request body
   try {
     // Check if the teacherId and meetingId are provided
-    if (!teacherId || !meetingId) {
+    if (
+      !mongoose.Types.ObjectId.isValid(teacherId) ||
+      !mongoose.Types.ObjectId.isValid(meetingId)
+    ) {
       return res
         .status(400)
-        .json({ error: "teacherId and meetingId are required" });
+        .json({ error: "Invalid teacherId or meetingId format" });
     }
 
     const teacher = await Teacher.findById(teacherId); // Find teacher by ID
