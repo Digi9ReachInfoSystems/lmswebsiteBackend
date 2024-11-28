@@ -37,6 +37,16 @@ exports.submitResponse = async (req, res) => {
     const newResponse = new Response({ student_id, quiz_id, responses: evaluatedResponses, score });
     const savedResponse = await newResponse.save();
 
+    // Update the quiz with the student's score
+    quiz.answered_by.push({
+      student_id: student._id,
+      score: score,
+      created_at: new Date(),
+    });
+
+    // Save the updated quiz
+    await quiz.save();
+
     res.status(201).json({ message: 'Response submitted successfully', response: savedResponse });
   } catch (error) {
     console.error('Error submitting response:', error);

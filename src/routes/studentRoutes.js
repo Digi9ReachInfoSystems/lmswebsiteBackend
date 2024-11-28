@@ -11,7 +11,8 @@ const {
   getStudentsBySubjectAndClassId,
   getStudentByAuthId,
   getStudentsByClassId,
-  getStudentsforBatchBySubject
+  getStudentsforBatchBySubject,
+  getStudentSchedule
 } = require("../controllers/studentController");
 const authMiddleware = require("../middlewares/authMiddleware");
 const authorizeRole = require("../middlewares/authorizeRole");
@@ -61,5 +62,8 @@ router.get("/class/:class_id",
   getStudentsByClassId);
 
 router.get("/batch/subject/:subjectId", getStudentsforBatchBySubject);
+
+
+router.get("/student/:id/schedule", getStudentSchedule);
 
 module.exports = router;

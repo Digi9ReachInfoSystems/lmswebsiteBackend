@@ -28,7 +28,21 @@ exports.getCircularNotificationById = async (req, res) => {
 // Get all circular notifications
 exports.getAllCircularNotifications = async (req, res) => {
   try {
-    const circularNotifications = await CircularNotifications.find()
+    const { role } = req.query; // Get the role from the query parameters (not route params)s
+    // Validate the role parameter
+    const validRoles = ["student", "teacher", "all"];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({ error: "Invalid role provided" });
+    }
+
+    // Prepare the query filter based on the role
+    let filter = {};
+    if (role !== "all") {
+      filter.role = role; // Filter by role if it's not 'all'
+    }
+
+    // Fetch circular notifications based on the filter
+    const circularNotifications = await CircularNotifications.find(filter)
       .populate("user_id", "name email") // Populates user details if necessary
       .exec();
 
@@ -76,7 +90,7 @@ exports.updateCircularNotification = async (req, res) => {
 
 exports.createCircularNotification = async (req, res) => {
   try {
-    const { circularName, validDate, content } = req.body;
+    const { circularName, validDate, content ,role} = req.body;
 
     if (!circularName || !validDate || !content||!req.file) {
       return res
@@ -107,6 +121,7 @@ exports.createCircularNotification = async (req, res) => {
         circularName,
         validDate,
         content,
+        role,
       });
 
       await newCircular.save();
