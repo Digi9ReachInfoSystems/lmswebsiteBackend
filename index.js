@@ -97,6 +97,8 @@ app.use('/boards', boardRoutes);
 app.use('/api/payments/webhook', bodyParser.raw({ type: 'application/json' }));
 app.use('/api/payments', paymentRoutes);
 app.use("/refreshToken",refreshTokenRoutes);
+app.use("/adminDashboard",adminDasboardRoutes);
+app.use("/teacherDashboard",teacherDashboardRoutes);
 
 // Start Server
 const PORT = process.env.PORT || 5000;
