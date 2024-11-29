@@ -12,6 +12,8 @@ const {
   getTeachersBySubjectId,
   getTeacherByAuthId,
   getTeacherSchedule,
+  clockIn,
+  clockOut,
 } = require("../controllers/teacherController");
 
 // Import authentication middleware
@@ -43,5 +45,10 @@ router.get("/experience/greater", getExperiencedTeachers);
 router.get("/teacher/AuthId", getTeacherByAuthId);
 
 router.get("/teacher/:id/schedule", getTeacherSchedule);
+
+router.post("/clock-in", clockIn);
+
+// Route for clocking out
+router.post("/clock-out", clockOut);
 
 module.exports = router;

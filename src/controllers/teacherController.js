@@ -1,6 +1,7 @@
 const mongoose = require("mongoose"); // Import mongoose
 const Teacher = require("../models/teacherModel");
-const Subject = require("../models/subjectModel"); // Import teacher model
+const Subject = require("../models/subjectModel");
+const moment = require("moment"); // Import teacher model
 
 // Get Teacher by ID
 exports.getTeacherById = async (req, res) => {
@@ -110,6 +111,7 @@ exports.getTeacherSchedule = async (req, res) => {
         date: item.date,
         meeting_url: item.meeting_url,
         meeting_title: item.meeting_title,
+        meeting_id: item.meeting_id,
       })),
     });
   } catch (error) {
@@ -227,6 +229,126 @@ exports.getTeacherByAuthId = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching teacher by auth_id:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+exports.clockIn = async (req, res) => {
+  const { teacherId, meetingId } = req.body;
+
+  try {
+    if (
+      !mongoose.Types.ObjectId.isValid(teacherId) ||
+      !mongoose.Types.ObjectId.isValid(meetingId)
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Invalid teacherId or meetingId format" });
+    }
+
+    const teacher = await Teacher.findById(teacherId);
+
+    if (!teacher) {
+      return res.status(404).json({ error: "Teacher not found" });
+    }
+
+    const attendance = teacher.attendance.find(
+      (record) =>
+        record.meeting_id.toString() === meetingId.toString() &&
+        !record.clock_in_time
+    );
+
+    if (!attendance) {
+      return res
+        .status(404)
+        .json({ error: "Attendance record not found or already clocked in" });
+    }
+
+    attendance.clock_in_time = moment().toDate();
+
+    await teacher.save();
+
+    res.status(200).json({
+      message: "Clock-in successful",
+      attendance,
+    });
+  } catch (error) {
+    console.error("Error during clock-in:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+// Clock-Out Method
+exports.clockOut = async (req, res) => {
+  const { teacherId, meetingId } = req.body; // Get teacherId and meetingId from request body
+  try {
+    // Check if the teacherId and meetingId are provided
+    if (
+      !mongoose.Types.ObjectId.isValid(teacherId) ||
+      !mongoose.Types.ObjectId.isValid(meetingId)
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Invalid teacherId or meetingId format" });
+    }
+
+    const teacher = await Teacher.findById(teacherId); // Find teacher by ID
+
+    if (!teacher) {
+      return res.status(404).json({ error: "Teacher not found" });
+    }
+
+    // Log the attendance array and meetingId to debug
+    console.log("Teacher Attendance:", teacher.attendance);
+    console.log("Meeting ID:", meetingId);
+
+    // Find the attendance record for the teacher and meeting
+    const attendance = teacher.attendance.find((record) => {
+      console.log("Checking record:", record); // Log each record
+      return (
+        record.meeting_id &&
+        record.meeting_id.toString() === meetingId.toString() &&
+        !record.clock_out_time
+      );
+    });
+
+    if (!attendance) {
+      return res
+        .status(404)
+        .json({ error: "Attendance record not found or already clocked out" });
+    }
+
+    // Update the attendance record with clock_out_time
+    attendance.clock_out_time = moment().toDate(); // Set the current time as clock_out_time
+
+    // Calculate the working hours (difference between clock_in_time and clock_out_time)
+    const clockInTime = moment(attendance.clock_in_time);
+    const clockOutTime = moment(attendance.clock_out_time);
+    const workingHours = clockOutTime.diff(clockInTime, "hours", true); // Returns hours as a decimal value
+
+    // Update the teacher's total working hours
+    let totalWorkingHours = 0;
+
+    // Calculate total working hours from all attendance records
+    teacher.attendance.forEach((record) => {
+      if (record.clock_in_time && record.clock_out_time) {
+        const inTime = moment(record.clock_in_time);
+        const outTime = moment(record.clock_out_time);
+        totalWorkingHours += outTime.diff(inTime, "hours", true); // Accumulate total working hours
+      }
+    });
+
+    // Update the teacher's working_hours field
+    teacher.worked_hours = totalWorkingHours;
+
+    // Save the updated teacher attendance
+    await teacher.save();
+
+    res.status(200).json({
+      message: "Clock-out successful",
+      attendance: attendance,
+      working_hours: totalWorkingHours,
+    });
+  } catch (error) {
+    console.error("Error during clock-out:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
