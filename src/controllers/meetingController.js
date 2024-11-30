@@ -210,6 +210,8 @@ exports.createMeetingTeams = async (req, res) => {
               date: new Date(startDate),
               meeting_url: joinWebUrl,
               meeting_title: title,
+              meeting_time: meetingTime,
+              meeting_id: meeting._id,
             },
           },
         },

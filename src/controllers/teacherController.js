@@ -234,7 +234,6 @@ exports.getTeacherByAuthId = async (req, res) => {
 };
 exports.clockIn = async (req, res) => {
   const { teacherId, meetingId } = req.body;
-
   try {
     // Validate teacherId and meetingId
     if (
@@ -252,6 +251,10 @@ exports.clockIn = async (req, res) => {
     if (!teacher) {
       return res.status(404).json({ error: "Teacher not found" });
     }
+    const meeting = teacher.schedule.find(scheduleItem =>
+      scheduleItem?.meeting_id?.toString() === meetingId.toString()
+    );
+
 
     // Find attendance record based on meetingId
     let attendance = teacher.attendance.find(
@@ -271,6 +274,7 @@ exports.clockIn = async (req, res) => {
         meeting_id: meetingId,
         clock_in_time: moment().toDate(), // Set current time as clock-in time
         clock_out_time: null, // Initialize clock_out_time as null
+        meeting_title: meeting.meeting_title,
       };
 
       // Push the new attendance record to the teacher's attendance array
@@ -370,3 +374,74 @@ exports.clockOut = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+
+exports.getTeacherAttendance = async (req, res) => {
+  try {
+    const { teacherId } = req.query; // Extract student ID from request parameters
+
+    if (teacherId) {
+      // If teacherId is provided, fetch attendance for the specific teacher
+      const teacher = await Teacher.findById(teacherId).select("attendance");
+
+      if (!teacher) {
+        return res.status(404).json({ error: "Teacher not found" });
+      }
+
+      // Check if the attendance array exists and has data
+      if (!teacher.attendance || teacher.attendance.length === 0) {
+        return res.status(200).json({
+          message: "No attendance found for the teacher",
+          attendance: [],
+        });
+      }
+
+      // Return the student's attendance
+      return res.status(200).json({
+        message: "Teacher attendance fetched successfully",
+        attendance: teacher.attendance.map((item) => ({
+          date: item.Date,
+          clock_in_time: item.clock_in_time,
+          clock_out_time: item.clock_out_time,
+          meeting_attended: item.Meeting_attended,
+          meeting_id: item.meeting_id,
+          meeting_title: item?.meeting_title,
+        })),
+      });
+    } else {
+      // If teacherId is not provided, fetch attendance for all teacehers
+      const teacher = await Teacher.find().select("attendance schedule").populate({ path: "user_id", select: "name email" }).populate({ path: "attendance" });
+
+      if (!teacher || teacher.length === 0) {
+        return res.status(200).json({
+          message: "No teacher found",
+          attendance: [],
+        });
+      }
+
+      // Map through each student and their attendance
+      const allAttendances = teacher?.map((teacher) => ({
+        teacherId: teacher._id,
+        name: teacher.user_id?.name,
+        email: teacher.user_id?.email,
+        attendance: teacher?.attendance?.map((item) => ({
+          date: item.Date,
+          clock_in_time: item.clock_in_time,
+          clock_out_time: item.clock_out_time,
+          meeting_attended: item.Meeting_attended,
+          meeting_id: item.meeting_id,
+          meeting_title: item?.meeting_title,
+        })),
+      }));
+
+      return res.status(200).json({
+        message: "All teacher' attendance fetched successfully",
+        attendance: allAttendances,
+      });
+    }
+  } catch (error) {
+    console.error("Error fetching student attendance:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+

@@ -25,6 +25,7 @@ const teacherSchema = new mongoose.Schema({
       Meeting_attended: { type: Boolean },
       meeting_id: { type: mongoose.Schema.Types.ObjectId, ref: "Meeting" },
       Meeting_completed: { type: Boolean },
+      meeting_title: { type: String },
     },
   ],
   class_id: [

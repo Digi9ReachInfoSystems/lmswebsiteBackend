@@ -75,9 +75,27 @@ const studentSchema = new mongoose.Schema({
       date: { type: Date },
       meeting_url: { type: String },
       meeting_title: { type: String },
+      clock_in_time: { type: Date },
+      clock_out_time: { type: Date },
+      meeting_completed: { type: Boolean },
+      meeting_time: { type: String },
+      meeting_id: { type: mongoose.Schema.Types.ObjectId, ref: "Meeting" },
     },
   ],
-
+  attendance: [
+    {
+      clock_in_time: { type: Date },
+      clock_out_time: { type: Date },
+      Date: { type: Date },
+      Meeting_attended: { type: Boolean },
+      meeting_id: { type: mongoose.Schema.Types.ObjectId, ref: "Meeting" },
+      Meeting_completed: { type: Boolean },
+      meeting_title: { type: String },
+    },
+  ],
+  worked_hours: {
+    type: Number,
+  },
   created_at: { type: Date, default: Date.now },
   last_online: { type: Date, default: Date.now },
 
