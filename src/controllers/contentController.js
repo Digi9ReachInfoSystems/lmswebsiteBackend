@@ -9,9 +9,10 @@ const path = require('path');
  * Upload content with batch, teacher info, and material link.
  */
 const uploadContent = async (req, res) => {
+    
     try {
         const { batchId, teacherId, materialLink } = req.body;
-
+         
         // Validate required fields
         if (!materialLink || !batchId || !teacherId) {
             return res.status(400).json({ error: 'All fields are required' });
