@@ -12,7 +12,11 @@ const {
   getStudentByAuthId,
   getStudentsByClassId,
   getStudentsforBatchBySubject,
-  getStudentSchedule
+  getStudentSchedule,
+  clockIn,
+  clockOut,
+  getStudentAttendance,
+  getStudentsWithAttendance
 } = require("../controllers/studentController");
 const authMiddleware = require("../middlewares/authMiddleware");
 const authorizeRole = require("../middlewares/authorizeRole");
@@ -65,5 +69,13 @@ router.get("/batch/subject/:subjectId", getStudentsforBatchBySubject);
 
 
 router.get("/student/:id/schedule", getStudentSchedule);
+
+router.post("/clock-in",clockIn);
+
+router.post("/clock-out",clockOut);
+
+router.get("/student/attendance", getStudentAttendance );
+
+router.get("/student/forattendance",getStudentsWithAttendance)
 
 module.exports = router;

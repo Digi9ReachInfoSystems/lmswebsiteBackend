@@ -171,7 +171,7 @@ exports.getDailyRevenueForMonth = async (req, res) => {
     try {
       const { year, month } = req.query; // Get year and month from params
   
-      // Validate input
+      // Validate input````````````````````````````````
       if (!year || !month) {
         return res.status(400).json({ success: false, message: "Year and month are required." });
       }
