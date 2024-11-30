@@ -236,6 +236,7 @@ exports.clockIn = async (req, res) => {
   const { teacherId, meetingId } = req.body;
 
   try {
+    // Validate teacherId and meetingId
     if (
       !mongoose.Types.ObjectId.isValid(teacherId) ||
       !mongoose.Types.ObjectId.isValid(meetingId)
@@ -245,26 +246,41 @@ exports.clockIn = async (req, res) => {
         .json({ error: "Invalid teacherId or meetingId format" });
     }
 
+    // Find teacher by ID
     const teacher = await Teacher.findById(teacherId);
 
     if (!teacher) {
       return res.status(404).json({ error: "Teacher not found" });
     }
 
-    const attendance = teacher.attendance.find(
-      (record) =>
-        record.meeting_id.toString() === meetingId.toString() &&
-        !record.clock_in_time
+    // Find attendance record based on meetingId
+    let attendance = teacher.attendance.find(
+      (record) => record.meeting_id.toString() === meetingId.toString()
     );
 
-    if (!attendance) {
-      return res
-        .status(404)
-        .json({ error: "Attendance record not found or already clocked in" });
+    // If attendance record exists but already clocked in
+    if (attendance && attendance.clock_in_time) {
+      return res.status(400).json({
+        error: "Attendance for this meeting has already been clocked in",
+      });
     }
 
-    attendance.clock_in_time = moment().toDate();
+    // If attendance record does not exist, create one
+    if (!attendance) {
+      attendance = {
+        meeting_id: meetingId,
+        clock_in_time: moment().toDate(), // Set current time as clock-in time
+        clock_out_time: null, // Initialize clock_out_time as null
+      };
 
+      // Push the new attendance record to the teacher's attendance array
+      teacher.attendance.push(attendance);
+    } else {
+      // If attendance exists but hasn't been clocked in, update the clock_in_time
+      attendance.clock_in_time = moment().toDate();
+    }
+
+    // Save the updated teacher document
     await teacher.save();
 
     res.status(200).json({
@@ -276,6 +292,8 @@ exports.clockIn = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+
 // Clock-Out Method
 exports.clockOut = async (req, res) => {
   const { teacherId, meetingId } = req.body; // Get teacherId and meetingId from request body
