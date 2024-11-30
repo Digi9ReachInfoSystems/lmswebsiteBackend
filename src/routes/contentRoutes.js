@@ -18,8 +18,6 @@ const upload = multer({ storage: storage });
 // Route to upload content
 router.post(
   "/upload",
-  authMiddleware,
-  authorizeRole("teacher"),
   upload.single("file"),
   uploadContent
 );
