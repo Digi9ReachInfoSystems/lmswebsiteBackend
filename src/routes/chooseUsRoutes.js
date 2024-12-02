@@ -9,7 +9,7 @@ const authorizeRole = require("../middlewares/authorizeRole");
 // GET route to fetch all features
 router.get('/getData', chooseUsController.getChooseUsData);
 
-router.post("/create", authMiddleware, authorizeRole("admin"),chooseUsController.createChooseUsFeature);
+router.post("/create", chooseUsController.createChooseUsFeature);
 
 router.put("/update/:id", authMiddleware, authorizeRole("admin"), chooseUsController.updateChooseUsFeature);
 
