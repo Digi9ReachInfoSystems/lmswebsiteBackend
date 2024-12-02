@@ -11,7 +11,7 @@ const path = require('path');
 const uploadContent = async (req, res) => {
     
     try {
-        const { batchId, teacherId, materialLink } = req.body;
+        const { batchId, teacherId, materialLink,description } = req.body;
          
         // Validate required fields
         if (!materialLink || !batchId || !teacherId) {
@@ -39,6 +39,7 @@ const uploadContent = async (req, res) => {
             teacher_id: teacher._id,
 
             material_link: materialLink,
+            description: description
         });
 
         await content.save(); // Save the content document

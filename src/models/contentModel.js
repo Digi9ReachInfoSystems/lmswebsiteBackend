@@ -8,6 +8,7 @@ const contentSchema = new Schema(
       batch_name: { type: String, required: true },
     },
     teacher_id: {type: Schema.Types.ObjectId, ref: 'Teacher', required: true },
+    description: { type: String, required: true },
     
     material_link: {
       type: String,
