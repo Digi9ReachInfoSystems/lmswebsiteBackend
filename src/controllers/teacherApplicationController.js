@@ -6,6 +6,17 @@ const path = require("path");
 const { bucket } = require("../services/firebaseService"); // Firebase bucket reference
 const mongoose = require("mongoose");
 const axios = require("axios");
+const nodemailer = require("nodemailer");
+
+const transporter = nodemailer.createTransport({
+  host: "smtp.hostinger.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: "Info@gully2global.com",
+    pass: "Shasudigi@217",
+  },
+});
 
 exports.createTeacherApplication = async (req, res) => {
   try {
@@ -112,9 +123,8 @@ async function uploadFileToFirebase(file, destination) {
     });
 
     blobStream.on("finish", () => {
-      const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${
-        bucket.name
-      }/o/${encodeURIComponent(destination)}?alt=media`;
+      const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name
+        }/o/${encodeURIComponent(destination)}?alt=media`;
       resolve(publicUrl);
     });
 
@@ -259,6 +269,24 @@ exports.approveTeacherApplication = async (req, res) => {
     teacher.microsoft_password = password; // Save the password used to create the user
     teacher.microsoft_principle_name = userPrincipalName;
 
+    if (teamsResponse.data) {
+      const mailOptions = {
+        from: 'Info@gully2global.com',
+        to: user.email, // Send email to the teacher's email address
+        subject: 'Teacher Application Approved',
+        text: `Dear ${user.name},\n\nYour teacher application has been approved. You are now a registered teacher in our LMS.\n\n your Microsoft Id is : ${teamsResponse.data.id}\nyour password is : ${password}\n your Microsoft Principal Name is : ${userPrincipalName}\n\nRegards,\nLMS`,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+          console.log("Error sending email: ", error);
+      } else {
+          console.log("Email sent: " + info.response);
+      }
+  });
+    }
+
+    
     await teacher.save();
 
     res.status(200).json({
