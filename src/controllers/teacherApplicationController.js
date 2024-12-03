@@ -177,14 +177,50 @@ const getAccessToken = async () => {
   return token;
 };
 
+
+// Helper functions
+const sanitizeUserName = (name) => {
+  return name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+};
+
+const generateUniqueUserPrincipalName = async (sanitizedUserName, domain, token) => {
+  const maxAttempts = 10; // Limit the number of attempts to prevent infinite loops
+
+  for (let i = 0; i < maxAttempts; i++) {
+    const randomNumber = Math.floor(100 + Math.random() * 900); // Generate a random 3-digit number
+    const userPrincipalName = `${sanitizedUserName}${randomNumber}@${domain}`.toLowerCase();
+
+    try {
+      // Attempt to fetch the user from Microsoft Graph API
+      await axios.get(`https://graph.microsoft.com/v1.0/users/${encodeURIComponent(userPrincipalName)}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      // If the request succeeds, the UPN exists. Log and try again.
+      console.log(`userPrincipalName ${userPrincipalName} already exists. Trying another.`);
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        // UPN does not exist, it's unique
+        return userPrincipalName;
+      } else {
+        // Some other error occurred
+        console.error(`Error checking userPrincipalName: ${error.message}`);
+        throw new Error(`Error checking userPrincipalName: ${error.message}`);
+      }
+    }
+  }
+
+  throw new Error("Unable to generate a unique userPrincipalName after multiple attempts.");
+};
+
 exports.approveTeacherApplication = async (req, res) => {
   try {
     const { applicationId } = req.params;
 
     // Find the application
-    const application = await TeacherApplication.findById(
-      applicationId
-    ).populate("teacher_id");
+    const application = await TeacherApplication.findById(applicationId).populate("teacher_id");
     if (!application) {
       return res.status(404).json({ error: "Application not found" });
     }
@@ -196,20 +232,57 @@ exports.approveTeacherApplication = async (req, res) => {
 
     // Update user role to 'teacher'
     const user = await User.findById(application.teacher_id._id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
     user.role = "teacher";
     await user.save();
 
     // Check if a Teacher document already exists for this user
     const existingTeacher = await Teacher.findOne({ user_id: user._id });
     if (existingTeacher) {
-      return res
-        .status(400)
-        .json({ error: "Teacher profile already exists for this user" });
+      return res.status(400).json({ error: "Teacher profile already exists for this user" });
     }
 
     const token = await getAccessToken();
 
-    // Create a new Teacher document
+    // Sanitize the user's name
+    const sanitizedUserName = sanitizeUserName(user.name);
+
+    if (!sanitizedUserName) {
+      return res.status(400).json({ error: "Invalid user name for creating Microsoft account" });
+    }
+
+    const domain = "roycareersolutions.com";
+    const userPrincipalName = await generateUniqueUserPrincipalName(sanitizedUserName, domain, token);
+
+    const mailNickname = sanitizedUserName; // Use the sanitized name as mailNickname
+
+    const password = "securePassword123#@!"; // Ensure this meets password policy requirements
+
+    const teamsUserData = {
+      accountEnabled: true,
+      displayName: user.name, // Full name of the user
+      mailNickname: mailNickname, // Sanitized nickname without spaces or special characters
+      userPrincipalName: userPrincipalName, // Unique UPN
+      passwordProfile: {
+        forceChangePasswordNextSignIn: true,
+        password: password, // Ensure this meets password policy requirements
+      },
+    };
+
+    const teamsResponse = await axios.post(
+      "https://graph.microsoft.com/v1.0/users",
+      teamsUserData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    // Create a new Teacher document with Microsoft credentials
     const teacher = new Teacher({
       auth_id: user.auth_id,
       teacher_id: application._id,
@@ -232,77 +305,39 @@ exports.approveTeacherApplication = async (req, res) => {
       language: application.language,
       phone_number: application.phoneNumber,
       is_grammar_teacher: false,
+      microsoft_id: teamsResponse.data.id,
+      microsoft_password: password,
+      microsoft_principle_name: userPrincipalName,
     });
 
     await teacher.save();
 
-    // Sanitize the user's name to create a valid mailNickname and userPrincipalName
-const sanitizedUserName = user.name.replace(/[^a-zA-Z0-9]/g, ''); // Remove all non-alphanumeric characters
-
-const userPrincipalName = `${sanitizedUserName}@roycareersolutions.com`.toLowerCase();
-
-    // Generate Microsoft user credentials
-
-    // Update teacher document with Microsoft Teams credentials
-
-    const password = "securePassword123#@!"; // Generate a secure password or use a custom logic
-    // const userPrincipalName = `${user.name}` + `@roycareersolutions.com`; // Replace domain with your tenant domain
-
-    // const teamsUserData = {
-    //   accountEnabled: true,
-    //   displayName: user.name, // Full name of the user
-    //   mailNickname: user.name, // Nickname without spaces or special characters
-    //   userPrincipalName: userPrincipalName, // Must be a valid email format
-    //   passwordProfile: {
-    //     forceChangePasswordNextSignIn: true,
-    //     password: password, // Ensure this meets password policy requirements
-    //   },
-    // };
-    const teamsUserData = {
-      accountEnabled: true,
-      displayName: user.name, // Full name of the user (can include spaces)
-      mailNickname: sanitizedUserName, // Sanitized nickname without spaces or special characters
-      userPrincipalName: userPrincipalName, // Valid email format without spaces
-      passwordProfile: {
-        forceChangePasswordNextSignIn: true,
-        password: password, // Ensure this meets password policy requirements
-      },
-    };
-
-    const teamsResponse = await axios.post(
-      "https://graph.microsoft.com/v1.0/users",
-      teamsUserData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    teacher.microsoft_id = teamsResponse.data.id;
-    teacher.microsoft_password = password; // Save the password used to create the user
-    teacher.microsoft_principle_name = userPrincipalName;
-
+    // Send email to the teacher
     if (teamsResponse.data) {
       const mailOptions = {
         from: 'Info@gully2global.com',
         to: user.email, // Send email to the teacher's email address
         subject: 'Teacher Application Approved',
-        text: `Dear ${user.name},\n\nYour teacher application has been approved. You are now a registered teacher in our LMS.\n\n your Microsoft Id is : ${teamsResponse.data.id}\nyour password is : ${password}\n your Microsoft Principal Name is : ${userPrincipalName}\n\nRegards,\nLMS`,
-    };
+        text: `Dear ${user.name},
 
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
+Your teacher application has been approved. You are now a registered teacher in our LMS.
+
+Your Microsoft ID: ${teamsResponse.data.id}
+Your password: ${password}
+Your Microsoft Principal Name: ${userPrincipalName}
+
+Regards,
+LMS`,
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
           console.log("Error sending email: ", error);
-      } else {
+        } else {
           console.log("Email sent: " + info.response);
-      }
-  });
+        }
+      });
     }
-
-    
-    await teacher.save();
 
     res.status(200).json({
       message:
@@ -312,10 +347,150 @@ const userPrincipalName = `${sanitizedUserName}@roycareersolutions.com`.toLowerC
       teamsUser: teamsResponse.data,
     });
   } catch (error) {
-    console.error("Error approving teacher application:", error);
+    console.error("Error approving teacher application:", error.response ? error.response.data : error.message);
     res.status(500).json({ error: "Server error" });
   }
 };
+
+// exports.approveTeacherApplication = async (req, res) => {
+//   try {
+//     const { applicationId } = req.params;
+
+//     // Find the application
+//     const application = await TeacherApplication.findById(
+//       applicationId
+//     ).populate("teacher_id");
+//     if (!application) {
+//       return res.status(404).json({ error: "Application not found" });
+//     }
+
+//     // Update application status
+//     application.approval_status = "approved";
+//     application.date_approved = new Date();
+//     await application.save();
+
+//     // Update user role to 'teacher'
+//     const user = await User.findById(application.teacher_id._id);
+//     user.role = "teacher";
+//     await user.save();
+
+//     // Check if a Teacher document already exists for this user
+//     const existingTeacher = await Teacher.findOne({ user_id: user._id });
+//     if (existingTeacher) {
+//       return res
+//         .status(400)
+//         .json({ error: "Teacher profile already exists for this user" });
+//     }
+
+//     const token = await getAccessToken();
+
+//     // Create a new Teacher document
+//     const teacher = new Teacher({
+//       auth_id: user.auth_id,
+//       teacher_id: application._id,
+//       user_id: user._id,
+//       role: "teacher",
+//       qualifications: application.qualifications,
+//       dateOfBirth: application.dateOfBirth,
+//       bio: "",
+//       approval_status: "approved",
+//       resume_link: application.resume_link,
+//       profile_image: application.profileImage,
+//       payout_info: "",
+//       subject: application.subject_id,
+//       class_id: application.class_id,
+//       board_id: application.board_id,
+//       last_online: new Date(),
+//       experience: application.experience,
+//       no_of_classes: 0,
+//       available_time: "",
+//       language: application.language,
+//       phone_number: application.phoneNumber,
+//       is_grammar_teacher: false,
+//     });
+
+//     await teacher.save();
+
+//     // Sanitize the user's name to create a valid mailNickname and userPrincipalName
+// const sanitizedUserName = user.name.replace(/[^a-zA-Z0-9]/g, ''); // Remove all non-alphanumeric characters
+
+// const userPrincipalName = `${sanitizedUserName}@roycareersolutions.com`.toLowerCase();
+
+//     // Generate Microsoft user credentials
+
+//     // Update teacher document with Microsoft Teams credentials
+
+//     const password = "securePassword123#@!"; // Generate a secure password or use a custom logic
+//     // const userPrincipalName = `${user.name}` + `@roycareersolutions.com`; // Replace domain with your tenant domain
+
+//     // const teamsUserData = {
+//     //   accountEnabled: true,
+//     //   displayName: user.name, // Full name of the user
+//     //   mailNickname: user.name, // Nickname without spaces or special characters
+//     //   userPrincipalName: userPrincipalName, // Must be a valid email format
+//     //   passwordProfile: {
+//     //     forceChangePasswordNextSignIn: true,
+//     //     password: password, // Ensure this meets password policy requirements
+//     //   },
+//     // };
+//     const teamsUserData = {
+//       accountEnabled: true,
+//       displayName: user.name, // Full name of the user (can include spaces)
+//       mailNickname: sanitizedUserName, // Sanitized nickname without spaces or special characters
+//       userPrincipalName: userPrincipalName, // Valid email format without spaces
+//       passwordProfile: {
+//         forceChangePasswordNextSignIn: true,
+//         password: password, // Ensure this meets password policy requirements
+//       },
+//     };
+
+//     const teamsResponse = await axios.post(
+//       "https://graph.microsoft.com/v1.0/users",
+//       teamsUserData,
+//       {
+//         headers: {
+//           Authorization: `Bearer ${token}`,
+//           "Content-Type": "application/json",
+//         },
+//       }
+//     );
+
+//     teacher.microsoft_id = teamsResponse.data.id;
+//     teacher.microsoft_password = password; // Save the password used to create the user
+//     teacher.microsoft_principle_name = userPrincipalName;
+
+//     if (teamsResponse.data) {
+//       const mailOptions = {
+//         from: 'Info@gully2global.com',
+//         to: user.email, // Send email to the teacher's email address
+//         subject: 'Teacher Application Approved',
+//         text: `Dear ${user.name},\n\nYour teacher application has been approved. You are now a registered teacher in our LMS.\n\n your Microsoft Id is : ${teamsResponse.data.id}\nyour password is : ${password}\n your Microsoft Principal Name is : ${userPrincipalName}\n\nRegards,\nLMS`,
+//     };
+
+//     transporter.sendMail(mailOptions, (error, info) => {
+//       if (error) {
+//           console.log("Error sending email: ", error);
+//       } else {
+//           console.log("Email sent: " + info.response);
+//       }
+//   });
+//     }
+
+
+//     await teacher.save();
+
+//     res.status(200).json({
+//       message:
+//         "Application approved, teacher profile created, and Teams user created successfully",
+//       application,
+//       teacher,
+//       teamsUser: teamsResponse.data,
+//     });
+//   } catch (error) {
+//     console.error("Error approving teacher application:", error);
+//     res.status(500).json({ error: "Server error" });
+//   }
+// };
 
 // Get a single teacher application by ID
 exports.getTeacherApplicationById = async (req, res) => {
