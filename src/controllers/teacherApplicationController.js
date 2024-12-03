@@ -236,18 +236,33 @@ exports.approveTeacherApplication = async (req, res) => {
 
     await teacher.save();
 
+    // Sanitize the user's name to create a valid mailNickname and userPrincipalName
+const sanitizedUserName = user.name.replace(/[^a-zA-Z0-9]/g, ''); // Remove all non-alphanumeric characters
+
+const userPrincipalName = `${sanitizedUserName}@roycareersolutions.com`.toLowerCase();
+
     // Generate Microsoft user credentials
 
     // Update teacher document with Microsoft Teams credentials
 
     const password = "securePassword123#@!"; // Generate a secure password or use a custom logic
-    const userPrincipalName = `${user.name}` + `@roycareersolutions.com`; // Replace domain with your tenant domain
+    // const userPrincipalName = `${user.name}` + `@roycareersolutions.com`; // Replace domain with your tenant domain
 
+    // const teamsUserData = {
+    //   accountEnabled: true,
+    //   displayName: user.name, // Full name of the user
+    //   mailNickname: user.name, // Nickname without spaces or special characters
+    //   userPrincipalName: userPrincipalName, // Must be a valid email format
+    //   passwordProfile: {
+    //     forceChangePasswordNextSignIn: true,
+    //     password: password, // Ensure this meets password policy requirements
+    //   },
+    // };
     const teamsUserData = {
       accountEnabled: true,
-      displayName: user.name, // Full name of the user
-      mailNickname: user.name, // Nickname without spaces or special characters
-      userPrincipalName: userPrincipalName, // Must be a valid email format
+      displayName: user.name, // Full name of the user (can include spaces)
+      mailNickname: sanitizedUserName, // Sanitized nickname without spaces or special characters
+      userPrincipalName: userPrincipalName, // Valid email format without spaces
       passwordProfile: {
         forceChangePasswordNextSignIn: true,
         password: password, // Ensure this meets password policy requirements
