@@ -8,6 +8,7 @@ const upload = multer({ storage: multer.memoryStorage() }).single('image');
 // CREATE: Add a new feature with image upload
 const createChooseUsFeature = async (req, res) => {
   const { name, description, imageLink } = req.body;
+  console.log(req.body);
 
   // Validate input
   if (!name || !description || !imageLink) {
