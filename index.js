@@ -38,6 +38,7 @@ const bodyParser = require('body-parser');
 const refreshTokenRoutes = require('./src/routes/refreshTokenRoutes');
 const adminDasboardRoutes = require('./src/routes/adminDashboardRoutes');
 const teacherDashboardRoutes = require('./src/routes/teacherDashboardRoutes');
+const rescheduleMeetingRoutes = require('./src/routes/rescheduleMeetingRoutes');
 require("dotenv").config();
 
 const app = express();
@@ -99,6 +100,7 @@ app.use('/api/payments', paymentRoutes);
 app.use("/refreshToken",refreshTokenRoutes);
 app.use("/adminDashboard",adminDasboardRoutes);
 app.use("/teacherDashboard",teacherDashboardRoutes);
+app.use("/reschedule",rescheduleMeetingRoutes);
 
 // Start Server
 const PORT = process.env.PORT || 5000;

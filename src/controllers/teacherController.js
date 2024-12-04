@@ -113,6 +113,7 @@ exports.getTeacherSchedule = async (req, res) => {
         meeting_url: item.meeting_url,
         meeting_title: item.meeting_title,
         meeting_id: item.meeting_id,
+        meeting_reschedule: item?.meeting_reschedule,
       })),
     });
   } catch (error) {
