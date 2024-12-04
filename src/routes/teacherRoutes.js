@@ -55,6 +55,6 @@ router.post("/clock-out", clockOut);
 
 router.get("/teacher/attendance", getTeacherAttendance);
 
-router.post("/getTeacherByMeetingId/one/:meetingId",getTeacherByMeetingId)
+router.get("/getTeacherByMeetingId/one/:meetingId",getTeacherByMeetingId)
 
 module.exports = router;
