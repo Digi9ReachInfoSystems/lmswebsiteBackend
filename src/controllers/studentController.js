@@ -513,6 +513,7 @@ exports.getStudentSchedule = async (req, res) => {
     // Find the teacher by their ID and select the 'schedule' field
     const student = await Student.findById(id).select("schedule");
 
+
     if (!student) {
       return res.status(404).json({ error: "student not found" });
     }
@@ -533,6 +534,7 @@ exports.getStudentSchedule = async (req, res) => {
         meeting_url: item.meeting_url,
         meeting_title: item.meeting_title,
         meeting_id: item.meeting_id,
+        meeting_reschedule:item.meeting_reschedule,
       })),
     });
   } catch (error) {

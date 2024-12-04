@@ -2,6 +2,7 @@ const mongoose = require("mongoose"); // Import mongoose
 const Teacher = require("../models/teacherModel");
 const Subject = require("../models/subjectModel");
 const moment = require("moment"); // Import teacher model
+const Meeting = require("../models/meetingModel");
 
 // Get Teacher by ID
 exports.getTeacherById = async (req, res) => {
@@ -442,6 +443,49 @@ exports.getTeacherAttendance = async (req, res) => {
   } catch (error) {
     console.error("Error fetching student attendance:", error);
     res.status(500).json({ error: "Server error" });
+  }
+};
+
+
+/**
+ * Controller to get teacher(s) by meeting ID.
+ * If the meeting ID exists in the teacher's schedule, return the teacher.
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+exports.getTeacherByMeetingId = async (req, res) => {
+  try {
+     console.log(req.params.meetingId)
+    const meetingId = new mongoose.Types.ObjectId(req.params.meetingId);
+    // 1. Validate the meetingId
+    if (!mongoose.Types.ObjectId.isValid(meetingId)) {
+      return res.status(400).json({ error: "Invalid meeting ID format." });
+    }
+
+    // 2. Optional: Check if the Meeting exists
+    const meeting = await Meeting.findById(meetingId).populate("batch_id");
+
+    // 3. Check if the meeting exists
+    if (!meeting) {
+      return res.status(404).json({ error: "Meeting not found." });
+    }
+
+    // 3. Find teacher(s) where schedule.meeting_id equals the given meetingId
+    const teachers = await Teacher.find({
+      "schedule.meeting_id": meetingId,
+    }).populate("user_id", "name email"); // Optionally populate user info
+
+    // 4. Check if any teachers were found
+    if (teachers.length === 0) {
+      return res.status(404).json({ error: "No teacher found for the given meeting ID." });
+    }
+
+    // 5. Return the teacher(s)
+    return res.status(200).json({ teachers });
+  } catch (error) {
+    console.error("Error fetching teacher by meeting ID:", error);
+    return res.status(500).json({ error: "Server error. Please try again later." });
   }
 };
 
