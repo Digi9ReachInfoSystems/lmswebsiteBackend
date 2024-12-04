@@ -16,7 +16,8 @@ const {
   clockIn,
   clockOut,
   getStudentAttendance,
-  getStudentsWithAttendance
+  getStudentsWithAttendance,
+  updateModeToPersonal
 } = require("../controllers/studentController");
 const authMiddleware = require("../middlewares/authMiddleware");
 const authorizeRole = require("../middlewares/authorizeRole");
@@ -77,5 +78,6 @@ router.post("/clock-out",clockOut);
 router.get("/student/attendance", getStudentAttendance );
 
 router.get("/student/forattendance",getStudentsWithAttendance)
+router.put("/student/mode",updateModeToPersonal)
 
 module.exports = router;

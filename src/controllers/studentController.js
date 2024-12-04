@@ -832,3 +832,37 @@ exports.getStudentsWithAttendance = async (req, res) => {
     res.status(500).json({ error: "Server error, unable to fetch students." });
   }
 };
+
+exports.updateModeToPersonal = async (req, res) => {
+  try {
+    // Extract the student's user ID from the authenticated user
+    const student_id = req.body.student_id;
+
+    // Find the student associated with this user ID
+    const student = await Student.findById(student_id);
+
+    if (!student) {
+      return res.status(404).json({ error: "Student not found." });
+    }
+
+    // Check if the mode is already 'personal'
+    if (student.mode === "personal") {
+      return res.status(400).json({ error: "Mode is already set to personal." });
+    }
+
+    // Update the mode to 'personal'
+    student.mode = "personal";
+
+    // Save the updated student document
+    await student.save();
+
+    // Respond with the updated student information
+    res.status(200).json({
+      message: "Student mode updated to personal successfully.",
+      student,
+    });
+  } catch (error) {
+    console.error("Error updating student mode:", error);
+    res.status(500).json({ error: "Server error." });
+  }
+};
