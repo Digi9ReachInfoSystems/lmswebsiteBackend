@@ -5,6 +5,7 @@ const batch = require("../models/batchModel");
 const Subject = require("../models/subjectModel");
 const Teacher = require("../models/teacherModel");
 const Student = require("../models/studentModel");
+const mongoose = require("mongoose");
 exports.getMeetings = async (req, res) => {
   try {
     // Extract startDate and endDate from query parameters
@@ -256,3 +257,52 @@ exports.getJoinUrl = async (req, res) => {
 };
 
 exports.getAttendance = async (req, res) => {};
+
+
+/**
+ * Controller to get the batch ID associated with a specific meeting ID.
+ * 
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+exports.getBatchIdByMeetingId = async (req, res) => {
+  try {
+    const { meetingId } = req.params;
+
+    // 1. Validate the meetingId
+    if (!mongoose.Types.ObjectId.isValid(meetingId)) {
+      return res.status(400).json({ error: "Invalid meeting ID format." });
+    }
+
+    // 2. Fetch the meeting document by ID and populate the batch_id
+    const meeting = await Meeting.findById(meetingId).populate("batch_id");
+
+    // 3. Check if the meeting exists
+    if (!meeting) {
+      return res.status(404).json({ error: "Meeting not found." });
+    }
+
+    // 4. Extract the batch_id (populated with batch details if needed)
+    const batchId = meeting.batch_id;
+
+    // Optional: If you want to return detailed batch information, you can modify the response
+    // For example:
+    /*
+    const batchDetails = await Batch.findById(batchId).select("-__v"); // Exclude __v field
+    if (!batchDetails) {
+      return res.status(404).json({ error: "Batch not found." });
+    }
+    */
+
+    // 5. Respond with the batch_id
+    return res.status(200).json({
+      batch_id: batchId._id, // If populated, batchId is an object. Otherwise, it's the ObjectId.
+      // Optional: Include batch details
+      // batch: batchDetails
+    });
+
+  } catch (error) {
+    console.error("Error fetching batch ID by meeting ID:", error);
+    return res.status(500).json({ error: "Server error. Please try again later." });
+  }
+};
