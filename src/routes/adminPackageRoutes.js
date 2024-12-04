@@ -8,8 +8,7 @@ const upload = require("../middlewares/uploadMiddleware");
 router.post(
   "/createPackage",
   authMiddleware,
-  upload.single("image"),
-  authorizeRole("admin"),
+
   adminPackageController.createPackage
 );
 
