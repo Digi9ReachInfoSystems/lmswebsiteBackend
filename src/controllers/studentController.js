@@ -63,11 +63,11 @@ exports.getStudentById = async (req, res) => {
   }
 
   try {
-    const student = await Student.findById( id )
-    .populate('user_id', 'name email') // Populate user details excluding sensitive fields  
-    .populate('class', 'className classLevel')// Example: populate class details
-    .populate('subject_id', 'subject_name') // Example: populate subject details
-    .populate('board_id', 'name'); // Populate user data
+    const student = await Student.findById(id)
+      .populate('user_id', 'name email') // Populate user details excluding sensitive fields  
+      .populate('class', 'className classLevel')// Example: populate class details
+      .populate('subject_id', 'subject_name') // Example: populate subject details
+      .populate('board_id', 'name'); // Populate user data
 
     if (!student) {
       return res.status(404).json({ error: "Student not found." });
@@ -87,8 +87,8 @@ exports.getAllStudents = async (req, res) => {
       path: "user_id",
       select: "name email mobile_number role", // Specify fields to return
     })
-    .populate('board_id')
-    .populate('class'); // Populate user data
+      .populate('board_id')
+      .populate('class'); // Populate user data
     res.status(200).json(students);
   } catch (error) {
     console.error("Error fetching students:", error);
@@ -316,8 +316,8 @@ exports.updateStudent = async (req, res) => {
 
 
 
-exports.getStudentByAuthId= async (req,res)=>{
-  try{
+exports.getStudentByAuthId = async (req, res) => {
+  try {
     const authId = req.headers['auth_id']; // Extract auth_id from headers
 
     if (!authId) {
@@ -325,20 +325,20 @@ exports.getStudentByAuthId= async (req,res)=>{
     }
 
     const student = await Student.findOne({ auth_id: authId })
-    .populate('user_id', 'name email') // Populate user details excluding sensitive fields  
-    .populate('class', 'className classLevel')// Example: populate class details
-    .populate('subject_id', 'subject_name') // Example: populate subject details
-    .populate('board_id', 'name') // Example: populate board details
+      .populate('user_id', 'name email') // Populate user details excluding sensitive fields  
+      .populate('class', 'className classLevel')// Example: populate class details
+      .populate('subject_id', 'subject_name') // Example: populate subject details
+      .populate('board_id', 'name') // Example: populate board details
     if (!student) {
       return res.status(404).json({ message: 'Student not found' });
     }
 
     res.status(200).json({
-      message: 'Student retrieved successfully by auth_id', 
+      message: 'Student retrieved successfully by auth_id',
       student,
     })
-  
-  }catch(error){
+
+  } catch (error) {
     console.error('Error fetching student by auth_id:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -374,14 +374,27 @@ exports.getStudentsByClassId = async (req, res) => {
 
 // Controller to get students by subject
 
-
+/**
+ * Controller to get students for batch creation based on subject and mode.
+ * 
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 exports.getStudentsforBatchBySubject = async (req, res) => {
   try {
-    const { subjectId } = req.params;
+    // const { subjectId } = req.params;
+    const { mode } = req.query; // Extract 'mode' from query parameters
 
+ const subjectId= new mongoose.Types.ObjectId(req.params.subjectId);
     // Validate subjectId
     if (!mongoose.Types.ObjectId.isValid(subjectId)) {
       return res.status(400).json({ error: "Invalid subject ID" });
+    }
+
+    // Validate mode if provided
+    const validModes = ['normal', 'personal'];
+    if (mode && !validModes.includes(mode)) {
+      return res.status(400).json({ error: "Invalid mode value. Allowed values are 'normal' or 'personal'." });
     }
 
     // Verify that the subject exists
@@ -390,10 +403,10 @@ exports.getStudentsforBatchBySubject = async (req, res) => {
       return res.status(404).json({ error: "Subject not found" });
     }
 
-    const subjectObjectId =new  mongoose.Types.ObjectId(subjectId);
+    const subjectObjectId = new mongoose.Types.ObjectId(subjectId);
 
-    // Aggregation pipeline for students with standard packages
-    const studentsWithStandardPackage = await Student.aggregate([
+    // Build the aggregation pipeline
+    const aggregationPipeline = [
       {
         $match: {
           is_paid: true,
@@ -434,6 +447,19 @@ exports.getStudentsforBatchBySubject = async (req, res) => {
           ],
         },
       },
+    ];
+
+    // If mode is provided, add an additional match stage
+    if (mode) {
+      aggregationPipeline.push({
+        $match: {
+          mode: mode,
+        },
+      });
+    }
+
+    // Continue with the rest of the pipeline
+    aggregationPipeline.push(
       {
         $lookup: {
           from: "users",
@@ -451,7 +477,12 @@ exports.getStudentsforBatchBySubject = async (req, res) => {
           auth_id: 1,
           student_id: 1,
           user_id: 1,
-          user: 1,
+          user: {
+            _id: 1,
+            name: 1,
+            email: 1,
+            // Add other user fields you want to include
+          },
           subscribed_Package: 1,
           is_paid: 1,
           custom_package_status: 1,
@@ -460,101 +491,17 @@ exports.getStudentsforBatchBySubject = async (req, res) => {
           created_at: 1,
           last_online: 1,
         },
-      },
-    ]);
+      }
+    );
 
-    // Aggregation pipeline for students with custom packages
-    const studentsWithCustomPackage = await Student.aggregate([
-      {
-        $match: {
-          custom_package_status: "approved",
-          custom_package_id: { $exists: true, $ne: null },
-        },
-      },
-      {
-        $lookup: {
-          from: "custompackages",
-          localField: "custom_package_id",
-          foreignField: "_id",
-          as: "custom_package",
-        },
-      },
-      {
-        $unwind: "$custom_package",
-      },
-      {
-        $match: {
-          "custom_package.subject_id": subjectObjectId,
-        },
-      },
-      {
-        $match: {
-          $or: [
-            { batch_creation: { $exists: false } }, // No batch_creation field
-            { batch_creation: { $size: 0 } }, // Empty batch_creation array
-            {
-              batch_creation: {
-                $not: {
-                  $elemMatch: {
-                    subject_id: subjectObjectId,
-                    status: true,
-                  },
-                },
-              },
-            },
-          ],
-        },
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "user_id",
-          foreignField: "_id",
-          as: "user",
-        },
-      },
-      {
-        $unwind: { path: "$user", preserveNullAndEmptyArrays: true },
-      },
-      {
-        $project: {
-          _id: 1,
-          auth_id: 1,
-          student_id: 1,
-          user_id: 1,
-          user: 1,
-          custom_package: 1,
-          is_paid: 1,
-          custom_package_status: 1,
-          batch_creation: 1,
-          role: 1,
-          created_at: 1,
-          last_online: 1,
-        },
-      },
-    ]);
+    // Execute the aggregation pipeline
+    const students = await Student.aggregate(aggregationPipeline);
 
-    // Combine both student arrays
-    const students = [
-      ...studentsWithStandardPackage,
-      ...studentsWithCustomPackage,
-    ];
-
-    if (!students.length) {
-      return res
-        .status(404)
-        .json({ message: "No eligible students found for this subject" });
-    }
-
-    res.status(200).json({
-      message: "Students retrieved successfully",
-      data: students,
-    });
+    // Return the aggregated students
+    return res.status(200).json({ students });
   } catch (error) {
-    console.error("Error fetching students by subject:", error);
-    res.status(500).json({
-      error: "Internal server error",
-    });
+    console.error("Error fetching students for batch creation:", error);
+    return res.status(500).json({ error: "Server error" });
   }
 };
 
@@ -614,8 +561,8 @@ exports.clockIn = async (req, res) => {
     if (!student) {
       return res.status(404).json({ error: "student not found" });
     }
-    
-    const meeting = student.schedule.find(scheduleItem => 
+
+    const meeting = student.schedule.find(scheduleItem =>
       scheduleItem?.meeting_id?.toString() === meetingId.toString()
     );
     // Find attendance record based on meetingId
@@ -772,7 +719,7 @@ exports.getStudentAttendance = async (req, res) => {
       });
     } else {
       // If studentId is not provided, fetch attendance for all students
-      const students = await Student.find().select("attendance").populate({path:"student_id",select:"name email"});
+      const students = await Student.find().select("attendance").populate({ path: "student_id", select: "name email" });
 
       if (!students || students.length === 0) {
         return res.status(200).json({
@@ -813,11 +760,11 @@ exports.getStudentAttendance = async (req, res) => {
 exports.getStudentsWithAttendance = async (req, res) => {
   try {
     // Fetch all students who have at least one attendance entry and populate user details
-    const studentsWithAttendance = await Student.find({ 
+    const studentsWithAttendance = await Student.find({
       "attendance.0": { $exists: true }
     })
-    .select("user_id attendance") // Select the necessary fields
-    .populate("user_id", "name email"); // Populate the user details (name and email)
+      .select("user_id attendance") // Select the necessary fields
+      .populate("user_id", "name email"); // Populate the user details (name and email)
 
     if (studentsWithAttendance.length === 0) {
       return res.status(404).json({ message: "No students found with attendance data." });

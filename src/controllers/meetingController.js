@@ -212,6 +212,7 @@ exports.createMeetingTeams = async (req, res) => {
               meeting_title: title,
               meeting_time: meetingTime,
               meeting_id: meeting._id,
+              meeting_reschedule: false
             },
           },
         },
