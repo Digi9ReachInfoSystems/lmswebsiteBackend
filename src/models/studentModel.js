@@ -96,6 +96,11 @@ const studentSchema = new mongoose.Schema({
   worked_hours: {
     type: Number,
   },
+  mode:{
+    type: String ,
+    enum:['normal','personal'],
+    default:'normal'
+  },
   created_at: { type: Date, default: Date.now },
   last_online: { type: Date, default: Date.now },
 
