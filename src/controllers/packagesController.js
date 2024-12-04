@@ -17,7 +17,7 @@ const mongoose = require("mongoose");
  */
 exports.getPackagesByClass = async (req, res) => {
   try {
-    const { class_id } = req.params;
+    const { class_id,mode } = req.params;
 
     // Validate class_id
     if (!class_id) {
@@ -28,7 +28,7 @@ exports.getPackagesByClass = async (req, res) => {
       return res.status(400).json({ error: "Invalid class_id format" });
     }
 
-    const packages = await Package.find({ class_id }).populate(
+    const packages = await Package.find({ class_id,mode }).populate(
       "subject_id",
       "subject_name"
     );
@@ -77,7 +77,7 @@ exports.getAllPackages = async (req, res) => {
 exports.createPackage = async (req, res) => {
   console.log(req.body);
   try {
-    const { package_name, description, features, class_id, subject_id,board_id, price,image } =
+    const { package_name, description, features, class_id, subject_id,board_id, price,image ,mode} =
       req.body;
 
     if (
@@ -88,7 +88,8 @@ exports.createPackage = async (req, res) => {
       !subject_id ||
       !board_id ||
       !image ||
-      !price
+      !price||
+      !mode
     ) {
       return res.status(400).json({ error: "All fields are required" });
     }
@@ -124,6 +125,7 @@ exports.createPackage = async (req, res) => {
         subject_id: subjectIdsArray,
         board_id,
         price,
+        mode
       });
       const savedPackage = await newPackage.save();
 

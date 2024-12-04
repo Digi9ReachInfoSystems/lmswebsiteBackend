@@ -48,6 +48,11 @@ const packageSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  mode:{
+    type: String ,
+    enum:['normal','personal'],
+    default:'normal'
+  },
 });
 
 module.exports = mongoose.model("Package", packageSchema);

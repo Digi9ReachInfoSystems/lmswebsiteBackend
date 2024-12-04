@@ -80,6 +80,7 @@ const studentSchema = new mongoose.Schema({
       meeting_completed: { type: Boolean },
       meeting_time: { type: String },
       meeting_id: { type: mongoose.Schema.Types.ObjectId, ref: "Meeting" },
+      meeting_reschedule: { type: Boolean , default: false },
     },
   ],
   attendance: [
