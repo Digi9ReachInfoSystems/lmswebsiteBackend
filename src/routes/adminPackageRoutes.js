@@ -15,7 +15,7 @@ router.post(
 
 router.get(
   "/getPackages/:class_id/:mode",
-  // authMiddleware,
+  authMiddleware,
   adminPackageController.getPackagesByClass
 );
 
