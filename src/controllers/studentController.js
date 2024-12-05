@@ -372,139 +372,6 @@ exports.getStudentsByClassId = async (req, res) => {
   }
 };
 
-// Controller to get students by subject
-
-/**
- * Controller to get students for batch creation based on subject and mode.
- * 
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
-exports.getStudentsforBatchBySubject = async (req, res) => {
-  try {
-    // const { subjectId } = req.params;
-    const { mode } = req.query; // Extract 'mode' from query parameters
-
- const subjectId= new mongoose.Types.ObjectId(req.params.subjectId);
-    // Validate subjectId
-    if (!mongoose.Types.ObjectId.isValid(subjectId)) {
-      return res.status(400).json({ error: "Invalid subject ID" });
-    }
-
-    // Validate mode if provided
-    const validModes = ['normal', 'personal'];
-    if (mode && !validModes.includes(mode)) {
-      return res.status(400).json({ error: "Invalid mode value. Allowed values are 'normal' or 'personal'." });
-    }
-
-    // Verify that the subject exists
-    const subjectExists = await Subject.exists({ _id: subjectId });
-    if (!subjectExists) {
-      return res.status(404).json({ error: "Subject not found" });
-    }
-
-    const subjectObjectId = new mongoose.Types.ObjectId(subjectId);
-
-    // Build the aggregation pipeline
-    const aggregationPipeline = [
-      {
-        $match: {
-          is_paid: true,
-          subscribed_Package: { $exists: true, $ne: null },
-        },
-      },
-      {
-        $lookup: {
-          from: "packages",
-          localField: "subscribed_Package",
-          foreignField: "_id",
-          as: "subscribed_Package",
-        },
-      },
-      {
-        $unwind: "$subscribed_Package",
-      },
-      {
-        $match: {
-          "subscribed_Package.subject_id": subjectObjectId,
-        },
-      },
-      {
-        $match: {
-          $or: [
-            { batch_creation: { $exists: false } }, // No batch_creation field
-            { batch_creation: { $size: 0 } }, // Empty batch_creation array
-            {
-              batch_creation: {
-                $not: {
-                  $elemMatch: {
-                    subject_id: subjectObjectId,
-                    status: true,
-                  },
-                },
-              },
-            },
-          ],
-        },
-      },
-    ];
-
-    // If mode is provided, add an additional match stage
-    if (mode) {
-      aggregationPipeline.push({
-        $match: {
-          mode: mode,
-        },
-      });
-    }
-
-    // Continue with the rest of the pipeline
-    aggregationPipeline.push(
-      {
-        $lookup: {
-          from: "users",
-          localField: "user_id",
-          foreignField: "_id",
-          as: "user",
-        },
-      },
-      {
-        $unwind: { path: "$user", preserveNullAndEmptyArrays: true },
-      },
-      {
-        $project: {
-          _id: 1,
-          auth_id: 1,
-          student_id: 1,
-          user_id: 1,
-          user: {
-            _id: 1,
-            name: 1,
-            email: 1,
-            // Add other user fields you want to include
-          },
-          subscribed_Package: 1,
-          is_paid: 1,
-          custom_package_status: 1,
-          batch_creation: 1,
-          role: 1,
-          created_at: 1,
-          last_online: 1,
-        },
-      }
-    );
-
-    // Execute the aggregation pipeline
-    const students = await Student.aggregate(aggregationPipeline);
-
-    // Return the aggregated students
-    return res.status(200).json({ students });
-  } catch (error) {
-    console.error("Error fetching students for batch creation:", error);
-    return res.status(500).json({ error: "Server error" });
-  }
-};
-
 
 exports.getStudentSchedule = async (req, res) => {
   try {
@@ -813,5 +680,162 @@ exports.updateModeToPersonal = async (req, res) => {
   } catch (error) {
     console.error("Error updating student mode:", error);
     res.status(500).json({ error: "Server error." });
+  }
+};
+
+/**
+ * Controller to get students for batch creation based on subject and mode.
+ * 
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+exports.getStudentsforBatchBySubject = async (req, res) => {
+  try {
+    const { mode } = req.query; // Extract 'mode' from query parameters
+    const subjectId= new mongoose.Types.ObjectId(req.params.subjectId);
+    // Validate subjectId
+    if (!mongoose.Types.ObjectId.isValid(subjectId)) {
+      return res.status(400).json({ error: "Invalid subject ID" });
+    }
+
+    // Convert subjectId to ObjectId
+    const subjectObjectId =  new mongoose.Types.ObjectId(subjectId);
+
+    // Validate mode if provided
+    const validModes = ['normal', 'personal'];
+    if (mode && !validModes.includes(mode)) {
+      return res.status(400).json({ error: "Invalid mode value. Allowed values are 'normal' or 'personal'." });
+    }
+
+    // Verify that the subject exists
+    const subjectExists = await Subject.exists({ _id: subjectObjectId });
+    if (!subjectExists) {
+      return res.status(404).json({ error: "Subject not found" });
+    }
+
+    // Build the aggregation pipeline
+    const aggregationPipeline = [
+      {
+        $match: {
+          $or: [
+           { subscribed_Package: { $exists: true, $ne: null }, is_paid: true,},
+            { custom_package_id: { $exists: true, $ne: null }, custom_package_status: "approved" }
+          ]
+        }
+      },
+      // Lookup for subscribed_Package
+      {
+        $lookup: {
+          from: "packages",
+          localField: "subscribed_Package",
+          foreignField: "_id",
+          as: "subscribed_Package"
+        }
+      },
+      {
+        $unwind: {
+          path: "$subscribed_Package",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      // Lookup for custom_package
+      {
+        $lookup: {
+          from: "custompackages", // Ensure the collection name is correct
+          localField: "custom_package_id",
+          foreignField: "_id",
+          as: "custom_package"
+        }
+      },
+      {
+        $unwind: {
+          path: "$custom_package",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      // Match students where either subscribed_Package or custom_package contains the subject_id
+      {
+        $match: {
+          $or: [
+            { "subscribed_Package.subject_id": subjectObjectId },
+            { "custom_package.subject_id": subjectObjectId }
+          ]
+        }
+      },
+      // Ensure batch_creation does not already include this subject with status true
+      {
+        $match: {
+          $or: [
+            { batch_creation: { $exists: false } }, // No batch_creation field
+            { batch_creation: { $size: 0 } }, // Empty batch_creation array
+            {
+              batch_creation: {
+                $not: {
+                  $elemMatch: {
+                    subject_id: subjectObjectId,
+                    status: true
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+    ];
+
+    // If mode is provided, add an additional match stage
+    if (mode) {
+      aggregationPipeline.push({
+        $match: {
+          mode: mode
+        }
+      });
+    }
+
+    // Continue with the rest of the pipeline
+    aggregationPipeline.push(
+      {
+        $lookup: {
+          from: "users",
+          localField: "user_id",
+          foreignField: "_id",
+          as: "user"
+        }
+      },
+      {
+        $unwind: { path: "$user", preserveNullAndEmptyArrays: true }
+      },
+      {
+        $project: {
+          _id: 1,
+          auth_id: 1,
+          student_id: 1,
+          user_id: 1,
+          user: {
+            _id: 1,
+            name: 1,
+            email: 1,
+            // Add other user fields you want to include
+          },
+          subscribed_Package: 1,
+          is_paid: 1,
+          custom_package_status: 1,
+          batch_creation: 1,
+          role: 1,
+          created_at: 1,
+          last_online: 1,
+          mode: 1
+        }
+      }
+    );
+
+    // Execute the aggregation pipeline
+    const students = await Student.aggregate(aggregationPipeline);
+
+    // Return the aggregated students
+    return res.status(200).json({ students });
+  } catch (error) {
+    console.error("Error fetching students for batch creation:", error);
+    return res.status(500).json({ error: "Server error" });
   }
 };
