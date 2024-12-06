@@ -35,7 +35,8 @@ exports.createSubject = async (req, res) => {
 
 exports.getallSubjects = async (req, res) => {
   try {
-    const subjects = await Subject.find();
+    const subjects = await Subject.find()
+    .populate("class_id");
     res.status(200).json(subjects);
   } catch (error) {
     console.error("Error fetching subjects:", error);
@@ -107,6 +108,21 @@ exports.deleteSubject = async (req, res) => {
     });
   } catch (error) {
     console.error("Error deleting subject:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+exports.getSubjectById= async (req, res) => {
+  try {
+    const { subject_id } = req.params;
+    const subject = await Subject.findById(subject_id)
+    .populate("class_id");
+    if (!subject) {
+      return res.status(404).json({ error: "Subject not found" });
+    }
+    res.status(200).json(subject);
+  } catch (error) {
+    console.error("Error fetching subject by ID:", error);
     res.status(500).json({ error: "Server error" });
   }
 };

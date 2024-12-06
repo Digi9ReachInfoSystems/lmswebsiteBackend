@@ -34,4 +34,5 @@ router.delete(
   subjectController.deleteSubject
 );
 
+router.get("/:subject_id", subjectController.getSubjectById);
 module.exports = router;

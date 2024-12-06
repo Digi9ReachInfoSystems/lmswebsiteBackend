@@ -88,3 +88,17 @@ exports.getAllClassesBoard = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
+exports.getClassById = async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const classData = await Class.findById(classId).populate("curriculum");
+    if (!classData) {
+      return res.status(404).json({ error: "Class not found" });
+    }
+    res.status(200).json(classData);
+  } catch (error) {
+    console.error("Error fetching class by ID:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};

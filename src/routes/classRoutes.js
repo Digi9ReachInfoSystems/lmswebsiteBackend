@@ -35,4 +35,7 @@ router.delete(
   classController.deleteClass
 );
 
+// Get a class by ID (GET)
+router.get("/:classId", classController.getClassById);
+
 module.exports = router;
