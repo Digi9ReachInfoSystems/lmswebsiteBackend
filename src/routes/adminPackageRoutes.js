@@ -14,14 +14,11 @@ router.post(
 
 router.get(
   "/getPackages/:class_id/:mode",
-  authMiddleware,
   adminPackageController.getPackagesByClass
 );
 
 router.get(
   "/getAllPackages",
-  authMiddleware,
-  authorizeRole("admin"),
   adminPackageController.getAllPackages
 );
 
