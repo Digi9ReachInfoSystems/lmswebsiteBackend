@@ -5,7 +5,7 @@ const Class = require("../models/classModel");
 // Create a new class/subject
 exports.createClass = async (req, res) => {
   try {
-    const { className, classLevel, curriculum } = req.body;
+    const { className, classLevel, curriculum ,imageLink,description} = req.body;
 
     if (!className || !classLevel || !curriculum) {
       return res.status(400).json({ error: "All fields are required" });
@@ -15,6 +15,9 @@ exports.createClass = async (req, res) => {
       className,
       classLevel,
       curriculum,
+      image:imageLink,
+      description
+
     });
 
     (await newClass.save()).populate("curriculum");
