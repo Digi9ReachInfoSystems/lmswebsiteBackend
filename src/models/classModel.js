@@ -9,6 +9,8 @@ const classSchema = new mongoose.Schema({
     ref: "Board",
     required: true
   },
+  image: { type: String,},
+  description: { type: String, },
 });
 
 
