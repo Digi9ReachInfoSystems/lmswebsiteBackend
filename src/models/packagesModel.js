@@ -53,6 +53,9 @@ const packageSchema = new mongoose.Schema({
     enum:['normal','personal'],
     default:'normal'
   },
+ duration: {
+    type: Number,
+  },
 });
 
 module.exports = mongoose.model("Package", packageSchema);

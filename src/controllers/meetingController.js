@@ -140,8 +140,14 @@ exports.createMeetingTeams = async (req, res) => {
       subject: title, 
     };
 
+    const teacher= await Teacher.findById(teacher_id);
+
+    if (!teacher) {
+      return res.status(404).json({ message: "Teacher not found" });
+    }
+
     const graphResponse = await axios.post(
-      "https://graph.microsoft.com/v1.0/users/bfa1bf61-f558-4089-b191-777c7bbb7851/onlineMeetings",
+      `https://graph.microsoft.com/v1.0/users/${teacher.microsoft_id}/onlineMeetings`,
       meetingDetails,
       {
         headers: {

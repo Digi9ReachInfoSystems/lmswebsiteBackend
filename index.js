@@ -39,19 +39,20 @@ const refreshTokenRoutes = require('./src/routes/refreshTokenRoutes');
 const adminDasboardRoutes = require('./src/routes/adminDashboardRoutes');
 const teacherDashboardRoutes = require('./src/routes/teacherDashboardRoutes');
 const rescheduleMeetingRoutes = require('./src/routes/rescheduleMeetingRoutes');
+const schedulePackageExpiryJob = require("./src/Jobs/packageExpiryJob");
 require("dotenv").config();
 
 const app = express();
 
 // Connect to MongoDB
-connectDB();
+// connectDB();
 
 // Middleware
-// app.use(cors());
-app.use(cors({
-  origin: 'http://localhost:5173', // Replace with your frontend URL
-  credentials: true,
-}));
+app.use(cors());
+// app.use(cors({
+//   origin: 'http://localhost:5173', // Replace with your frontend URL
+//   credentials: true,
+// }));
 app.use(express.json());
 app.use(helmet());
 
@@ -103,7 +104,25 @@ app.use("/teacherDashboard",teacherDashboardRoutes);
 app.use("/reschedule",rescheduleMeetingRoutes);
 
 // Start Server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// const PORT = process.env.PORT || 5000;
+// app.listen(PORT, () => {
+//   console.log(`Server running on port ${PORT}`);
+// });
+
+connectDB()
+  .then(() => {
+    console.log("Connected to MongoDB");
+
+    // Start the Cron Job
+    schedulePackageExpiryJob();
+
+    // Start the Server
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+    process.exit(1); // Exit process with failure
+  });

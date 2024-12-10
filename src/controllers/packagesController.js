@@ -77,7 +77,7 @@ exports.getAllPackages = async (req, res) => {
 exports.createPackage = async (req, res) => {
   console.log(req.body);
   try {
-    const { package_name, description, features, class_id, subject_id,board_id, price,image ,mode} =
+    const { package_name, description, features, class_id, subject_id,board_id, price,image ,mode,duration} =
       req.body;
 
     if (
@@ -89,7 +89,8 @@ exports.createPackage = async (req, res) => {
       !board_id ||
       !image ||
       !price||
-      !mode
+      !mode||
+      !duration
     ) {
       return res.status(400).json({ error: "All fields are required" });
     }
@@ -125,7 +126,8 @@ exports.createPackage = async (req, res) => {
         subject_id: subjectIdsArray,
         board_id,
         price,
-        mode
+        mode,
+        duration
       });
       const savedPackage = await newPackage.save();
 
