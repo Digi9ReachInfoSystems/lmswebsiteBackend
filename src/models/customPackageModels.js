@@ -50,6 +50,7 @@ const customPackageSchema = new mongoose.Schema({
       message: "At least 3 subjects are required.",
     },
   },
+  duration: { type: Number },
   slots: { type:String},
 });
 

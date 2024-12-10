@@ -23,10 +23,13 @@ const studentSchema = new mongoose.Schema({
     unique: true,
   },
 
-  subscribed_Package: { type: mongoose.Schema.Types.ObjectId, ref: "Package" },
+  subscribed_Package:[ {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Package"
+  }],
   is_paid: {
     type: Boolean,
-    default: false,
+   
   },
   subscription_id: {
     type: mongoose.Schema.Types.ObjectId,
@@ -46,17 +49,19 @@ const studentSchema = new mongoose.Schema({
     ref: "Board"
   },
 
-  payment_id: {
+  payment_id: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: "Payment",
-  },
-  custom_package_id: {
+  }],
+  custom_package_id: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: "CustomPackage",
-  },
+  }],
+  package_expiry: { type: Date },
+  custom_package_expiry: { type: Date },
   custom_package_status: {
     type: String,
-    enum: ["pending", "approved", "rejected", "no_package"],
+    enum: ["pending", "approved", "rejected", "no_package","expired"],
     default: "no_package",
   },
   batch_creation: [{
@@ -80,7 +85,7 @@ const studentSchema = new mongoose.Schema({
       meeting_completed: { type: Boolean },
       meeting_time: { type: String },
       meeting_id: { type: mongoose.Schema.Types.ObjectId, ref: "Meeting" },
-      meeting_reschedule: { type: Boolean , default: false },
+      meeting_reschedule: { type: Boolean, default: false },
     },
   ],
   attendance: [
@@ -97,10 +102,10 @@ const studentSchema = new mongoose.Schema({
   worked_hours: {
     type: Number,
   },
-  mode:{
-    type: String ,
-    enum:['normal','personal'],
-    default:'normal'
+  mode: {
+    type: String,
+    enum: ['normal', 'personal'],
+    default: 'normal'
   },
   created_at: { type: Date, default: Date.now },
   last_online: { type: Date, default: Date.now },

@@ -839,3 +839,64 @@ exports.getStudentsforBatchBySubject = async (req, res) => {
     return res.status(500).json({ error: "Server error" });
   }
 };
+
+
+
+/**
+ * Controller to fetch a student's schedule from today to the next 7 days.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ */
+exports.getStudentScheduleNext7Days = async (req, res) => {
+  try {
+    const { id } = req.params; // Extract student ID from request parameters
+ 
+    // Validate the ID format (optional but recommended)
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ error: 'Invalid student ID format' });
+    }
+
+    // Find the student by their ID and select the 'schedule' field
+    const student = await Student.findById(id).select('schedule');
+
+    if (!student) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+
+    // Check if the schedule array exists and has data
+    if (!student.schedule || student.schedule.length === 0) {
+      return res.status(200).json({
+        message: 'No schedule found for the student',
+        schedule: [],
+      });
+    }
+
+    // Define the date range: today to next 7 days
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to start of today
+
+    const sevenDaysFromNow = new Date();
+    sevenDaysFromNow.setDate(today.getDate() + 7);
+    sevenDaysFromNow.setHours(23, 59, 59, 999); // Set to end of the 7th day
+    // Filter the schedule for entries within the date range
+    const filteredSchedule = student.schedule.filter((item) => {
+      const itemDate = new Date(item.date);
+      return itemDate >= today && itemDate <= sevenDaysFromNow;
+    });
+
+    // Return the filtered schedule with meeting details
+    res.status(200).json({
+      message: 'Student schedule fetched successfully',
+      schedule: filteredSchedule.map((item) => ({
+        date: item.date,
+        meeting_url: item.meeting_url,
+        meeting_title: item.meeting_title,
+        meeting_id: item.meeting_id,
+        meeting_reschedule: item.meeting_reschedule,
+      })),
+    });
+  } catch (error) {
+    console.error('Error fetching student schedule for next 7 days:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};

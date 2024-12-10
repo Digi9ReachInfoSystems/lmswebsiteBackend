@@ -79,6 +79,7 @@ exports.updateCustomPackage = async (req, res) => {
       admin_notes,
       is_active,
       expiry_date,
+      duration
     } = req.body;
 
     // Find the custom package by ID
@@ -98,6 +99,7 @@ exports.updateCustomPackage = async (req, res) => {
     if (admin_notes !== undefined) customPackage.admin_notes = admin_notes;
     if (is_active !== undefined) customPackage.is_active = is_active;
     if (expiry_date !== undefined) customPackage.expiry_date = expiry_date;
+    if (duration !== undefined) customPackage.duration = duration;
 
     await customPackage.save();
 
