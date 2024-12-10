@@ -554,6 +554,12 @@ exports.clockOut = async (req, res) => {
   }
 };
 
+// controllers/studentController.js
+
+// controllers/studentController.js
+
+// controllers/studentController.js
+
 exports.getStudentAttendance = async (req, res) => {
   try {
     const { studentId } = req.query; // Extract student ID from request parameters
@@ -571,24 +577,31 @@ exports.getStudentAttendance = async (req, res) => {
         return res.status(200).json({
           message: "No attendance found for the student",
           attendance: [],
+          classesAttended: 0, // Add count as 0
         });
       }
 
-      // Return the student's attendance
+      // **Updated Calculation: Use 'clock_out_time' to determine attendance**
+      const classesAttended = student.attendance.filter(item => item.clock_out_time !== null).length;
+
+      // Return the student's attendance along with the count
       return res.status(200).json({
         message: "Student attendance fetched successfully",
         attendance: student.attendance.map((item) => ({
-          date: item.Date,
+          date: item.Date, // Ensure this field exists and is correctly capitalized
           clock_in_time: item.clock_in_time,
           clock_out_time: item.clock_out_time,
-          meeting_attended: item.Meeting_attended,
+          // Remove 'meeting_attended' as it doesn't exist
           meeting_id: item.meeting_id,
-          meeting_title: item?.meeting_title,
+          meeting_title: item.meeting_title,
         })),
+        classesAttended, // Include the count
       });
     } else {
       // If studentId is not provided, fetch attendance for all students
-      const students = await Student.find().select("attendance").populate({ path: "student_id", select: "name email" });
+      const students = await Student.find()
+        .select("attendance student_id")
+        .populate({ path: "student_id", select: "name email" });
 
       if (!students || students.length === 0) {
         return res.status(200).json({
@@ -597,20 +610,25 @@ exports.getStudentAttendance = async (req, res) => {
         });
       }
 
-      // Map through each student and their attendance
-      const allAttendances = students.map((student) => ({
-        studentId: student._id,
-        name: student.student_id?.name,
-        email: student.student_id?.email,
-        attendance: student.attendance.map((item) => ({
-          date: item.Date,
-          clock_in_time: item.clock_in_time,
-          clock_out_time: item.clock_out_time,
-          meeting_attended: item.Meeting_attended,
-          meeting_id: item.meeting_id,
-          meeting_title: item?.meeting_title,
-        })),
-      }));
+      // Map through each student and their attendance, including the count
+      const allAttendances = students.map((student) => {
+        const classesAttended = student.attendance.filter(item => item.clock_out_time !== null).length;
+
+        return {
+          studentId: student._id,
+          name: student.student_id?.name,
+          email: student.student_id?.email,
+          attendance: student.attendance.map((item) => ({
+            date: item.Date, // Ensure correct field name
+            clock_in_time: item.clock_in_time,
+            clock_out_time: item.clock_out_time,
+        
+            meeting_id: item.meeting_id,
+            meeting_title: item.meeting_title,
+          })),
+          classesAttended, // Include the count for each student
+        };
+      });
 
       return res.status(200).json({
         message: "All students' attendance fetched successfully",
@@ -622,6 +640,76 @@ exports.getStudentAttendance = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
+
+// exports.getStudentAttendance = async (req, res) => {
+//   try {
+//     const { studentId } = req.query; // Extract student ID from request parameters
+
+//     if (studentId) {
+//       // If studentId is provided, fetch attendance for the specific student
+//       const student = await Student.findById(studentId).select("attendance");
+
+//       if (!student) {
+//         return res.status(404).json({ error: "Student not found" });
+//       }
+
+//       // Check if the attendance array exists and has data
+//       if (!student.attendance || student.attendance.length === 0) {
+//         return res.status(200).json({
+//           message: "No attendance found for the student",
+//           attendance: [],
+//         });
+//       }
+
+//       // Return the student's attendance
+//       return res.status(200).json({
+//         message: "Student attendance fetched successfully",
+//         attendance: student.attendance.map((item) => ({
+//           date: item.Date,
+//           clock_in_time: item.clock_in_time,
+//           clock_out_time: item.clock_out_time,
+//           meeting_attended: item.Meeting_attended,
+//           meeting_id: item.meeting_id,
+//           meeting_title: item?.meeting_title,
+//         })),
+//       });
+//     } else {
+//       // If studentId is not provided, fetch attendance for all students
+//       const students = await Student.find().select("attendance").populate({ path: "student_id", select: "name email" });
+
+//       if (!students || students.length === 0) {
+//         return res.status(200).json({
+//           message: "No students found",
+//           attendance: [],
+//         });
+//       }
+
+//       // Map through each student and their attendance
+//       const allAttendances = students.map((student) => ({
+//         studentId: student._id,
+//         name: student.student_id?.name,
+//         email: student.student_id?.email,
+//         attendance: student.attendance.map((item) => ({
+//           date: item.Date,
+//           clock_in_time: item.clock_in_time,
+//           clock_out_time: item.clock_out_time,
+//           meeting_attended: item.Meeting_attended,
+//           meeting_id: item.meeting_id,
+//           meeting_title: item?.meeting_title,
+//         })),
+//       }));
+
+//       return res.status(200).json({
+//         message: "All students' attendance fetched successfully",
+//         attendance: allAttendances,
+//       });
+//     }
+//   } catch (error) {
+//     console.error("Error fetching student attendance:", error);
+//     res.status(500).json({ error: "Server error" });
+//   }
+// };
 
 
 
