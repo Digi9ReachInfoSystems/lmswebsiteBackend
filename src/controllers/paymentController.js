@@ -79,7 +79,7 @@ exports.verifyPayment = async (req, res) => {
 
   if (digested_signature === signature) {
     if (req.body.event == "payment.captured") {
-      console.log("Valid signature inside payment.captured",req.body);
+      console.log("Valid signature inside payment.captured", req.body);
       // Payment is valid
       const payment = await Payment.findOne({ order_id: req.body.payload.payment.entity.order_id });
       if (!payment) {
@@ -91,33 +91,37 @@ exports.verifyPayment = async (req, res) => {
       await payment.save();
       // Update student details
       await Student.findByIdAndUpdate(payment.student_id, {
-        subscribed_Package: payment.package_id, payment_id: payment._id, is_paid: true,
+        $push: {
+          subscribed_Package: { _id: payment.package_id, is_active: true },
+          payment_id: payment._id
+        },
+        is_paid: true,
       });
 
-       // Fetch the package to get duration
-       const pkg = await Package.findById(payment.package_id);
+      // Fetch the package to get duration
+      const pkg = await Package.findById(payment.package_id);
 
-       if (!pkg) {
-         return res.status(400).json({ error: "Associated package not found" });
-       }
+      if (!pkg) {
+        return res.status(400).json({ error: "Associated package not found" });
+      }
 
-       // Calculate package_expiry: payment date + duration months
-       const paymentDate = new Date(); // Assuming payment is processed now
-       const packageExpiryDate = new Date(
-         paymentDate.setMonth(paymentDate.getMonth() + pkg.duration)
-       );
+      // Calculate package_expiry: payment date + duration months
+      const paymentDate = new Date(); // Assuming payment is processed now
+      const packageExpiryDate = new Date(
+        paymentDate.setMonth(paymentDate.getMonth() + pkg.duration)
+      );
 
-       // Update student details
-       await Student.findByIdAndUpdate(payment.student_id, {
-         package_expiry: packageExpiryDate,
-       });
+      // Update student details
+      await Student.findByIdAndUpdate(payment.student_id, {
+        package_expiry: packageExpiryDate,
+      });
 
-    }else if (req.body.event == "payment_link.paid") {
-      console.log("Valid signature inside payment.link.paid",req.body);
-      console.log("request",req.body.payload.order.entity);
+    } else if (req.body.event == "payment_link.paid") {
+      console.log("Valid signature inside payment.link.paid", req.body);
+      console.log("request", req.body.payload.order.entity);
       // Payment is valid
       const payment = await Payment.findOne({ receipt: req.body.payload.order.entity.receipt });
-      console.log("payment",payment);
+      console.log("payment", payment);
       if (!payment) {
         return res.status(400).json({ error: 'Payment not found' });
       }
@@ -127,25 +131,29 @@ exports.verifyPayment = async (req, res) => {
       await payment.save();
       // Update student details
       await Student.findByIdAndUpdate(payment.student_id, {
-        custom_package_id: payment.custom_package_id, payment_id: payment._id, custom_package_status: "approved",
+        $push: {
+          custom_package_id: { _id: payment.custom_package_id, is_active: true },
+          payment_id: payment._id
+        },
+        custom_package_status: "approved",
       });
-       // Fetch the package to get duration
-       const pkg = await CustomPackage.findById(payment.custom_package_id);
+      // Fetch the package to get duration
+      const pkg = await CustomPackage.findById(payment.custom_package_id);
 
-       if (!pkg) {
-         return res.status(400).json({ error: "Associated custom package not found" });
-       }
+      if (!pkg) {
+        return res.status(400).json({ error: "Associated custom package not found" });
+      }
 
-       // Calculate package_expiry: payment date + duration months
-       const paymentDate = new Date(); // Assuming payment is processed now
-       const packageExpiryDate = new Date(
-         paymentDate.setMonth(paymentDate.getMonth() + pkg.duration)
-       );
+      // Calculate package_expiry: payment date + duration months
+      const paymentDate = new Date(); // Assuming payment is processed now
+      const packageExpiryDate = new Date(
+        paymentDate.setMonth(paymentDate.getMonth() + pkg.duration)
+      );
 
-       // Update student details
-       await Student.findByIdAndUpdate(payment.student_id, {
+      // Update student details
+      await Student.findByIdAndUpdate(payment.student_id, {
         custom_package_expiry: packageExpiryDate,
-       });
+      });
       // update custom package details
       await CustomPackage.findByIdAndUpdate(payment.custom_package_id, {
         is_active: true, is_approved: true, is_price_finalized: true, admin_contacted: true, package_price: payment.amount,
@@ -161,7 +169,7 @@ exports.verifyPayment = async (req, res) => {
 
 
 exports.createCustomPackageOrder = async (req, res) => {
-  const { amount, package_id, student_id,duration } = req.body;
+  const { amount, package_id, student_id, duration } = req.body;
   try {
     // Create Razorpay order
     // Validate input

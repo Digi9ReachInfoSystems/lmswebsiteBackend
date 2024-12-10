@@ -23,10 +23,12 @@ const studentSchema = new mongoose.Schema({
     unique: true,
   },
 
-  subscribed_Package:[ {
+  subscribed_Package:[ {_id:{
     type: mongoose.Schema.Types.ObjectId,
     ref: "Package"
-  }],
+  },
+  is_active: { type: Boolean },
+}],
   is_paid: {
     type: Boolean,
    
@@ -53,9 +55,11 @@ const studentSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Payment",
   }],
-  custom_package_id: [{
+  custom_package_id: [{_id:{
     type: mongoose.Schema.Types.ObjectId,
     ref: "CustomPackage",
+    },
+    is_active: { type: Boolean },
   }],
   package_expiry: { type: Date },
   custom_package_expiry: { type: Date },
