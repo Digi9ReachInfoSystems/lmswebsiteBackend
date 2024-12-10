@@ -29,6 +29,14 @@ const handleStandardPackageExpiry = async () => {
 
       // Iterate over each expired student
       for (const student of expiredStandardStudents) {
+
+        // Mark all standard packages as inactive
+        if (Array.isArray(student.subscribed_Package)) {
+          student.subscribed_Package.forEach(pkg => {
+            pkg.is_active = false;
+          });
+        }
+
         // Update student fields
         student.is_paid = false;
         // student.subscribed_Package = null;
@@ -76,6 +84,14 @@ const handleCustomPackageExpiry = async () => {
 
       // Iterate over each expired student
       for (const student of expiredCustomStudents) {
+
+        // Mark all custom packages as inactive
+        if (Array.isArray(student.custom_package_id)) {
+          student.custom_package_id.forEach(cp => {
+            cp.is_active = false;
+          });
+        }
+
         // Update student fields
         // student.custom_package_id = null;
         student.custom_package_status = "expired";
@@ -113,11 +129,12 @@ const checkAndUpdateExpiredPackages = async () => {
  */
 const schedulePackageExpiryJob = () => {
   // Schedule the task to run daily at midnight (00:00)
-  cron.schedule("0 0 * * *", () => {
-    console.log("Running scheduled package expiry job...");
-    checkAndUpdateExpiredPackages();
-  });
-
+  console.log("Starting package expiry job...");
+  // cron.schedule("0 0 * * *", () => {
+  //   console.log("Running scheduled package expiry job...");
+  //   checkAndUpdateExpiredPackages();
+  // });
+  checkAndUpdateExpiredPackages();
   console.log("Package expiry job scheduled to run daily at midnight.");
 };
 
