@@ -135,11 +135,11 @@ const checkAndUpdateExpiredPackages = async () => {
 const schedulePackageExpiryJob = () => {
   // Schedule the task to run daily at midnight (00:00)
   console.log("Starting package expiry job...");
-  // cron.schedule("0 0 * * *", () => {
-  //   console.log("Running scheduled package expiry job...");
-  //   checkAndUpdateExpiredPackages();
-  // });
-  checkAndUpdateExpiredPackages();
+  cron.schedule("0 0 * * *", () => {
+    console.log("Running scheduled package expiry job...");
+    checkAndUpdateExpiredPackages();
+  });
+  // checkAndUpdateExpiredPackages();
   console.log("Package expiry job scheduled to run daily at midnight.");
 };
 
