@@ -41,7 +41,7 @@ const handleStandardPackageExpiry = async () => {
         student.is_paid = false;
         // student.subscribed_Package = null;
         student.package_expiry = null;
-        student.batch_creation = null; // Or [] if you prefer an empty array
+        student.batch_creation = []; // Or [] if you prefer an empty array
         // student.attendance = null; // Or [] if you prefer an empty array
 
         await student.save();
@@ -91,6 +91,11 @@ const handleCustomPackageExpiry = async () => {
             cp.is_active = false;
           });
         }
+        // if (Array.isArray(student.subscribed_Package)) {
+        //   student.subscribed_Package.forEach(pkg => {
+        //     pkg.is_active = false;
+        //   });
+        // }
 
         // Update student fields
         // student.custom_package_id = null;
@@ -98,7 +103,7 @@ const handleCustomPackageExpiry = async () => {
         student.custom_package_expiry = null;
         // student.attendance = null; // Or [] if you prefer an empty array
         // student.schedule = null; // Or [] if you prefer an empty array
-        student.batch_creation = null; // Or [] if you prefer an empty array
+        student.batch_creation = []; // Or [] if you prefer an empty array
 
         await student.save();
 
