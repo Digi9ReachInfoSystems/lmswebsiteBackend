@@ -126,7 +126,7 @@ exports.verifyPayment = async (req, res) => {
         return res.status(400).json({ error: 'Payment not found' });
       }
       // Update payment details
-      payment.payment_id = req.body.payload.payment.id;
+      payment.payment_id = req.body.payload.payment.entity.id;
       payment.status = 'paid';
       await payment.save();
       // Update student details
