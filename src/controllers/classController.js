@@ -1,6 +1,7 @@
 // src/controllers/classController.js
 
 const Class = require("../models/classModel");
+const Subject = require('../models/subjectModel');
 
 // Create a new class/subject
 exports.createClass = async (req, res) => {
@@ -66,6 +67,13 @@ exports.updateClass = async (req, res) => {
 exports.deleteClass = async (req, res) => {
   try {
     const { classId } = req.params;
+
+    const classData= await Class.findById(classId);
+    if (!classData) {
+      return res.status(404).json({ error: "Class not found" });
+    }
+
+    await Subject.deleteMany({ class_id: classId });
 
     const deletedClass = await Class.findByIdAndDelete(classId).populate("curriculum");
 
