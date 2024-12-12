@@ -196,3 +196,20 @@ exports.getQuizBySubjectId = async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
+
+exports.getQuizByBatchId = async (req, res) => {
+  try {
+    const { batch_id } = req.params;
+    const quizzes = await Quiz.find({ batch_index: batch_id })
+      .populate('teacher_id', 'name email')
+      .populate('subject', 'subject_name')
+      .exec();
+    res.status(200).json({
+      message: 'Quizzes fetched successfully',
+      quizzes,
+    });
+  } catch (error) {
+    console.error('Error fetching quizzes:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
