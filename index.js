@@ -40,6 +40,7 @@ const adminDasboardRoutes = require('./src/routes/adminDashboardRoutes');
 const teacherDashboardRoutes = require('./src/routes/teacherDashboardRoutes');
 const rescheduleMeetingRoutes = require('./src/routes/rescheduleMeetingRoutes');
 const schedulePackageExpiryJob = require("./src/Jobs/packageExpiryJob");
+const typeOfBatchRoutes= require("./src/routes/typeOfBatchRoutes")
 require("dotenv").config();
 
 const app = express();
@@ -102,6 +103,7 @@ app.use("/refreshToken",refreshTokenRoutes);
 app.use("/adminDashboard",adminDasboardRoutes);
 app.use("/teacherDashboard",teacherDashboardRoutes);
 app.use("/reschedule",rescheduleMeetingRoutes);
+app.use("/typeOfBatch",typeOfBatchRoutes)
 
 // Start Server
 // const PORT = process.env.PORT || 5000;
