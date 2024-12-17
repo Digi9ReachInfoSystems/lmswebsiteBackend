@@ -36,6 +36,8 @@ exports.createTeacherApplication = async (req, res) => {
       profileImage,
       qualifications,
       dateOfBirth,
+      name,
+      email,
     } = req.body;
 
     // Check for required fields and file links
@@ -53,7 +55,9 @@ exports.createTeacherApplication = async (req, res) => {
       !class_id ||
       !subject_id ||
       !qualifications ||
-      !dateOfBirth
+      !dateOfBirth ||
+      !name ||
+      !email
     ) {
       return res
         .status(400)
@@ -91,6 +95,8 @@ exports.createTeacherApplication = async (req, res) => {
       phoneNumber: phone_number,
       dateOfBirth,
       qualifications,
+      teacher_name: name,
+      email,
     });
 
     await teacherApplication.save(); // Save to MongoDB
