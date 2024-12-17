@@ -2,8 +2,8 @@ const mongoose = require("mongoose");
 const { profile } = require("winston");
 
 const teacherSchema = new mongoose.Schema({
-  auth_id: { type: String, required: true, unique: true },
-  teacher_id: { type: String, required: true, unique: true },
+  auth_id: { type: String, unique: true },
+  teacher_id: { type: String, unique: true },
   user_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

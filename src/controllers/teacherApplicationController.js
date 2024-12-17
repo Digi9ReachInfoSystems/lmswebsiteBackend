@@ -7,6 +7,7 @@ const { bucket } = require("../services/firebaseService"); // Firebase bucket re
 const mongoose = require("mongoose");
 const axios = require("axios");
 const nodemailer = require("nodemailer");
+const admin=require('../services/firebaseService');
 
 const transporter = nodemailer.createTransport({
   host: "smtp.hostinger.com",
@@ -547,8 +548,8 @@ exports.getTeacherApplicationByUserId = async (req, res) => {
 exports.approveTeacherApplication = async (req, res) => {
   try {
     const { applicationId } = req.params;
-    const {auth_id, microsoft_id, microsoft_password, microsoft_principle_name } = req.body;
-
+    const {auth_id, user_id,microsoft_id, microsoft_password, microsoft_principle_name } = req.body;
+ 
     // Find the application
     const application = await TeacherApplication.findById(applicationId).populate("teacher_id");
     if (!application) {
@@ -574,16 +575,13 @@ exports.approveTeacherApplication = async (req, res) => {
       return res.status(400).json({ error: "Teacher profile already exists for this user" });
     }
 
-
-
-
   
 
     // Create a new Teacher document with Microsoft credentials
     const teacher = new Teacher({
       auth_id:auth_id,
       teacher_id: application._id,
-      user_id: auth_id,
+      user_id: user_id,
       role: "teacher",
       qualifications: application.qualifications,
       dateOfBirth: application.dateOfBirth,
@@ -615,7 +613,6 @@ exports.approveTeacherApplication = async (req, res) => {
         "Application approved, teacher profile created, and Teams user created successfully",
       application,
       teacher,
-      teamsUser: teamsResponse.data,
     });
   } catch (error) {
     console.error("Error approving teacher application:", error.response ? error.response.data : error.message);

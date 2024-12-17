@@ -5,7 +5,7 @@ const teacherApplicationSchema = new mongoose.Schema({
   teacher_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User", 
-    required: true,
+   
   },
   resume_link: {
     type: String,
