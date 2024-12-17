@@ -133,3 +133,29 @@ exports.deleteTypeOfBatch = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+// Controller to get a batch type by mode
+exports.getBatchByMode = async (req, res) => {
+  try {
+    // Extract the 'mode' parameter from the request query or body
+    const { mode } = req.params;
+
+    // Validate mode input
+    if (!mode) {
+      return res.status(400).json({ error: "Mode is required" });
+    }
+
+    // Find the batch type by mode
+    const batch = await TypeOfBatch.find({ mode });
+
+    // If no batch type found
+    if (!batch) {
+      return res.status(404).json({ error: "No batch found with the specified mode" });
+    }
+
+    // Respond with the batch details
+    res.status(200).json({ success: true, data: batch });
+  } catch (error) {
+    console.error("Error fetching batch by mode:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
