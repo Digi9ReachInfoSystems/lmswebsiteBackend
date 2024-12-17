@@ -549,7 +549,7 @@ exports.approveTeacherApplication = async (req, res) => {
   try {
     const { applicationId } = req.params;
     const {auth_id, user_id,microsoft_id, microsoft_password, microsoft_principle_name } = req.body;
-
+ 
     // Find the application
     const application = await TeacherApplication.findById(applicationId).populate("teacher_id");
     if (!application) {
