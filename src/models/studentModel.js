@@ -26,6 +26,11 @@ const studentSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+  type_of_batch: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "TypeOfBatch",
+  },
+  
 
   subscribed_Package:[ {_id:{
     type: mongoose.Schema.Types.ObjectId,
