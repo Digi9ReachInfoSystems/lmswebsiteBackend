@@ -263,11 +263,12 @@ exports.getPaymentStatusChartData = async (req, res) => {
  */
 exports.updateStudent = async (req, res) => {
   const { studentId } = req.params; // Get student ID from route params
-  const { class_id, ...updateData } = req.body; // Extract class_id and other update data
-
+  const { class_id, updateData } = req.body; // Extract class_id and other update data
+ console.log(req.body);
+ console.log(updateData);
   try {
     // Find the student by ID
-    let student = await Student.findOne({ user_id: studentId });
+    let student = await Student.findById( studentId );
     if (!student) {
       return res.status(404).json({ error: "Student not found" });
     }
@@ -300,7 +301,8 @@ exports.updateStudent = async (req, res) => {
     student.payment_id = updateData.payment_id || student.payment_id;
     student.last_online = updateData.last_online || student.last_online;
     student.phone_number = updateData.phone_number || student.phone_number;
-
+    student.type_of_batch = updateData.type_of_batch || student.type_of_batch;
+    student.duration = updateData.duration || student.duration;
     // Save the updated student
     const updatedStudent = await student.save();
 
