@@ -41,7 +41,7 @@ const studentSchema = new mongoose.Schema({
 }],
   is_paid: {
     type: Boolean,
-   
+   default: false
   },
   subscription_id: {
     type: mongoose.Schema.Types.ObjectId,
