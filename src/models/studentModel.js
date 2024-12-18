@@ -30,7 +30,8 @@ const studentSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "TypeOfBatch",
   },
-  
+  duration: { type: String },
+  amount: { type: Number },
 
   subscribed_Package:[ {_id:{
     type: mongoose.Schema.Types.ObjectId,
