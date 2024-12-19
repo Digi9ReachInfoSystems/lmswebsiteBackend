@@ -15,7 +15,9 @@ const subjectSchema = new mongoose.Schema({
     enum: ["pending", "approved", "rejected"],
     default: "pending",
   },
-
+  icon:{
+    type: String
+  },
   teacher_id: [
     {
       type: mongoose.Schema.Types.ObjectId,

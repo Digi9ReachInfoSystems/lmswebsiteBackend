@@ -61,5 +61,6 @@ router.get(
 router.post("/joinmeeting", meetingController.getJoinUrl);
 
 router.get("/getbatch/:meetingId",meetingController.getBatchIdByMeetingId);
+router.post("/getrecording",meetingController.getMeetingRecordings);
  
 module.exports = router;

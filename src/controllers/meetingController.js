@@ -158,6 +158,7 @@ exports.createMeetingTeams = async (req, res) => {
     );
 
     const { joinWebUrl, id } = graphResponse.data;
+    console.log(graphResponse);
 
     const meetingData = {
       startDate: startDate,
@@ -312,4 +313,36 @@ exports.getBatchIdByMeetingId = async (req, res) => {
     console.error("Error fetching batch ID by meeting ID:", error);
     return res.status(500).json({ error: "Server error. Please try again later." });
   }
+};
+
+exports.getMeetingRecordings = async (req, res) => {
+
+  try {
+    const { meetingId,teacherId } = req.body;
+
+    // 1. Validate the meetingId  
+    if (!meetingId||!teacherId) {
+      return res.status(400).json({ error: "ImeetingId and teacherId required" });
+    }
+    const token = await getAccessToken();
+    // const token="eyJ0eXAiOiJKV1QiLCJub25jZSI6IktlVW1UOFNiSlZ2TVo4WXY5V1BIUTZBUDVaLVc1WlNCYVF1eG5PZ2o3bzAiLCJhbGciOiJSUzI1NiIsIng1dCI6InoxcnNZSEhKOS04bWdndDRIc1p1OEJLa0JQdyIsImtpZCI6InoxcnNZSEhKOS04bWdndDRIc1p1OEJLa0JQdyJ9.eyJhdWQiOiJodHRwczovL2dyYXBoLm1pY3Jvc29mdC5jb20iLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC80YTE4ZjU0Mi1lNzZiLTRlNjQtYjExYi0yMmNmODg3ZTQ2NTkvIiwiaWF0IjoxNzM0NjAzMDYzLCJuYmYiOjE3MzQ2MDMwNjMsImV4cCI6MTczNDYwNjk2MywiYWlvIjoiazJCZ1lFaFhMdTdhbjN6Ymg5OUhaWGVJZXQ1ZUFBPT0iLCJhcHBfZGlzcGxheW5hbWUiOiJsbXN3ZWJzaXRlIiwiYXBwaWQiOiI0Mzc0MTc2ZC03ZjkxLTRkODMtYTVlNy1jNDRkMDZkMTI3MjYiLCJhcHBpZGFjciI6IjEiLCJpZHAiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC80YTE4ZjU0Mi1lNzZiLTRlNjQtYjExYi0yMmNmODg3ZTQ2NTkvIiwiaWR0eXAiOiJhcHAiLCJvaWQiOiI4NjljZDFjOS02NmI5LTQwZWQtYTgxNi1lN2I1ZWVjNTlmYzUiLCJyaCI6IjEuQWNZQVF2VVlTbXZuWkU2eEd5TFBpSDVHV1FNQUFBQUFBQUFBd0FBQUFBQUFBQURHQUFER0FBLiIsInJvbGVzIjpbIlVzZXIuUmVhZEJhc2ljLkFsbCIsIk9ubGluZU1lZXRpbmdzLlJlYWQuQWxsIiwiVXNlci5SZXZva2VTZXNzaW9ucy5BbGwiLCJPbmxpbmVNZWV0aW5ncy5SZWFkV3JpdGUuQWxsIiwiVXNlci5SZWFkV3JpdGUuQWxsIiwiVXNlci5EZWxldGVSZXN0b3JlLkFsbCIsIkFkbWluaXN0cmF0aXZlVW5pdC5SZWFkLkFsbCIsIlVzZXIuRW5hYmxlRGlzYWJsZUFjY291bnQuQWxsIiwiVXNlci5JbnZpdGUuQWxsIiwiVXNlci5SZWFkLkFsbCIsIlVzZXIuRXhwb3J0LkFsbCIsIlVzZXIuTWFuYWdlSWRlbnRpdGllcy5BbGwiLCJBZG1pbmlzdHJhdGl2ZVVuaXQuUmVhZFdyaXRlLkFsbCJdLCJzdWIiOiI4NjljZDFjOS02NmI5LTQwZWQtYTgxNi1lN2I1ZWVjNTlmYzUiLCJ0ZW5hbnRfcmVnaW9uX3Njb3BlIjoiQVMiLCJ0aWQiOiI0YTE4ZjU0Mi1lNzZiLTRlNjQtYjExYi0yMmNmODg3ZTQ2NTkiLCJ1dGkiOiJlcGRSaDk1Nm9FbXA4Qng1UFJvX0FnIiwidmVyIjoiMS4wIiwid2lkcyI6WyIwOTk3YTFkMC0wZDFkLTRhY2ItYjQwOC1kNWNhNzMxMjFlOTAiXSwieG1zX2lkcmVsIjoiNyAxNCIsInhtc190Y2R0IjoxNzMxMTczMjY4fQ.cX0PlYeF3GTMCVA8fsdEgGKzNz5ai1YBLT9F0h5JqOxrqc4LoNTM4GTZnaJ7GfltCSp-9hAfJ8Hut6n4a5pfFxIbUqELb_dGGCRDhLvVjb8UnsgMvoMfk78LYwdJYeeMHkAUtetW8optaY6kiJCUwxpPKXXsg1pNwc0_00BjgWHgB3S-WkpsOnjspqOutRCbJzuR1P88222L2nKn6V2aOwiMqLYiF0SnOypZlhCNkmA8f4qWHJOiGvGrZpLKtKe8Bq9wJMB1FnT2fZhJrTe4eStkW2CurW9aihjdpKOSVFDBixhfsfkQQibMxt3eH3N-msbAothOGYiGEJBFgn3T9Q"
+    const graphResponse = await axios.get(
+      `https://graph.microsoft.com/v1.0/users/${teacherId}/onlineMeetings/${meetingId}/recordings/`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return res.status(200).json(graphResponse.data);
+
+    // 2. Fetch the meeting document by ID and populate the batch_id
+
+  }catch (error) {
+    console.error("Error fetching batch ID by meeting ID:", error);
+    return res.status(500).json({ error: "Server error. Please try again later." });
+  }
+
+    
 };

@@ -1,4 +1,5 @@
 const Subject = require("../models/subjectModel");
+const mongoose = require("mongoose");
 
 exports.createSubject = async (req, res) => {
   try {
@@ -9,7 +10,7 @@ exports.createSubject = async (req, res) => {
       approval_status,
       is_grammar_subject,
       subject_image,
-
+      icon
     } = req.body;
 
     if (!subject_name || !class_id || !language) {
@@ -22,6 +23,7 @@ exports.createSubject = async (req, res) => {
       language,
       approval_status,
       is_grammar_subject,
+      icon
     });
     await newSubject.save();
     res
@@ -45,7 +47,8 @@ exports.getallSubjects = async (req, res) => {
 };
 exports.getSubjectsByClassId = async (req, res) => {
   try {
-    const { class_id } = req.params; // Extract class_id from URL parameters
+    // const { class_id } = req.params; // Extract class_id from URL parameters
+    const class_id= new mongoose.Types.ObjectId(req.params.class_id);
     const subjects = await Subject.find({ class_id }); // Find subjects with the matching class_id
 
     if (!subjects || subjects.length === 0) {
