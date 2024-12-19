@@ -4,12 +4,13 @@ const Subject = require('../models/subjectModel');
 
 // Create a new board
 exports.createBoard = async (req, res) => {
-  const { name, description} = req.body;
+  const { name, description,icon} = req.body;
 
   try {
     const board = new Board({
       name,
       description,
+      icon
     });
 
     const savedBoard = await board.save();
