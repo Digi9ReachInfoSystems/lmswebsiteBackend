@@ -84,6 +84,6 @@ router.put("/student/mode",updateModeToPersonal)
 
 router.get("/student/:id/scheduleSevenDays", getStudentScheduleNext7Days);
 
-router.get("/student/eligible-student",getEligibleStudents)
+router.post("/student/eligible-student",getEligibleStudents)
 
 module.exports = router;

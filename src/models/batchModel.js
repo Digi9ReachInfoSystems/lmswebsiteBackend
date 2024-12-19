@@ -32,7 +32,10 @@ const batchSchema = new mongoose.Schema({
   ],
   contentMaterial: { type: String },
   date: { type: Date, default: Date.now },
-
+   type_of_batch:{
+    type:mongoose.Schema.Types.ObjectId,
+    ref:"TypeOfBatch"
+   },
   meeting_link: { type: String },
 });
 
