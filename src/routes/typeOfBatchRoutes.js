@@ -8,6 +8,7 @@ const {
   updateDiscount,
   updateAllFields,
   deleteTypeOfBatch,
+  getBatchByMode,
 } = require("../controllers/typeOfBatchController");
 
 // Create new TypeOfBatch
@@ -27,5 +28,7 @@ router.put("/:id", updateAllFields);
 
 // Delete a TypeOfBatch
 router.delete("/:id", deleteTypeOfBatch);
+// Route to get batch by mode
+router.get("/batch-mode/:mode", getBatchByMode);
 
 module.exports = router;

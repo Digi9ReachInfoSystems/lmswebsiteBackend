@@ -16,12 +16,22 @@ const studentSchema = new mongoose.Schema({
       ref: "Subject",
     },
   ],
+  type_of_batch:{
+    type: mongoose.Schema.Types.ObjectId,
+    ref:"TypeOfBatch"
+  },
   user_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
     unique: true,
   },
+  type_of_batch: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "TypeOfBatch",
+  },
+  duration: { type: String },
+  amount: { type: Number },
 
   subscribed_Package:[ {_id:{
     type: mongoose.Schema.Types.ObjectId,
@@ -31,7 +41,7 @@ const studentSchema = new mongoose.Schema({
 }],
   is_paid: {
     type: Boolean,
-   
+   default: false
   },
   subscription_id: {
     type: mongoose.Schema.Types.ObjectId,
@@ -90,6 +100,7 @@ const studentSchema = new mongoose.Schema({
       meeting_time: { type: String },
       meeting_id: { type: mongoose.Schema.Types.ObjectId, ref: "Meeting" },
       meeting_reschedule: { type: Boolean, default: false },
+      teacher_id: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher" },
     },
   ],
   attendance: [

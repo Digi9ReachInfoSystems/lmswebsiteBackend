@@ -13,11 +13,11 @@ const axios = require('axios');
 
 // Create Razorpay Order
 exports.createOrder = async (req, res) => {
-  const { studentId, packageId, amount, description } = req.body;
+  const { studentId, amount, description } = req.body;
 
   // Validate input
-  if (!studentId || !packageId || !amount) {
-    return res.status(400).json({ error: 'Missing required fields: studentId, packageId, amount' });
+  if (!studentId || !amount) {
+    return res.status(400).json({ error: 'Missing required fields: studentId, amount' });
   }
 
   try {
@@ -28,10 +28,10 @@ exports.createOrder = async (req, res) => {
     }
 
     // Check if package exists
-    const package = await Package.findById(packageId);
-    if (!package) {
-      return res.status(404).json({ error: 'Package not found' });
-    }
+    // const package = await Package.findById(packageId);
+    // if (!package) {
+    //   return res.status(404).json({ error: 'Package not found' });
+    // }
 
     // Create Razorpay order
     const orderOptions = {
@@ -41,7 +41,7 @@ exports.createOrder = async (req, res) => {
       payment_capture: 1, // Auto-capture
       notes: {
         student_id: studentId,
-        package_id: packageId,
+        // package_id: packageId,
         description: description || 'Payment for course package'
       },
     };
@@ -55,8 +55,8 @@ exports.createOrder = async (req, res) => {
       status: 'created',
       order_id: order.id,
       student_id: studentId,
-      package_id: packageId,
-      description: description || 'Payment for course package',
+      // package_id: packageId,
+       description: description || 'Payment for course package',
       receipt: order.receipt,
       razorpay_signature: order.razorpay_signature
     });
@@ -92,29 +92,29 @@ exports.verifyPayment = async (req, res) => {
       // Update student details
       await Student.findByIdAndUpdate(payment.student_id, {
         $push: {
-          subscribed_Package: { _id: payment.package_id, is_active: true },
+          // subscribed_Package: { _id: payment.package_id, is_active: true },
           payment_id: payment._id
         },
         is_paid: true,
       });
 
       // Fetch the package to get duration
-      const pkg = await Package.findById(payment.package_id);
+      // const pkg = await Package.findById(payment.package_id);
 
-      if (!pkg) {
-        return res.status(400).json({ error: "Associated package not found" });
-      }
+      // if (!pkg) {
+      //   return res.status(400).json({ error: "Associated package not found" });
+      // }
 
       // Calculate package_expiry: payment date + duration months
-      const paymentDate = new Date(); // Assuming payment is processed now
-      const packageExpiryDate = new Date(
-        paymentDate.setMonth(paymentDate.getMonth() + pkg.duration)
-      );
+      // const paymentDate = new Date(); // Assuming payment is processed now
+      // const packageExpiryDate = new Date(
+      //   paymentDate.setMonth(paymentDate.getMonth() + pkg.duration)
+      // );
 
       // Update student details
-      await Student.findByIdAndUpdate(payment.student_id, {
-        package_expiry: packageExpiryDate,
-      });
+      // await Student.findByIdAndUpdate(payment.student_id, {
+      //   package_expiry: packageExpiryDate,
+      // });
 
     } else if (req.body.event == "payment_link.paid") {
       console.log("Valid signature inside payment.link.paid", req.body);

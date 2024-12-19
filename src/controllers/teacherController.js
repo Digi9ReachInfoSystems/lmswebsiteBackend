@@ -4,6 +4,17 @@ const Subject = require("../models/subjectModel");
 const moment = require("moment"); // Import teacher model
 const Meeting = require("../models/meetingModel");
 
+
+exports.createTeacher = async (req, res) => {
+  try {
+    const teacher = await Teacher.create(req.body);
+    res.status(201).json({ teacher });
+  } catch (error) {
+    console.error("Error creating teacher:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 // Get Teacher by ID
 exports.getTeacherById = async (req, res) => {
   const { id } = req.params;

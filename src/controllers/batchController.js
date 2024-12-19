@@ -16,6 +16,7 @@ exports.createBatch = async (req, res) => {
       teacher_id,
       students, // Array of student IDs
       date,
+      type_of_batch
     } = req.body;
 
     // Validate required fields
@@ -25,7 +26,8 @@ exports.createBatch = async (req, res) => {
       !class_id ||
       !teacher_id ||
       !students ||
-      !date
+      !date||
+      !type_of_batch
     ) {
       await session.abortTransaction();
       session.endSession();
@@ -54,6 +56,7 @@ exports.createBatch = async (req, res) => {
       teacher_id,
       students,
       date,
+      type_of_batch
     });
 
     await newBatch.save({ session });
