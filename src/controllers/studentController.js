@@ -1469,3 +1469,78 @@ exports.getStudentsforBatchBySubject = async (req, res) => {
     return res.status(500).json({ error: "Server error" });
   }
 };
+
+
+
+
+exports.getEligibleStudents = async (req, res) => {
+  try {
+    const { subject_id, type_of_batch, duration } = req.body;
+
+    if (!subject_id || !type_of_batch || !duration) {
+      return res.status(400).json({
+        error: "subject_id, type_of_batch, and duration are required.",
+      });
+    }
+
+    // Query to find eligible students
+    const students = await Student.find({
+      is_paid: true,
+      subject_id: subject_id,
+      $or: [
+        {
+          "batch_creation.subject_id": { $ne: subject_id },
+          type_of_batch: type_of_batch,
+          duration: duration,
+        },
+        {
+          custom_package_status: "approved",
+          "custom_package_id.is_active": true,
+          "batch_creation.subject_id": { $ne: subject_id },
+          type_of_batch: type_of_batch,
+          duration: duration,
+        },
+      ],
+    })
+      .populate("type_of_batch", "mode price duration")
+      .populate({
+        path: "custom_package_id",
+        match: { is_active: true },
+        populate: { path: "subject_id" },
+      })
+      .select("student_name phone_number profile_image type_of_batch custom_package_id duration batch_creation");
+
+    // Filter the results to ensure the subject is valid
+    const filteredStudents = students.filter((student) => {
+      const customPackageHasSubject =
+        student.custom_package_id &&
+        student.custom_package_id.some((pkg) =>
+          pkg.subject_id.includes(subject_id)
+        );
+
+      // Ensure batch_creation exists and check the condition safely
+      const batchCreationHasSubject =
+        student.batch_creation &&
+        student.batch_creation.every(
+          (batch) => batch.subject_id.toString() !== subject_id
+        );
+
+      return customPackageHasSubject || batchCreationHasSubject;
+    });
+
+    // Response
+    if (filteredStudents.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No eligible students found with given criteria." });
+    }
+
+    res.status(200).json({
+      message: "Eligible students fetched successfully.",
+      students: filteredStudents,
+    });
+  } catch (error) {
+    console.error("Error fetching eligible students:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
