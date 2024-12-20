@@ -13,16 +13,16 @@ exports.createSubject = async (req, res) => {
       icon
     } = req.body;
 
-    if (!subject_name || !class_id || !language) {
+    if (!subject_name || !class_id ) {
       return res.status(400).json({ error: "All fields are required" });
     }
     const newSubject = new Subject({
       subject_name,
       subject_image,
       class_id,
-      language,
+      // language,
       approval_status,
-      is_grammar_subject,
+      // is_grammar_subject,
       icon
     });
     await newSubject.save();

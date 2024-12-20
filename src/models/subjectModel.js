@@ -9,7 +9,7 @@ const subjectSchema = new mongoose.Schema({
   },
   subject_image: { type: String },
   created_at: { type: Date, default: Date.now },
-  language: { type: String, required: true },
+  language: { type: String },
   approval_status: {
     type: String,
     enum: ["pending", "approved", "rejected"],
