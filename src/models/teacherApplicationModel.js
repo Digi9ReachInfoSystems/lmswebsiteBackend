@@ -49,7 +49,7 @@ const teacherApplicationSchema = new mongoose.Schema({
   },
   language: {
     type: String,
-    required: true,
+   
   },
 
   profileImage:{

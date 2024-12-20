@@ -55,7 +55,7 @@ console.log(req.body);
     user = new User({
       auth_id: uid,
       email: decodedToken.email || null,
-      name: student_name ?student_name: "Anonymous",
+      name: student_name|| "Anonymous",
       role: userRole,
       access_token: access_token,
       refresh_token: refresh_token,

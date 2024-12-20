@@ -338,6 +338,73 @@ exports.getBatchesByStudentId = async (req, res) => {
   }
 };
 
+
+
+/**
+ * Add one or multiple students to an existing batch
+ * 
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @returns {Object} - JSON response with success or error message
+ */
+exports.addStudentsToBatch = async (req, res) => {
+  try {
+    const { batchId } = req.params;
+    const { studentIds } = req.body;
+
+    // Validate batchId
+    if (!mongoose.Types.ObjectId.isValid(batchId)) {
+      return res.status(400).json({ error: 'Invalid batch ID.' });
+    }
+
+    // Validate studentIds
+    if (!studentIds || !Array.isArray(studentIds) || studentIds.length === 0) {
+      return res.status(400).json({ error: 'studentIds must be a non-empty array.' });
+    }
+
+    // Validate each studentId
+    for (const id of studentIds) {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ error: `Invalid student ID: ${id}` });
+      }
+    }
+
+    // Find the batch
+    const batch = await Batch.findById(batchId);
+    if (!batch) {
+      return res.status(404).json({ error: 'Batch not found.' });
+    }
+
+    // Check if students exist
+    const existingStudents = await Student.find({ _id: { $in: studentIds } });
+    const existingStudentIds = existingStudents.map(student => student._id.toString());
+
+    const nonExistentStudents = studentIds.filter(id => !existingStudentIds.includes(id));
+    if (nonExistentStudents.length > 0) {
+      return res.status(404).json({ error: `Students not found: ${nonExistentStudents.join(', ')}` });
+    }
+
+    // Add students to the batch using $addToSet to prevent duplicates
+    batch.students = [...new Set([...batch.students.map(id => id.toString()), ...studentIds])].map(id => new mongoose.Types.ObjectId(id));
+  
+    // Save the updated batch
+    await batch.save();
+
+    // Optionally, populate the students field to return detailed information
+    await batch.populate('students', 'name email'); // Adjust fields as necessary
+
+    return res.status(200).json({
+      message: 'Student(s) added to the batch successfully.',
+      batch,
+    });
+  } catch (error) {
+    console.error('Error adding students to batch:', error);
+    return res.status(500).json({ error: 'An error occurred while adding students to the batch.' });
+  }
+};
+
+
+
 // // Get batches by authenticated teacher ID
 // exports.getBatchesByTeacherId = async (req, res) => {
 //   try {

@@ -49,7 +49,7 @@ exports.createTeacherApplication = async (req, res) => {
       !city ||
       !pincode ||
       !current_position ||
-      !language ||
+      
       !phone_number ||
       !experience ||
       !board_id ||
