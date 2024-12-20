@@ -11,7 +11,8 @@ function calculateDiscountedPrice(price, discountPercentage) {
 // Create a new TypeOfBatch
 exports.createTypeOfBatch = async (req, res) => {
   try {
-    const { mode, duration, price } = req.body;
+    const { mode, duration, price ,features,title} = req.body;
+    console.log(req.body);
 
     // Basic validation
     if (!mode || !price) {
@@ -25,6 +26,8 @@ exports.createTypeOfBatch = async (req, res) => {
       discountPercentage: 0,
       discountedPrice: price,
       discount_active: false,
+      feature:features,
+      title:title
     });
 
     await newBatch.save();

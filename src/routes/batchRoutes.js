@@ -25,6 +25,8 @@ router.get("/getAllBatches/student/:studentId", batchController.getBatchesByStud
 router.get("/getAllBatchesNoFilter", batchController.getAllBatchesNoFilter);
 
 router.get("/getAllBatches/all", batchController.getAllBatches);
+
+router.post("/addstudents/:batchId", batchController.addStudentsToBatch);
 // router.get(
 //   "/getBatchForStudent",
 //   authorizeRole("student"),
