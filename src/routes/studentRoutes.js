@@ -19,7 +19,8 @@ const {
   getStudentsWithAttendance,
   updateModeToPersonal,
   getStudentScheduleNext7Days,
-  getEligibleStudents
+  getEligibleStudents,
+  checkBatchStatus
 } = require("../controllers/studentController");
 const authMiddleware = require("../middlewares/authMiddleware");
 const authorizeRole = require("../middlewares/authorizeRole");
@@ -85,5 +86,6 @@ router.put("/student/mode",updateModeToPersonal)
 router.get("/student/:id/scheduleSevenDays", getStudentScheduleNext7Days);
 
 router.post("/student/eligible-student",getEligibleStudents)
+router.post("/student/batchstatus",checkBatchStatus)
 
 module.exports = router;
