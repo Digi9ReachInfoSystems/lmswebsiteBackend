@@ -404,6 +404,7 @@ exports.getStudentSchedule = async (req, res) => {
         meeting_title: item.meeting_title,
         meeting_id: item.meeting_id,
         meeting_reschedule: item.meeting_reschedule,
+        batch_id: item.batch_id
       })),
     });
   } catch (error) {
@@ -1719,7 +1720,7 @@ exports.getStudentsforBatchBySubject = async (req, res) => {
 exports.getEligibleStudents = async (req, res) => {
   try {
     const { subject_id: subjectIdStr, type_of_batch: typeOfBatchStr } = req.body;
-
+console.log("req.body", req.body);
     // Validate required inputs
     if (!subjectIdStr || !typeOfBatchStr) {
       return res.status(400).json({
@@ -1771,5 +1772,66 @@ exports.getEligibleStudents = async (req, res) => {
   } catch (error) {
     console.error("Error fetching eligible students:", error);
     return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+exports.checkBatchStatus = async (req, res) => {
+  try {
+    const { studentId, batchId } = req.body;
+
+    // Validate input
+    if (!studentId || !batchId) {
+      return res.status(400).json({
+        error: "Both studentId and batchId are required in the request body.",
+      });
+    }
+
+    // Validate ObjectId format
+    if (
+      !mongoose.Types.ObjectId.isValid(studentId) ||
+      !mongoose.Types.ObjectId.isValid(batchId)
+    ) {
+      return res.status(400).json({
+        error: "Invalid studentId or batchId format.",
+      });
+    }
+
+    // Query using $elemMatch to find the matching subdocument
+    const student = await Student.findOne({
+      _id: studentId,
+      subject_id: {
+        $elemMatch: { batch_id: batchId },
+      },
+    }).select("subject_id");
+
+    if (!student) {
+      return res.status(404).json({
+        error: "Student not found or batch not associated with the student.",
+      });
+    }
+
+    // Use $filter to get the specific subdocument
+    const batchSubdoc = student.subject_id.find(
+      (sub) => sub.batch_id.toString() === batchId
+    );
+
+    if (!batchSubdoc) {
+      return res.status(404).json({
+        error: "Batch not found in the student's subject array.",
+      });
+    }
+
+    const isActive = batchSubdoc.batch_status === "active";
+
+    return res.status(200).json({
+      status: isActive,
+      message: isActive
+        ? "The batch is active for the student."
+        : "The batch is not active for the student.",
+    });
+  } catch (error) {
+    console.error("Error in checkBatchStatus:", error);
+    return res.status(500).json({
+      error: "Internal Server Error.",
+    });
   }
 };
