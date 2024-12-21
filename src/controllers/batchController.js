@@ -3,20 +3,120 @@ const mongoose = require("mongoose");
 const { error } = require("winston");
 const Batch = require("../models/batchModel");
 const Student = require("../models/studentModel");
+const TypeOfBatch = require("../models/typeOfBatchModel"); // Adjust path as needed
+
+// exports.createBatch = async (req, res) => {
+//   const session = await mongoose.startSession();
+//   session.startTransaction();
+//   try {
+//     const {
+//       batch_name,
+//       batch_image, // Expected to be a string (URL or file path)
+//       subject_id,
+//       class_id,
+//       teacher_id,
+//       students, // Array of student IDs
+//       date,
+//       type_of_batch
+//     } = req.body;
+
+//     // Validate required fields
+//     if (
+//       !batch_name ||
+//       !subject_id ||
+//       !class_id ||
+//       !teacher_id ||
+//       !students ||
+//       !date||
+//       !type_of_batch
+//     ) {
+//       await session.abortTransaction();
+//       session.endSession();
+//       return res.status(400).json({ message: "All fields are required" });
+//     }
+
+//     // Ensure 'students' is an array
+//     if (!Array.isArray(students)) {
+//       await session.abortTransaction();
+//       session.endSession();
+//       return res.status(400).json({ message: "'students' must be an array of student IDs" });
+//     }
+
+//     // Validate all student IDs
+//     const validStudentsCount = await Student.countDocuments({ _id: { $in: students } });
+//     if (validStudentsCount !== students.length) {
+//       throw new Error("One or more student IDs are invalid");
+//     }
+
+//     // Create the new Batch
+//     const newBatch = new Batch({
+//       batch_name,
+//       batch_image,
+//       subject_id,
+//       class_id,
+//       teacher_id,
+//       students,
+//       date,
+//       type_of_batch
+//     });
+
+//     await newBatch.save({ session });
+
+//     // Prepare the update for students using $addToSet to prevent duplicates
+//     const bulkOps = students.map((studentId) => ({
+//       updateOne: {
+//         filter: { _id: studentId },
+//         update: {
+//           $addToSet: {
+//             batch_creation: {
+//               subject_id: subject_id,
+//               status: true,
+//             },
+//           },
+//         },
+//       },
+//     }));
+
+//     // Execute bulk operations
+//     const bulkWriteResult = await Student.bulkWrite(bulkOps, { session });
+
+//     // Commit the transaction
+//     await session.commitTransaction();
+//     session.endSession();
+
+//     res.status(201).json({ message: "Batch created successfully" });
+//   } catch (error) {
+//     // Abort the transaction in case of error
+//     await session.abortTransaction();
+//     session.endSession();
+
+//     console.error("Error creating batch:", error);
+
+//     // Handle specific errors if necessary
+//     if (error.name === "CastError") {
+//       return res.status(400).json({ error: "Invalid ID format" });
+//     }
+
+//     res.status(500).json({ error: error.message || "Server error" });
+//   }
+// };
+
+
 
 exports.createBatch = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
+
   try {
     const {
       batch_name,
-      batch_image, // Expected to be a string (URL or file path)
-      subject_id,
+      batch_image,   // (string) URL or file path
+      subject_id,    // The subject _id used for this batch
       class_id,
       teacher_id,
-      students, // Array of student IDs
+      students,      // Array of student _ids
       date,
-      type_of_batch
+      type_of_batch, // e.g. a TypeOfBatch reference
     } = req.body;
 
     // Validate required fields
@@ -26,28 +126,36 @@ exports.createBatch = async (req, res) => {
       !class_id ||
       !teacher_id ||
       !students ||
-      !date||
       !type_of_batch
     ) {
       await session.abortTransaction();
       session.endSession();
-      return res.status(400).json({ message: "All fields are required" });
+      return res.status(400).json({ message: "All fields are required." });
     }
 
     // Ensure 'students' is an array
     if (!Array.isArray(students)) {
       await session.abortTransaction();
       session.endSession();
-      return res.status(400).json({ message: "'students' must be an array of student IDs" });
+      return res
+        .status(400)
+        .json({ message: "'students' must be an array of student IDs." });
     }
 
     // Validate all student IDs
-    const validStudentsCount = await Student.countDocuments({ _id: { $in: students } });
-    if (validStudentsCount !== students.length) {
-      throw new Error("One or more student IDs are invalid");
-    }
+    const validStudentsCount = await Student.countDocuments({
+      _id: { $in: students },
+    }).session(session);
 
-    // Create the new Batch
+    if (validStudentsCount !== students.length) {
+      throw new Error("One or more student IDs are invalid.");
+    }
+    const currentDate = new Date();
+    const nextYear = currentDate.getFullYear() + 1;
+    // monthIndex = 1 => February (0-based month in JS), day = 1 => Feb 1.
+    const nextFeb = new Date(nextYear, 1, 1);
+
+    // Create and save the new Batch
     const newBatch = new Batch({
       batch_name,
       batch_image,
@@ -55,51 +163,86 @@ exports.createBatch = async (req, res) => {
       class_id,
       teacher_id,
       students,
-      date,
-      type_of_batch
+      date:nextFeb,
+      type_of_batch,
     });
 
     await newBatch.save({ session });
 
-    // Prepare the update for students using $addToSet to prevent duplicates
-    const bulkOps = students.map((studentId) => ({
-      updateOne: {
-        filter: { _id: studentId },
-        update: {
-          $addToSet: {
-            batch_creation: {
-              subject_id: subject_id,
-              status: true,
-            },
-          },
-        },
-      },
-    }));
+    // For each student, update their subject array subdoc + batch_creation
+    for (const studentId of students) {
+      // 1) Find the student document
+      const studentDoc = await Student.findOne({ _id: studentId }).session(
+        session
+      );
 
-    // Execute bulk operations
-    const bulkWriteResult = await Student.bulkWrite(bulkOps, { session });
+      if (!studentDoc) {
+        throw new Error(`Student not found: ${studentId}`);
+      }
 
-    // Commit the transaction
+      // 2) Find the matching subject subdoc in the student's subject_id array
+      const subdoc = studentDoc.subject_id.find(
+        (sub) => sub._id.toString() === subject_id.toString()
+      );
+
+      if (!subdoc) {
+        // If subdoc doesn't exist, you might decide to throw an error
+        // or skip. We'll throw an error for strictness.
+        throw new Error(
+          `Subject ${subject_id} not found in student ${studentId}'s subject_id array.`
+        );
+      }
+
+      // 3) Retrieve the duration from the subdoc
+      //    This is presumably in months.
+      const durationValue = parseInt(subdoc.duration, 10) || 0;
+
+      // 4) Compute expiry date from 'today + duration (months)'
+      const expiryDate = new Date();
+      expiryDate.setMonth(expiryDate.getMonth() + durationValue);
+
+      // 5) Update the subdoc fields
+      subdoc.batch_id = newBatch._id;
+      subdoc.batch_assigned = true;
+      subdoc.batch_expiry_date = expiryDate;
+      subdoc.batch_status = "active";
+
+      // 6) Update or push to `batch_creation` array
+      //    We'll do an "add if not present" approach.
+      const alreadyInBatchCreation = studentDoc.batch_creation.some(
+        (bc) => bc.subject_id.toString() === subject_id.toString()
+      );
+      if (!alreadyInBatchCreation) {
+        studentDoc.batch_creation.push({
+          subject_id,
+          status: true, // or whichever logic for "active"
+        });
+      }
+
+      // 7) Save changes for this student
+      await studentDoc.save({ session });
+    }
+
+    // If all updates succeed, commit the transaction
     await session.commitTransaction();
     session.endSession();
 
-    res.status(201).json({ message: "Batch created successfully" });
+    res.status(201).json({ message: "Batch created successfully." });
   } catch (error) {
-    // Abort the transaction in case of error
+    // Abort transaction on error
     await session.abortTransaction();
     session.endSession();
 
     console.error("Error creating batch:", error);
 
-    // Handle specific errors if necessary
+    // Check specific errors
     if (error.name === "CastError") {
-      return res.status(400).json({ error: "Invalid ID format" });
+      return res.status(400).json({ error: "Invalid ID format." });
     }
 
-    res.status(500).json({ error: error.message || "Server error" });
+    res.status(500).json({ error: error.message || "Server error." });
   }
 };
-
 // src/controllers/batchController.js
 
 exports.getAllBatches = async (req, res) => {
