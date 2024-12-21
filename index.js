@@ -42,6 +42,7 @@ const rescheduleMeetingRoutes = require('./src/routes/rescheduleMeetingRoutes');
 const schedulePackageExpiryJob = require("./src/Jobs/packageExpiryJob");
 const typeOfBatchRoutes= require("./src/routes/typeOfBatchRoutes");
 const blogRoutes = require("./src/routes/blogRoutes");
+const assignmentRoutes= require("./src/routes/assignmentRoutes")
 
 require("dotenv").config();
 
@@ -107,6 +108,7 @@ app.use("/teacherDashboard",teacherDashboardRoutes);
 app.use("/reschedule",rescheduleMeetingRoutes);
 app.use("/typeOfBatch",typeOfBatchRoutes);
 app.use("/blogs",blogRoutes);
+app.use("/assignments",assignmentRoutes);
 
 // Start Server
 // const PORT = process.env.PORT || 5000;
