@@ -266,11 +266,12 @@ exports.verifyPayment = async (req, res) => {
       // pkg.subject_id is assumed to be an array of Subject _ids (from your customPackage model)
       // We'll push them into studentDoc.subject_id if they don't already exist
       pkg.subject_id.forEach((subjectId) => {
-        const alreadyExists = studentDoc.subject_id.some(
-          (sub) => sub._id.toString() === subjectId.toString()
-        );
-        if (!alreadyExists) {
+        // const alreadyExists = studentDoc.subject_id.some(
+        //   (sub) => sub._id.toString() === subjectId.toString()
+        // );
+        // if (!alreadyExists) {
           // Add a new subdocument with default fields
+          console.log("subjectId", subjectId);
           studentDoc.subject_id.push({
             _id: subjectId,
             batch_assigned: false,
@@ -278,7 +279,7 @@ exports.verifyPayment = async (req, res) => {
             batch_status: "new",
             duration: pkg.duration || 0, // store same duration as custom package if desired
           });
-        }
+        // }
       });
 
       // Save the updated student
