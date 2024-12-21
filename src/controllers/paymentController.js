@@ -56,7 +56,7 @@ exports.createOrder = async (req, res) => {
       order_id: order.id,
       student_id: studentId,
       // package_id: packageId,
-       description: description || 'Payment for course package',
+      description: description || 'Payment for course package',
       receipt: order.receipt,
       razorpay_signature: order.razorpay_signature
     });
@@ -178,8 +178,8 @@ exports.verifyPayment = async (req, res) => {
   if (digested_signature === signature) {
     if (req.body.event == "payment.captured") {
       console.log("Valid signature inside payment.captured", req.body);
-      console.log("request", req.body.payload.payment.entity);
-    
+      console.log("request", req.body.payload.payment);
+
       // Payment is valid
       const payment = await Payment.findOne({
         order_id: req.body.payload.payment.entity.order_id,
@@ -192,6 +192,62 @@ exports.verifyPayment = async (req, res) => {
       payment.payment_id = req.body.payload.payment.entity.id;
       payment.status = "paid";
       await payment.save();
+      if (req.body.payload.payment.entity.notes.batchId && req.body.payload.payment.entity.notes.subjectId && req.body.payload.payment.entity.notes.duration) {
+        const { batchId, subjectId, duration } = req.body.payload.payment.entity.notes || {};
+        const durationInt = parseInt(req.body.payload.payment.entity.notes.duration, 10);
+        if (isNaN(durationInt) || durationInt <= 0) {
+          console.error("Invalid duration provided:", duration);
+          return res.status(400).json({ error: "Invalid duration provided" });
+        }
+        // Find the student document
+        const student = await Student.findById(payment.student_id);
+        if (!student) {
+          console.error("Student not found with ID:", payment.student_id);
+          return res.status(404).json({ error: "Student not found" });
+        }
+        // Find the matching subject subdocument
+        const subjectSubdoc = student.subject_id.find(
+          (sub) =>
+            sub._id.toString() === subjectId.toString() &&
+            sub.batch_id &&
+            sub.batch_id.toString() === batchId.toString()
+        );
+        if (!subjectSubdoc) {
+          console.error(
+            `Subject subdocument not found for subjectId: ${subjectId} and batchId: ${batchId} in student: ${student._id}`
+          );
+          return res.status(404).json({
+            error: "Subject and Batch combination not found in student's subject array",
+          });
+        }
+        // Update the subdocument fields
+        subjectSubdoc.duration = durationInt;
+
+        // Calculate new batch_expiry_date: current date + duration months
+        const currentDate = new Date();
+        const newExpiryDate = new Date(currentDate);
+        newExpiryDate.setMonth(newExpiryDate.getMonth() + durationInt);
+
+        subjectSubdoc.batch_expiry_date = newExpiryDate;
+        subjectSubdoc.batch_status = "active";
+
+        // Optionally, set batch_assigned to true if required
+        subjectSubdoc.batch_assigned = true;
+
+        // Save the updated student document
+        await student.save();
+        console.log(
+          `Updated subject_id subdoc for student ${student._id}:`,
+          {
+            subjectId,
+            batchId,
+            duration: durationInt,
+            batch_expiry_date: newExpiryDate,
+            batch_status: "active",
+          }
+        );
+
+      }
 
       // Update student: set is_paid, push payment_id, etc.
       await Student.findByIdAndUpdate(payment.student_id, {
@@ -271,15 +327,15 @@ exports.verifyPayment = async (req, res) => {
         //   (sub) => sub._id.toString() === subjectId.toString()
         // );
         // if (!alreadyExists) {
-          // Add a new subdocument with default fields
-          console.log("subjectId", subjectId);
-          studentDoc.subject_id.push({
-            _id: subjectId,
-            batch_assigned: false,
-            batch_expiry_date: null,
-            batch_status: "new",
-            duration: pkg.duration || 0, // store same duration as custom package if desired
-          });
+        // Add a new subdocument with default fields
+        console.log("subjectId", subjectId);
+        studentDoc.subject_id.push({
+          _id: subjectId,
+          batch_assigned: false,
+          batch_expiry_date: null,
+          batch_status: "new",
+          duration: pkg.duration || 0, // store same duration as custom package if desired
+        });
         // }
       });
 
@@ -412,3 +468,63 @@ exports.getAllPayments = async (req, res) => {
   }
 };
 
+exports.createOrderRenewal = async (req, res) => {
+  const { studentId, amount, description, batchId, subjectId, duration } = req.body;
+
+  // Validate input
+  if (!studentId || !amount) {
+    return res.status(400).json({ error: 'Missing required fields: studentId, amount' });
+  }
+
+  try {
+    // Check if student exists
+    const student = await Student.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+
+    // Check if package exists
+    // const package = await Package.findById(packageId);
+    // if (!package) {
+    //   return res.status(404).json({ error: 'Package not found' });
+    // }
+
+    // Create Razorpay order
+    const orderOptions = {
+      amount: amount * 100, // Amount in paise
+      currency: 'INR',
+      receipt: `receipt_${Date.now()}`,
+      payment_capture: 1, // Auto-capture
+      notes: {
+        student_id: studentId,
+        // package_id: packageId,
+        description: description || 'Payment for course package',
+        batchId,
+        subjectId,
+        duration
+      },
+    };
+
+    const order = await razorpayInstance.orders.create(orderOptions);
+
+    // Save order details in Payment model
+    const payment = new Payment({
+      amount: amount,
+      currency: order.currency,
+      status: 'created',
+      order_id: order.id,
+      student_id: studentId,
+      // package_id: packageId,
+      description: description || 'Payment for course package',
+      receipt: order.receipt,
+      razorpay_signature: order.razorpay_signature
+    });
+
+    await payment.save();
+
+    res.status(200).json(order);
+  } catch (error) {
+    console.error('Error creating order:', error);
+    res.status(500).json({ error: 'Unable to create order' });
+  }
+};
