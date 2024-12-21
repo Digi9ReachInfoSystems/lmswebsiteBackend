@@ -221,7 +221,8 @@ exports.createMeetingTeams = async (req, res) => {
               meeting_time: meetingTime,
               meeting_id: meeting._id,
               meeting_reschedule: false,
-              teacher_id: teacher_id
+              teacher_id: teacher_id,
+              batch_id: batch_id
             },
           },
         },
