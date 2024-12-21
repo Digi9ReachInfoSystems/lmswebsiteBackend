@@ -179,6 +179,7 @@ exports.verifyPayment = async (req, res) => {
     if (req.body.event == "payment.captured") {
       console.log("Valid signature inside payment.captured", req.body);
       console.log("request", req.body.payload.payment.entity);
+    
       // Payment is valid
       const payment = await Payment.findOne({
         order_id: req.body.payload.payment.entity.order_id,
