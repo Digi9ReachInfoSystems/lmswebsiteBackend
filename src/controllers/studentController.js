@@ -264,11 +264,11 @@ exports.getPaymentStatusChartData = async (req, res) => {
 exports.updateStudent = async (req, res) => {
   const { studentId } = req.params; // Get student ID from route params
   const { class_id, updateData } = req.body; // Extract class_id and other update data
- console.log(req.body);
- console.log(updateData);
+  console.log(req.body);
+  console.log(updateData);
   try {
     // Find the student by ID
-    let student = await Student.findById( studentId );
+    let student = await Student.findById(studentId);
     if (!student) {
       return res.status(404).json({ error: "Student not found" });
     }
@@ -404,6 +404,7 @@ exports.getStudentSchedule = async (req, res) => {
         meeting_title: item.meeting_title,
         meeting_id: item.meeting_id,
         meeting_reschedule: item.meeting_reschedule,
+        batch_id: item.batch_id
       })),
     });
   } catch (error) {
@@ -1546,158 +1547,291 @@ exports.getStudentsforBatchBySubject = async (req, res) => {
 //   }
 // };
 
+// exports.getEligibleStudents = async (req, res) => {
+//   try {
+//     // Extract and validate required fields from the request body
+//     const { subject_id: subjectIdStr, type_of_batch: typeOfBatchStr } = req.body;
+//     console.log("Received Data:", req.body);
+
+//     // Convert to ObjectId
+//     if (!subjectIdStr || !typeOfBatchStr) {
+//       return res
+//         .status(400)
+//         .json({ error: "subject_id and type_of_batch are required." });
+//     }
+
+//     const subject_id = new mongoose.Types.ObjectId(subjectIdStr);
+//     const type_of_batch = new mongoose.Types.ObjectId(typeOfBatchStr);
+
+//     // Main query to find eligible students
+//     // 1) Normal criteria: Student has paid (is_paid = true)
+//     //    AND subject_id array contains subdoc with matching _id
+//     //    AND batch_creation does not already contain this subject
+//     //    AND matching type_of_batch
+//     //
+//     // 2) Custom package criteria: custom_package_status = "approved"
+//     //    AND custom_package_id subdoc is active
+//     //    AND batch_creation does not already contain this subject
+//     //    AND matching type_of_batch
+//     const students = await Student.find({
+//       $or: [
+//         {
+//           is_paid: true,
+//           // subject_id array must contain a subdocument with _id = subject_id
+//           subject_id: {
+//             $elemMatch: {
+//               _id: subject_id,
+//             },
+//           },
+//           // Exclude students who have this subject in batch_creation
+//           "batch_creation.subject_id": { $ne: subject_id },
+//           type_of_batch,
+//         },
+//         {
+//           custom_package_status: "approved",
+//           "custom_package_id.is_active": true,
+//           subject_id: {
+//             $elemMatch: {
+//               _id: subject_id,
+//             },
+//           },
+//           // "batch_creation.subject_id": { $ne: subject_id },
+//           type_of_batch,
+//         },
+//       ],
+//     })
+//       .populate("type_of_batch", "mode price duration")
+//       .populate({
+//         path: "custom_package_id",
+//         match: { is_active: true },
+//         populate: { path: "_id", select: "subject_id" }, // or adjust if needed
+//       })
+//       .populate("user_id") // Populate user details
+//       .select(
+//         "auth_id phone_number profile_image type_of_batch custom_package_id duration batch_creation user_id is_paid subject_id"
+//       );
+//       console.log("students",students);
+
+//     // Now filter the results to ensure the subject is actually present
+//     // in the array (for normal criteria), or in the custom package
+//     const filteredStudents = students.filter((student) => {
+//       // 1) Check if subject_id array includes the given subject
+//       const normalSubjectMatch =
+//         student.subject_id &&
+//         student.subject_id.some(
+//           (subdoc) => subdoc._id.toString() === subject_id.toString()
+//         );
+
+         
+//       // 2) Check if custom_package_id includes the subject
+//       //    (If your customPackage model has subject array, adjust accordingly)
+//       const customPackageHasSubject =
+//         student.custom_package_id &&
+//         student.custom_package_id.some(
+//           (cp) =>
+//             // If the custom package references Subject IDs in a field `subject_id`,
+//             // we must check cp._id.subject_id or similar structure. Adjust as needed.
+//             cp._id &&
+//             cp._id.subject_id &&
+//             cp._id.subject_id.includes(subject_id)
+//         );
+
+//       // 3) Check that `batch_creation` does NOT have this subject
+//       //    (or ensure it's not 'active' if that's the logic)
+//       const batchCreationExcludesSubject = !(
+//         student.batch_creation &&
+//         student.batch_creation.some(
+//           (bc) => bc?.subject_id.toString() === subject_id.toString() && bc.status
+//         )
+//       );
+
+//       // The student is valid if either:
+//       // - Normal criteria (paid, has subdoc in subject_id) AND not in batch_creation
+//       // - Custom package criteria (approved, is_active) AND not in batch_creation
+//       // We'll let the next step separate them
+//       return (
+//         batchCreationExcludesSubject &&
+//         (normalSubjectMatch || customPackageHasSubject)
+//       );
+//     });
+
+//     // Separate into normal vs. custom package arrays
+//     const normalCriteria = [];
+//     const customPackageCriteria = [];
+//     console.log("filteredStudents", filteredStudents);
+
+//     filteredStudents.forEach((student) => {
+//       // Check if the student qualifies for normal criteria
+//       const hasNormalSubject =
+//         student.subject_id &&
+//         student?.subject_id.some(
+//           (subdoc) => subdoc._id.toString() === subject_id.toString()
+//         ) &&
+//         student.is_paid &&
+//         student.type_of_batch &&
+//         student.type_of_batch._id.toString() === type_of_batch.toString();
+
+//         console.log("hasNormalSubject", hasNormalSubject);
+
+//       // Check if the student qualifies for custom package
+//       const hasCustomSubject =
+//         student.custom_package_status === "approved" &&
+//         student.custom_package_id &&
+//         student.custom_package_id.some(
+//           (cp) =>
+//             cp.is_active === true &&
+//             cp._id &&
+//             cp._id.subject_id &&
+//             cp._id.subject_id.includes(subject_id)
+//         ) &&
+//         student.type_of_batch &&
+//         student.type_of_batch._id.toString() === type_of_batch.toString();
+//         console.log("hasCustomSubject", hasCustomSubject);
+
+//       if (hasNormalSubject) {
+//         normalCriteria.push(student);
+//       }
+//       if (hasCustomSubject) {
+//         customPackageCriteria.push(student);
+//       }
+//     });
+// console.log("normalCriteria", normalCriteria);
+// console.log("customPackageCriteria", customPackageCriteria);
+//     if (normalCriteria.length === 0 && customPackageCriteria.length === 0) {
+//       return res.status(404).json({
+//         message: "No eligible students found with the given criteria.",
+//       });
+//     }
+
+//     // Final response
+//     res.status(200).json({
+//       message: "Eligible students fetched successfully.",
+//       normalCriteria,
+//       customPackageCriteria,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching eligible students:", error.message);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// };
+
+
+
 exports.getEligibleStudents = async (req, res) => {
   try {
-    // Extract and validate required fields from the request body
     const { subject_id: subjectIdStr, type_of_batch: typeOfBatchStr } = req.body;
-    console.log("Received Data:", req.body);
-
-    // Convert to ObjectId
+console.log("req.body", req.body);
+    // Validate required inputs
     if (!subjectIdStr || !typeOfBatchStr) {
-      return res
-        .status(400)
-        .json({ error: "subject_id and type_of_batch are required." });
+      return res.status(400).json({
+        error: "subject_id and type_of_batch are required in the request body.",
+      });
     }
 
+    // Convert strings to ObjectId
     const subject_id = new mongoose.Types.ObjectId(subjectIdStr);
     const type_of_batch = new mongoose.Types.ObjectId(typeOfBatchStr);
 
-    // Main query to find eligible students
-    // 1) Normal criteria: Student has paid (is_paid = true)
-    //    AND subject_id array contains subdoc with matching _id
-    //    AND batch_creation does not already contain this subject
-    //    AND matching type_of_batch
-    //
-    // 2) Custom package criteria: custom_package_status = "approved"
-    //    AND custom_package_id subdoc is active
-    //    AND batch_creation does not already contain this subject
-    //    AND matching type_of_batch
+    // Query conditions:
+    // 1) subject_id array has a subdocument with `_id = subject_id`
+    // 2) batch_creation array does NOT have this subject
+    // 3) Matches the passed type_of_batch
+    // 4) (is_paid = true) OR (custom_package_status = "approved")
     const students = await Student.find({
+      // Must have subject_id subdoc with the given subject
+      "subject_id._id": subject_id,
+
+      // Must NOT have this subject in batch_creation
+      "batch_creation.subject_id": { $ne: subject_id },
+
+      // Must match type_of_batch
+      type_of_batch,
+
+      // Either paid or custom package is approved
       $or: [
-        {
-          is_paid: true,
-          // subject_id array must contain a subdocument with _id = subject_id
-          subject_id: {
-            $elemMatch: {
-              _id: subject_id,
-            },
-          },
-          // Exclude students who have this subject in batch_creation
-          "batch_creation.subject_id": { $ne: subject_id },
-          type_of_batch,
-        },
-        {
-          custom_package_status: "approved",
-          "custom_package_id.is_active": true,
-          "batch_creation.subject_id": { $ne: subject_id },
-          type_of_batch,
-        },
+        { is_paid: true },
+        { custom_package_status: "approved" },
       ],
     })
-      .populate("type_of_batch", "mode price duration")
-      .populate({
-        path: "custom_package_id",
-        match: { is_active: true },
-        populate: { path: "_id", select: "subject_id" }, // or adjust if needed
-      })
-      .populate("user_id") // Populate user details
-      .select(
-        "auth_id phone_number profile_image type_of_batch custom_package_id duration batch_creation user_id is_paid subject_id"
-      );
-
-    // Now filter the results to ensure the subject is actually present
-    // in the array (for normal criteria), or in the custom package
-    const filteredStudents = students.filter((student) => {
-      // 1) Check if subject_id array includes the given subject
-      const normalSubjectMatch =
-        student.subject_id &&
-        student.subject_id.some(
-          (subdoc) => subdoc._id.toString() === subject_id.toString()
-        );
-
-      // 2) Check if custom_package_id includes the subject
-      //    (If your customPackage model has subject array, adjust accordingly)
-      const customPackageHasSubject =
-        student.custom_package_id &&
-        student.custom_package_id.some(
-          (cp) =>
-            // If the custom package references Subject IDs in a field `subject_id`,
-            // we must check cp._id.subject_id or similar structure. Adjust as needed.
-            cp._id &&
-            cp._id.subject_id &&
-            cp._id.subject_id.includes(subject_id)
-        );
-
-      // 3) Check that `batch_creation` does NOT have this subject
-      //    (or ensure it's not 'active' if that's the logic)
-      const batchCreationExcludesSubject = !(
-        student.batch_creation &&
-        student.batch_creation.some(
-          (bc) => bc.subject_id.toString() === subject_id.toString() && bc.status
-        )
-      );
-
-      // The student is valid if either:
-      // - Normal criteria (paid, has subdoc in subject_id) AND not in batch_creation
-      // - Custom package criteria (approved, is_active) AND not in batch_creation
-      // We'll let the next step separate them
-      return (
-        batchCreationExcludesSubject &&
-        (normalSubjectMatch || customPackageHasSubject)
-      );
-    });
-
-    // Separate into normal vs. custom package arrays
-    const normalCriteria = [];
-    const customPackageCriteria = [];
-
-    filteredStudents.forEach((student) => {
-      // Check if the student qualifies for normal criteria
-      const hasNormalSubject =
-        student.subject_id &&
-        student.subject_id.some(
-          (subdoc) => subdoc._id.toString() === subject_id.toString()
-        ) &&
-        student.is_paid &&
-        student.type_of_batch &&
-        student.type_of_batch._id.toString() === type_of_batch.toString();
-
-      // Check if the student qualifies for custom package
-      const hasCustomSubject =
-        student.custom_package_status === "approved" &&
-        student.custom_package_id &&
-        student.custom_package_id.some(
-          (cp) =>
-            cp.is_active === true &&
-            cp._id &&
-            cp._id.subject_id &&
-            cp._id.subject_id.includes(subject_id)
-        ) &&
-        student.type_of_batch &&
-        student.type_of_batch._id.toString() === type_of_batch.toString();
-
-      if (hasNormalSubject) {
-        normalCriteria.push(student);
-      }
-      if (hasCustomSubject) {
-        customPackageCriteria.push(student);
-      }
-    });
-
-    if (normalCriteria.length === 0 && customPackageCriteria.length === 0) {
+      // Optional populate if you want user details
+      .populate("user_id", "name email")
+      // .populate("type_of_batch", "mode price duration") // If needed
+      .select("auth_id user_id is_paid custom_package_status subject_id batch_creation type_of_batch");
+ console.log("students", students);
+    // If no students found
+    if (!students || students.length === 0) {
       return res.status(404).json({
         message: "No eligible students found with the given criteria.",
       });
     }
 
-    // Final response
-    res.status(200).json({
+    return res.status(200).json({
       message: "Eligible students fetched successfully.",
-      normalCriteria,
-      customPackageCriteria,
+      students,
     });
   } catch (error) {
-    console.error("Error fetching eligible students:", error.message);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error("Error fetching eligible students:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+exports.checkBatchStatus = async (req, res) => {
+  try {
+    const { studentId, batchId } = req.body;
+
+    // Validate input
+    if (!studentId || !batchId) {
+      return res.status(400).json({
+        error: "Both studentId and batchId are required in the request body.",
+      });
+    }
+
+    // Validate ObjectId format
+    if (
+      !mongoose.Types.ObjectId.isValid(studentId) ||
+      !mongoose.Types.ObjectId.isValid(batchId)
+    ) {
+      return res.status(400).json({
+        error: "Invalid studentId or batchId format.",
+      });
+    }
+
+    // Query using $elemMatch to find the matching subdocument
+    const student = await Student.findOne({
+      _id: studentId,
+      subject_id: {
+        $elemMatch: { batch_id: batchId },
+      },
+    }).select("subject_id");
+
+    if (!student) {
+      return res.status(404).json({
+        error: "Student not found or batch not associated with the student.",
+      });
+    }
+
+    // Use $filter to get the specific subdocument
+    const batchSubdoc = student.subject_id.find(
+      (sub) => sub.batch_id.toString() === batchId
+    );
+
+    if (!batchSubdoc) {
+      return res.status(404).json({
+        error: "Batch not found in the student's subject array.",
+      });
+    }
+
+    const isActive = batchSubdoc.batch_status === "active";
+
+    return res.status(200).json({
+      status: isActive,
+      message: isActive
+        ? "The batch is active for the student."
+        : "The batch is not active for the student.",
+    });
+  } catch (error) {
+    console.error("Error in checkBatchStatus:", error);
+    return res.status(500).json({
+      error: "Internal Server Error.",
+    });
   }
 };

@@ -63,6 +63,7 @@ app.use(helmet());
 // Routes
 app.use("/auth", authRoutes);
 const teacherApplicationRoutes = require("./src/routes/teacherApplicationRoutes");
+const scheduleBatchExpiryJob = require("./src/Jobs/batchExpiryJob");
 
 // Error Handling
 app.use((err, req, res, next) => {
@@ -121,7 +122,8 @@ connectDB()
     console.log("Connected to MongoDB");
 
     // Start the Cron Job
-    schedulePackageExpiryJob();
+    // schedulePackageExpiryJob();
+    scheduleBatchExpiryJob();
 
     // Start the Server
     const PORT = process.env.PORT || 5000;

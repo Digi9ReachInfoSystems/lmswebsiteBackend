@@ -40,6 +40,7 @@ const {
 
   getAllPayments,
   createCustomPackageOrder,
+  createOrderRenewal,
 
 
 } = require('../controllers/paymentController');
@@ -47,6 +48,7 @@ const authMiddleware = require('../middlewares/authMiddleware'); // Ensure you h
 
 // Apply authentication middleware to protect these routes except for webhook
 router.post('/create-order', authMiddleware, createOrder);
+router.post('/create-order-renewal', authMiddleware, createOrderRenewal);
 router.post('/verify-payment-webhook', verifyPayment);
 
 
