@@ -41,6 +41,7 @@ const {
   getAllPayments,
   createCustomPackageOrder,
   createOrderRenewal,
+  getPaymentsByStudentId,
 
 
 } = require('../controllers/paymentController');
@@ -57,7 +58,7 @@ router.get('/allPayments',getAllPayments);
 // Route to create Razorpay order and send payment link via email
 router.post('/customPackage/create-order', createCustomPackageOrder);
 
-
+router.get ("/getPayoutByStudentId/:studentId",getPaymentsByStudentId)
 
 
 module.exports = router;

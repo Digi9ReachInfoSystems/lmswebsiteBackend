@@ -531,3 +531,41 @@ exports.createOrderRenewal = async (req, res) => {
     res.status(500).json({ error: 'Unable to create order' });
   }
 };
+
+/**
+ * Controller to get all payments for a specific student.
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+exports.getPaymentsByStudentId = async (req, res) => {
+  try {
+    // Extract student ID from URL params
+    const { studentId } = req.params;
+
+    // Fetch payments belonging to the specified student
+    const payments = await Payment.find({ student_id: studentId })
+      .populate("student_id", "student_id user_id") // fields you want from Student
+      .populate("package_id", "name price")         // fields you want from Package
+      .populate("custom_package_id", "subject_id duration") // fields from CustomPackage
+      .exec();
+
+    // If no payments found, return a 404 or empty array
+    if (!payments || payments.length === 0) {
+      return res.status(404).json({
+        error: "No payments found for this student",
+      });
+    }
+
+    // Return the payments data
+    return res.status(200).json({
+      message: "Payments fetched successfully",
+      payments,
+    });
+  } catch (error) {
+    console.error("Error fetching payments by student ID:", error);
+    return res.status(500).json({
+      error: "An error occurred while fetching payments",
+    });
+  }
+};

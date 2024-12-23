@@ -89,14 +89,20 @@ exports.deleteClass = async (req, res) => {
 };
 
 exports.getAllClassesBoard = async (req, res) => {
-
   try {
     const { boardId } = req.params;
-    const classes = await Class.find({curriculum:boardId}).populate("curriculum");
-    res.status(200).json(classes);
+
+    // Find classes belonging to the boardId, 
+    // populate the 'curriculum' field,
+    // and sort by classLevel ascending.
+    const classes = await Class.find({ curriculum: boardId })
+      .populate("curriculum")
+      .sort({ classLevel: 1 }); // 1 = ascending, -1 = descending
+
+    return res.status(200).json(classes);
   } catch (error) {
     console.error("Error fetching classes:", error);
-    res.status(500).json({ error: "Server error" });
+    return res.status(500).json({ error: "Server error" });
   }
 };
 
