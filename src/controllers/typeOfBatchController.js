@@ -11,7 +11,7 @@ function calculateDiscountedPrice(price, discountPercentage) {
 // Create a new TypeOfBatch
 exports.createTypeOfBatch = async (req, res) => {
   try {
-    const { mode, duration, price ,features,title} = req.body;
+    const { mode, duration, price ,features,title,subject_id} = req.body;
     console.log(req.body);
 
     // Basic validation
@@ -27,7 +27,8 @@ exports.createTypeOfBatch = async (req, res) => {
       discountedPrice: price,
       discount_active: false,
       feature:features,
-      title:title
+      title:title,
+      subject_id:subject_id
     });
 
     await newBatch.save();
@@ -160,5 +161,31 @@ exports.getBatchByMode = async (req, res) => {
   } catch (error) {
     console.error("Error fetching batch by mode:", error.message);
     res.status(500).json({ error: "Internal server error" });
+  }
+};
+/**
+ * Controller to get all TypeOfBatch documents by a specific subject ID
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @route GET /api/typeOfBatch/subject/:subjectId
+ */
+exports.getTypeOfBatchBySubjectId = async (req, res) => {
+  try {
+    const { subjectId } = req.params;
+
+    // Find all TypeOfBatch docs where subject_id matches subjectId
+    const batches = await TypeOfBatch.find({ subject_id: subjectId });
+
+    // If no records are found, return an empty array or 404, depending on your design
+    if (!batches || batches.length === 0) {
+      // Could also return res.status(404).json({ error: "No batches found for this subject" });
+      return res.status(200).json([]);
+    }
+
+    return res.status(200).json(batches);
+  } catch (error) {
+    console.error("Error fetching typeOfBatch by subject ID:", error);
+    return res.status(500).json({ error: "Server error" });
   }
 };
