@@ -984,6 +984,7 @@ exports.getStudentScheduleNext7Days = async (req, res) => {
         meeting_title: item.meeting_title,
         meeting_id: item.meeting_id,
         meeting_reschedule: item.meeting_reschedule,
+        batch_id: item?.batch_id,
       })),
     });
   } catch (error) {

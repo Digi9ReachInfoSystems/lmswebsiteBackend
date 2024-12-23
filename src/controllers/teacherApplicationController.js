@@ -7,17 +7,28 @@ const { bucket } = require("../services/firebaseService"); // Firebase bucket re
 const mongoose = require("mongoose");
 const axios = require("axios");
 const nodemailer = require("nodemailer");
-const admin=require('../services/firebaseService');
+const admin = require('../services/firebaseService');
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.hostinger.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: "Info@gully2global.com",
-    pass: "Shasudigi@217",
-  },
-});
+const sendEmail = async (emailContent, toMail) => {
+  const transporter = nodemailer.createTransport({
+    host: "smtp.hostinger.com",
+    port: 465,
+    secure: true,
+    auth: {
+      user: "Info@gully2global.com",
+      pass: "Shasudigi@217",
+    },
+  });
+
+  const mailOptions = {
+    from: "Info@gully2global.com",
+    to: toMail, // Replace with the recipient's email
+    subject: "Application Status Notification",
+    html: emailContent,
+  };
+
+  await transporter.sendMail(mailOptions);
+};
 
 exports.createTeacherApplication = async (req, res) => {
   try {
@@ -49,7 +60,7 @@ exports.createTeacherApplication = async (req, res) => {
       !city ||
       !pincode ||
       !current_position ||
-      
+
       !phone_number ||
       !experience ||
       !board_id ||
@@ -548,8 +559,8 @@ exports.getTeacherApplicationByUserId = async (req, res) => {
 exports.approveTeacherApplication = async (req, res) => {
   try {
     const { applicationId } = req.params;
-    const {auth_id, user_id,microsoft_id, microsoft_password, microsoft_principle_name } = req.body;
- 
+    const { auth_id, user_id, microsoft_id, microsoft_password, microsoft_principle_name } = req.body;
+
     // Find the application
     const application = await TeacherApplication.findById(applicationId).populate("teacher_id");
     if (!application) {
@@ -570,16 +581,31 @@ exports.approveTeacherApplication = async (req, res) => {
     // await user.save();
 
     // Check if a Teacher document already exists for this user
-    const existingTeacher = await Teacher.findOne({ teacher_id:applicationId});
+    const existingTeacher = await Teacher.findOne({ teacher_id: applicationId });
     if (existingTeacher) {
       return res.status(400).json({ error: "Teacher profile already exists for this user" });
     }
+    let emailContent = `
+  <h3>Congratulations, Your Teacher Application is Approved!</h3>
+  <p>We are excited to have you on our platform. Below are your account details:</p>
+  <ul>
+    <li><strong>Microsoft ID:</strong> ${microsoft_id}</li>
+    <li><strong>Microsoft Account Name:</strong> ${microsoft_principle_name}</li>
+    <li><strong>Password:</strong> ${microsoft_password}</li>
+  </ul>
+  <p>You can now log in to our platform using this email address. Additionally, you can access Microsoft Teams using the provided credentials.</p>
+  <p>For any queries or support, feel free to reach out to our support team.</p>
+  <p>We look forward to your contribution and wish you all the best!</p>
+  <hr>
+  <p style="font-size: 0.9em;">Please keep your credentials safe and do not share them with others. If you did not apply for this role, please contact our support immediately.</p>
+`;
 
-  
+    await sendEmail(emailContent, application.email);
+
 
     // Create a new Teacher document with Microsoft credentials
     const teacher = new Teacher({
-      auth_id:auth_id,
+      auth_id: auth_id,
       teacher_id: application._id,
       user_id: user_id,
       role: "teacher",
