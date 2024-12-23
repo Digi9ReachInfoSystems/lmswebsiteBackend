@@ -12,7 +12,7 @@ exports.getAccessToken = async (req, res) => {
     }
 
     // API endpoint and payload
-    const url = `https://securetoken.googleapis.com/v1/token?key=${firebaseConfig.apiKey}`;
+    const url = `https://securetoken.googleapis.com/v1/token?key=${firebaseConfig.firebaseConfig.apiKey}`;
     const data = new URLSearchParams({
       grant_type: "refresh_token",
       refresh_token: refresh_token,

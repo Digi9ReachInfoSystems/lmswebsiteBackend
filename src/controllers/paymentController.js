@@ -316,6 +316,9 @@ exports.verifyPayment = async (req, res) => {
       // -------------- NEW CODE: ADD CUSTOM PACKAGE SUBJECTS TO STUDENT --------------
       // Retrieve the student's document so we can insert subject subdocs
       const studentDoc = await Student.findById(payment.student_id);
+      console.log("studentDoc", studentDoc?.subject_id);
+      studentDoc.subject_id = [];
+      console.log("studentDoc.subject_id", studentDoc?.subject_id);
       if (!studentDoc) {
         return res.status(404).json({ error: "Student not found" });
       }
