@@ -10,6 +10,7 @@ const {
   deleteTypeOfBatch,
   getBatchByMode,
   getTypeOfBatchBySubjectId,
+  getCustomTypeOfBatch,
 } = require("../controllers/typeOfBatchController");
 
 // Create new TypeOfBatch
@@ -32,5 +33,6 @@ router.delete("/:id", deleteTypeOfBatch);
 // Route to get batch by mode
 router.get("/batch-mode/:mode", getBatchByMode);
 router.get("/subject/:subjectId",getTypeOfBatchBySubjectId)
+router.get("/custom/typeofbatch",getCustomTypeOfBatch)
 
 module.exports = router;
