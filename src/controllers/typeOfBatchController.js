@@ -1,4 +1,5 @@
 // controllers/typeOfBatchController.js
+const { populate } = require("../models/studentModel");
 const TypeOfBatch = require("../models/typeOfBatchModel");
 
 // Helper function to calculate discounted price
@@ -11,7 +12,7 @@ function calculateDiscountedPrice(price, discountPercentage) {
 // Create a new TypeOfBatch
 exports.createTypeOfBatch = async (req, res) => {
   try {
-    const { mode, duration, price ,features,title,subject_id} = req.body;
+    const { mode, duration, price ,features,title,subject_id,custom_batch} = req.body;
     console.log(req.body);
 
     // Basic validation
@@ -28,7 +29,8 @@ exports.createTypeOfBatch = async (req, res) => {
       discount_active: false,
       feature:features,
       title:title,
-      subject_id:subject_id
+      subject_id:subject_id,
+      custom_batch:custom_batch||false,
     });
 
     await newBatch.save();
@@ -58,7 +60,9 @@ exports.getSingleTypeOfBatch = async (req, res) => {
 // Get all TypeOfBatch
 exports.getAllTypeOfBatch = async (req, res) => {
   try {
-    const batches = await TypeOfBatch.find();
+    const batches = await TypeOfBatch.find().populate(
+      {path:"subject_id", populate:{path:"class_id",populate:{path:"curriculum"}}}
+    );
     res.status(200).json(batches);
   } catch (error) {
     console.error(error);
@@ -175,7 +179,7 @@ exports.getTypeOfBatchBySubjectId = async (req, res) => {
     const { subjectId } = req.params;
 
     // Find all TypeOfBatch docs where subject_id matches subjectId
-    const batches = await TypeOfBatch.find({ subject_id: subjectId });
+    const batches = await TypeOfBatch.find({ subject_id: subjectId }).populate("subject_id");
 
     // If no records are found, return an empty array or 404, depending on your design
     if (!batches || batches.length === 0) {
@@ -187,5 +191,24 @@ exports.getTypeOfBatchBySubjectId = async (req, res) => {
   } catch (error) {
     console.error("Error fetching typeOfBatch by subject ID:", error);
     return res.status(500).json({ error: "Server error" });
+  }
+};
+
+exports.getCustomTypeOfBatch = async (req, res) => {
+  try {
+    
+
+    // Find all TypeOfBatch docs where subject_id matches subjectId
+    const batch = await TypeOfBatch.find({ custom_batch: true }).populate("subject_id");
+
+    if (!batch||batch.length === 0) {
+      return res.status(404).json({ error: "No custom type of batch found " });
+    }
+
+    // Respond with the batch details
+    return res.status(200).json(batch);
+  } catch (error) {
+    console.error("Error fetching custom type of batch ", error.message);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
