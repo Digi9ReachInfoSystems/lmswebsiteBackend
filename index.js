@@ -39,7 +39,7 @@ const refreshTokenRoutes = require('./src/routes/refreshTokenRoutes');
 const adminDasboardRoutes = require('./src/routes/adminDashboardRoutes');
 const teacherDashboardRoutes = require('./src/routes/teacherDashboardRoutes');
 const rescheduleMeetingRoutes = require('./src/routes/rescheduleMeetingRoutes');
-const schedulePackageExpiryJob = require("./src/Jobs/packageExpiryJob");
+// const schedulePackageExpiryJob = require("./src/Jobs/packageExpiryJob");
 const typeOfBatchRoutes= require("./src/routes/typeOfBatchRoutes");
 const blogRoutes = require("./src/routes/blogRoutes");
 const assignmentRoutes= require("./src/routes/assignmentRoutes")
@@ -63,7 +63,7 @@ app.use(helmet());
 // Routes
 app.use("/auth", authRoutes);
 const teacherApplicationRoutes = require("./src/routes/teacherApplicationRoutes");
-const scheduleBatchExpiryJob = require("./src/Jobs/completeBatchExpiryJob");
+// const scheduleBatchExpiryJob = require("./src/Jobs/completeBatchExpiryJob");
 
 
 // Error Handling
@@ -123,8 +123,8 @@ connectDB()
     console.log("Connected to MongoDB");
 
     // Start the Cron Job
-    schedulePackageExpiryJob();
-    scheduleBatchExpiryJob();
+    // schedulePackageExpiryJob();
+    // scheduleBatchExpiryJob();
 
 
     // Start the Server
