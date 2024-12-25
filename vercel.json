@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 2,
   "builds": [
     {
       "src": "index.js",
@@ -25,7 +25,7 @@
       "crons": [
         {
           "path": "api/manageExpiredBatches.js",
-          "schedule": "20 16 * * *"
+          "schedule": "26 16 * * *"
         }
       ]
     
