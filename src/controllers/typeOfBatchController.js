@@ -64,7 +64,8 @@ exports.getAllTypeOfBatch = async (req, res) => {
     const batches = await TypeOfBatch.find().populate(
       { path: "subject_id", populate: { path: "class_id", populate: { path: "curriculum" } } },
     )
-    .populate({path:"class_id", populate:{path:"curriculum"}});
+    .populate({path:"class_id", populate:{path:"curriculum"}})
+    .sort({ mode: 1 }); 
     res.status(200).json(batches);
   } catch (error) {
     console.error(error);
@@ -157,7 +158,8 @@ exports.getBatchByMode = async (req, res) => {
     }
 
     // Find the batch type by mode
-    const batch = await TypeOfBatch.find({ mode });
+    const batch = await TypeOfBatch.find({ mode })
+    .sort({ mode: 1 }); 
 
     // If no batch type found
     if (!batch) {
@@ -183,7 +185,8 @@ exports.getTypeOfBatchBySubjectId = async (req, res) => {
     const { subjectId } = req.params;
 
     // Find all TypeOfBatch docs where subject_id matches subjectId
-    const batches = await TypeOfBatch.find({ subject_id: subjectId }).populate("subject_id");
+    const batches = await TypeOfBatch.find({ subject_id: subjectId }).populate("subject_id")
+    .sort({ mode: 1 }); 
 
     // If no records are found, return an empty array or 404, depending on your design
     if (!batches || batches.length === 0) {
@@ -203,7 +206,8 @@ exports.getCustomTypeOfBatch = async (req, res) => {
 
 
     // Find all TypeOfBatch docs where subject_id matches subjectId
-    const batch = await TypeOfBatch.find({ custom_batch: true }).populate("subject_id");
+    const batch = await TypeOfBatch.find({ custom_batch: true }).populate("subject_id")
+    .sort({ mode: 1 }); 
 
     if (!batch || batch.length === 0) {
       return res.status(404).json({ error: "No custom type of batch found " });
@@ -222,7 +226,8 @@ exports.getTypeOfBatchByClassId = async (req, res) => {
     const { ClassId,batchType } = req.params;
 
     // Find all TypeOfBatch docs where subject_id matches subjectId
-    const batches = await TypeOfBatch.find({ class_id: ClassId,custom_batch:batchType }).populate("subject_id").populate("class_id");
+    const batches = await TypeOfBatch.find({ class_id: ClassId,custom_batch:batchType }).populate("subject_id").populate("class_id")
+    .sort({ mode: 1 }); 
 
     // If no records are found, return an empty array or 404, depending on your design
     if (!batches || batches.length === 0) {
