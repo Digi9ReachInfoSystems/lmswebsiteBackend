@@ -27,9 +27,11 @@ const sendEmail = async (emailContent) => {
     await transporter.sendMail(mailOptions);
 };
 
-const manageExpiredBatches = async () => {
-
-
+export default async function manageExpiredBatches(req, res) {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ message: 'Method Not Allowed' });
+    }
+  
     try {
         const today = new Date();
 
@@ -142,20 +144,20 @@ const manageExpiredBatches = async () => {
 };
 
 
-const schedulePackageExpiryJob = () => {
-    // Schedule the task to run daily at midnight (00:00)
-    console.log("Starting package expiry job...");
-    cron.schedule("30 15 * * *", () => {
-        console.log("Running scheduled package expiry job...");
-        manageExpiredBatches();
-    },
-        {
-            timezone: "Asia/Kolkata" // Set your desired timezone
-        }
-    );
-    // checkAndUpdateExpiredPackages();
-    console.log("Package expiry job scheduled to run daily at midnight.");
-};
+// const schedulePackageExpiryJob = () => {
+//     // Schedule the task to run daily at midnight (00:00)
+//     console.log("Starting package expiry job...");
+//     cron.schedule("30 15 * * *", () => {
+//         console.log("Running scheduled package expiry job...");
+//         manageExpiredBatches();
+//     },
+//         {
+//             timezone: "Asia/Kolkata" // Set your desired timezone
+//         }
+//     );
+//     // checkAndUpdateExpiredPackages();
+//     console.log("Package expiry job scheduled to run daily at midnight.");
+// };
 
-module.exports = schedulePackageExpiryJob;
+// module.exports = schedulePackageExpiryJob;
 
