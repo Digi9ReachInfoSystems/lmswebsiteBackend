@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "builds": [
     {
       "src": "index.js",
@@ -20,10 +20,14 @@
       "dest": "api/manageExpiredBatches.js"
     }
   ],
-  "functions": {
-    "api/manageExpiredBatches.js": {
-      "schedule": "13 16 * * *",
-      "timezone": "Asia/Kolkata"
-    }
-  }
+
+   
+      "crons": [
+        {
+          "path": "api/manageExpiredBatches.js",
+          "schedule": "20 16 * * *"
+        }
+      ]
+    
+  
 }
