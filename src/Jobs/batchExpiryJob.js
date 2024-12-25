@@ -6,12 +6,12 @@ const Student = require("../models/studentModel");
 
 // Example: Daily at midnight
 // * Adjust schedule as desired: e.g., "0 0 * * *" => daily at 00:00
-const scheduleBatchExpiryJob = () => {
+const scheduleBatchExpiryJob = async () => {
     //     const schedule= async () => {
 
     // //     }
-    cron.schedule("0 0 * * *", async () => {
-        console.log("Running batch expiry check job...");
+    // cron.schedule("0 0 * * *", async () => {
+    //     console.log("Running batch expiry check job...");
 
         try {
             // Get today's date truncated to midnight (optional: you may want exact Date() instead)
@@ -56,8 +56,8 @@ const scheduleBatchExpiryJob = () => {
         }
     }
 
-    );
-    schedule();
-};
+    // );
+    // schedule();
+// };
 
 module.exports = scheduleBatchExpiryJob;

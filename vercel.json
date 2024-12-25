@@ -12,6 +12,12 @@
       "dest": "index.js"
     }
    
+  ],
+  "crons": [
+    {
+      "path": "/cron/run-cron-job",
+      "schedule": "0 0 * * *"
+    }
   ]
 
 }
