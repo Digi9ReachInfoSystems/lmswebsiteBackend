@@ -12,7 +12,7 @@ function calculateDiscountedPrice(price, discountPercentage) {
 // Create a new TypeOfBatch
 exports.createTypeOfBatch = async (req, res) => {
   try {
-    const { mode, duration, price ,features,title,subject_id,custom_batch} = req.body;
+    const { mode, duration, price, features, title, subject_id,class_id, custom_batch } = req.body;
     console.log(req.body);
 
     // Basic validation
@@ -27,10 +27,11 @@ exports.createTypeOfBatch = async (req, res) => {
       discountPercentage: 0,
       discountedPrice: price,
       discount_active: false,
-      feature:features,
-      title:title,
-      subject_id:subject_id,
-      custom_batch:custom_batch||false,
+      feature: features,
+      title: title,
+      subject_id: subject_id,
+      custom_batch: custom_batch || false,
+      class_id: class_id,
     });
 
     await newBatch.save();
@@ -61,8 +62,9 @@ exports.getSingleTypeOfBatch = async (req, res) => {
 exports.getAllTypeOfBatch = async (req, res) => {
   try {
     const batches = await TypeOfBatch.find().populate(
-      {path:"subject_id", populate:{path:"class_id",populate:{path:"curriculum"}}}
-    );
+      { path: "subject_id", populate: { path: "class_id", populate: { path: "curriculum" } } },
+    )
+    .populate({path:"class_id", populate:{path:"curriculum"}});
     res.status(200).json(batches);
   } catch (error) {
     console.error(error);
@@ -102,7 +104,7 @@ exports.updateDiscount = async (req, res) => {
 exports.updateAllFields = async (req, res) => {
   try {
     const { id } = req.params;
-    const { mode, price, duration, discountPercentage, discount_active } = req.body;
+    const { mode, price, title, duration, discountPercentage, discount_active, feature } = req.body;
 
     const batch = await TypeOfBatch.findById(id);
     if (!batch) {
@@ -111,9 +113,11 @@ exports.updateAllFields = async (req, res) => {
 
     if (mode !== undefined) batch.mode = mode;
     if (price !== undefined) batch.price = price;
+    if (title !== undefined) batch.title = title;
     if (duration !== undefined) batch.duration = duration;
     if (discountPercentage !== undefined) batch.discountPercentage = discountPercentage;
     if (discount_active !== undefined) batch.discount_active = discount_active;
+    if (feature !== undefined) batch.feature = feature;
 
     // Recalculate discounted price if discountPercentage or price changes
     batch.discountedPrice = calculateDiscountedPrice(batch.price, batch.discountPercentage);
@@ -196,12 +200,12 @@ exports.getTypeOfBatchBySubjectId = async (req, res) => {
 
 exports.getCustomTypeOfBatch = async (req, res) => {
   try {
-    
+
 
     // Find all TypeOfBatch docs where subject_id matches subjectId
     const batch = await TypeOfBatch.find({ custom_batch: true }).populate("subject_id");
 
-    if (!batch||batch.length === 0) {
+    if (!batch || batch.length === 0) {
       return res.status(404).json({ error: "No custom type of batch found " });
     }
 
@@ -210,5 +214,25 @@ exports.getCustomTypeOfBatch = async (req, res) => {
   } catch (error) {
     console.error("Error fetching custom type of batch ", error.message);
     res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+exports.getTypeOfBatchByClassId = async (req, res) => {
+  try {
+    const { ClassId,batchType } = req.params;
+
+    // Find all TypeOfBatch docs where subject_id matches subjectId
+    const batches = await TypeOfBatch.find({ class_id: ClassId,custom_batch:batchType }).populate("subject_id").populate("class_id");
+
+    // If no records are found, return an empty array or 404, depending on your design
+    if (!batches || batches.length === 0) {
+      // Could also return res.status(404).json({ error: "No batches found for this subject" });
+      return res.status(200).json([]);
+    }
+
+    return res.status(200).json(batches);
+  } catch (error) {
+    console.error("Error fetching typeOfBatch by subject ID:", error);
+    return res.status(500).json({ error: "Server error" });
   }
 };

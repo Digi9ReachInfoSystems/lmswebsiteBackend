@@ -1,5 +1,6 @@
 const Subject = require("../models/subjectModel");
 const mongoose = require("mongoose");
+const TypeOfBatch = require("../models/typeOfBatchModel");
 
 exports.createSubject = async (req, res) => {
   try {
@@ -101,6 +102,7 @@ exports.updateSubjects = async (req, res) => {
 exports.deleteSubject = async (req, res) => {
   try {
     const { subject_id } = req.params;
+    await TypeOfBatch.deleteMany({ subject_id: subject_id });
     const deletedSubject = await Subject.findByIdAndDelete(subject_id);
     if (!deletedSubject) {
       return res.status(404).json({ error: "Subject not found" });

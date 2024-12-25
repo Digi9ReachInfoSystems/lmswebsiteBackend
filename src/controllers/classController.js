@@ -2,6 +2,7 @@
 
 const Class = require("../models/classModel");
 const Subject = require('../models/subjectModel');
+const TypeOfBatch = require('../models/typeOfBatchModel'); 
 
 // Create a new class/subject
 exports.createClass = async (req, res) => {
@@ -72,7 +73,7 @@ exports.deleteClass = async (req, res) => {
     if (!classData) {
       return res.status(404).json({ error: "Class not found" });
     }
-
+    await TypeOfBatch.deleteMany({ class_id: classId });
     await Subject.deleteMany({ class_id: classId });
 
     const deletedClass = await Class.findByIdAndDelete(classId).populate("curriculum");
