@@ -29,8 +29,7 @@ const sendEmail = async (emailContent) => {
 
 const manageExpiredBatches = async () => {
 
-    // cron.schedule("0 0 * * *", async () => {
-    //   console.log("Running job: complete batch expiry management");
+
     try {
         const today = new Date();
 
@@ -142,10 +141,17 @@ const manageExpiredBatches = async () => {
     // );
 };
 
-module.exports = manageExpiredBatches;
 
-// // Schedule the job using node-cron
-// cron.schedule("0 0 * * *", () => {
-//   console.log("Running job: Batch expiry management");
-//   manageExpiredBatches();
-// });
+const schedulePackageExpiryJob = () => {
+    // Schedule the task to run daily at midnight (00:00)
+    console.log("Starting package expiry job...");
+    cron.schedule("40 14 * * *", () => {
+        console.log("Running scheduled package expiry job...");
+        manageExpiredBatches();
+    });
+    // checkAndUpdateExpiredPackages();
+    console.log("Package expiry job scheduled to run daily at midnight.");
+};
+
+module.exports = schedulePackageExpiryJob;
+

@@ -5,6 +5,7 @@ const typeOfBatchSchema = new mongoose.Schema({
     price: { type: Number, required: true },
     duration: { type: Number, },
     subject_id: { type: mongoose.Schema.Types.ObjectId, ref: "Subject" },
+    class_id: { type: mongoose.Schema.Types.ObjectId, ref: "Class" },
     title: { type: String, required: true },
     discountPercentage: { type: Number },
     discountedPrice: { type: Number },
