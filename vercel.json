@@ -20,7 +20,7 @@
    
       "crons": [
         {
-          "path": "/api/manageExpiredBatches.js",
+          "path": "/cron/run-cron-job",
           "schedule": "20 17 * * *"
         }
       ]

@@ -43,6 +43,7 @@ const rescheduleMeetingRoutes = require('./src/routes/rescheduleMeetingRoutes');
 const typeOfBatchRoutes= require("./src/routes/typeOfBatchRoutes");
 const blogRoutes = require("./src/routes/blogRoutes");
 const assignmentRoutes= require("./src/routes/assignmentRoutes")
+const cronRoutes= require("./src/routes/cronRoutes")
 
 require("dotenv").config();
 
@@ -111,7 +112,7 @@ app.use("/reschedule",rescheduleMeetingRoutes);
 app.use("/typeOfBatch",typeOfBatchRoutes);
 app.use("/blogs",blogRoutes);
 app.use("/assignments",assignmentRoutes);
-
+app.use("/cron",cronRoutes);
 // Start Server
 // const PORT = process.env.PORT || 5000;
 // app.listen(PORT, () => {
