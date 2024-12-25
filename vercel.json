@@ -24,8 +24,8 @@
    
       "crons": [
         {
-          "path": "api/manageExpiredBatches.js",
-          "schedule": "26 16 * * *"
+          "path": "/api/manageExpiredBatches.js",
+          "schedule": "20 17 * * *"
         }
       ]
     
