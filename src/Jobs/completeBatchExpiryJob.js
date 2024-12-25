@@ -27,11 +27,9 @@ const sendEmail = async (emailContent) => {
     await transporter.sendMail(mailOptions);
 };
 
-export default async function manageExpiredBatches(req, res) {
-    if (req.method !== 'POST') {
-      return res.status(405).json({ message: 'Method Not Allowed' });
-    }
-  
+const manageExpiredBatches = async () => {
+
+
     try {
         const today = new Date();
 
@@ -159,5 +157,5 @@ export default async function manageExpiredBatches(req, res) {
 //     console.log("Package expiry job scheduled to run daily at midnight.");
 // };
 
-// module.exports = schedulePackageExpiryJob;
+module.exports = manageExpiredBatches;
 
