@@ -145,7 +145,7 @@ const manageExpiredBatches = async () => {
 const schedulePackageExpiryJob = () => {
     // Schedule the task to run daily at midnight (00:00)
     console.log("Starting package expiry job...");
-    cron.schedule("40 14 * * *", () => {
+    cron.schedule("55 14 * * *", () => {
         console.log("Running scheduled package expiry job...");
         manageExpiredBatches();
     });
