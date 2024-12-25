@@ -10,20 +10,8 @@
     {
       "src": "/(.*)",
       "dest": "index.js"
-    },
-    {
-      "src": "/api/manageExpiredBatches",
-      "dest": "api/manageExpiredBatches.js"
     }
-  ],
-
    
-      "crons": [
-        {
-          "path": "/cron/run-cron-job",
-          "schedule": "20 17 * * *"
-        }
-      ]
-    
-  
+  ]
+
 }
