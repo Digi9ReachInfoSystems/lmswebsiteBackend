@@ -148,7 +148,11 @@ const schedulePackageExpiryJob = () => {
     cron.schedule("30 15 * * *", () => {
         console.log("Running scheduled package expiry job...");
         manageExpiredBatches();
-    });
+    },
+        {
+            timezone: "Asia/Kolkata" // Set your desired timezone
+        }
+    );
     // checkAndUpdateExpiredPackages();
     console.log("Package expiry job scheduled to run daily at midnight.");
 };
