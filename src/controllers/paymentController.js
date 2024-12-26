@@ -47,6 +47,7 @@ exports.createOrder = async (req, res) => {
     };
 
     const order = await razorpayInstance.orders.create(orderOptions);
+    console.log("order",order)
 
     // Save order details in Payment model
     const payment = new Payment({
