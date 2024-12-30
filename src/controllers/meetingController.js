@@ -141,7 +141,7 @@ exports.createMeetingTeams = async (req, res) => {
     };
 
     const graphResponse = await axios.post(
-      "https://graph.microsoft.com/v1.0/users/bfa1bf61-f558-4089-b191-777c7bbb7851/onlineMeetings",
+      "https://graph.microsoft.com/v1.0/users/5e32454e-206d-4b80-9955-ebff2590bf0e/onlineMeetings",
       meetingDetails,
       {
         headers: {

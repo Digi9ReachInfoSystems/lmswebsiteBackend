@@ -649,6 +649,18 @@ exports.getStudentsWithAttendance = async (req, res) => {
   }
 };
 
+//controller function to get percentage of attendance to display in student dashboard 
+
+exports.getPercentageOfAttendance = async (req, res) => {
+  try{
+
+    
+  }catch(error){
+    console.error("Error fetching percentage of attendance:", error);
+    res.status(500).json({ error: "Server error, unable to fetch percentage of attendance." });
+  }
+}
+
 exports.updateModeToPersonal = async (req, res) => {
   try {
     // Extract the student's user ID from the authenticated user
