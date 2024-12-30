@@ -7,7 +7,7 @@ const Student = require("../models/studentModel");
 // Controller for creating a custom package
 exports.createCustomPackage = async (req, res) => {
   try {
-    let { student_id, subject_id, slots } = req.body;
+    let { student_id, subject_id } = req.body;
 
     // Ensure subject_id is an array and has at least 3 subjects
     if (!Array.isArray(subject_id) || subject_id.length < 3) {
@@ -46,7 +46,7 @@ exports.createCustomPackage = async (req, res) => {
       is_price_finalized: false,
       admin_contacted: false,
       admin_notes: "",
-      slots: slots,
+      // slots: slots,
     });
 
     const savedCustomPackage = await newCustomPackage.save();
@@ -79,6 +79,7 @@ exports.updateCustomPackage = async (req, res) => {
       admin_notes,
       is_active,
       expiry_date,
+      duration
     } = req.body;
 
     // Find the custom package by ID
@@ -98,6 +99,7 @@ exports.updateCustomPackage = async (req, res) => {
     if (admin_notes !== undefined) customPackage.admin_notes = admin_notes;
     if (is_active !== undefined) customPackage.is_active = is_active;
     if (expiry_date !== undefined) customPackage.expiry_date = expiry_date;
+    if (duration !== undefined) customPackage.duration = duration;
 
     await customPackage.save();
 
@@ -118,7 +120,7 @@ exports.getPackages = async (req, res) => {
       .populate("subject_id", "subject_name")
       .populate({
         path: "student_id",
-        populate:(["user_id","class"]),
+        populate:(["user_id","class","type_of_batch"]),
       })
       .exec();
 

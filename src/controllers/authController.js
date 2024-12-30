@@ -27,8 +27,8 @@ const User = require("../models/userModel");
  */
 exports.signup = async (req, res) => {
   const authHeader = req.headers.authorization;
-  const  {access_token,class_id,phone_number,profile_image,refresh_token,role,studentDOB,studentGender,student_name,board_id  }= req.body; // Get role from request body
-
+  const { access_token, class_id, phone_number, profile_image, refresh_token, role, studentDOB, studentGender, student_name, board_id, subject_id, type_of_batch, amount, duration } = req.body; // Get role from request body
+  console.log(req.body);
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Unauthorized: No token provided" });
   }
@@ -55,7 +55,7 @@ exports.signup = async (req, res) => {
     user = new User({
       auth_id: uid,
       email: decodedToken.email || null,
-      name: student_name ?student_name: "Anonymous",
+      name: student_name || "Anonymous",
       role: userRole,
       access_token: access_token,
       refresh_token: refresh_token,
@@ -66,7 +66,7 @@ exports.signup = async (req, res) => {
 
     // If the role is 'student', create a Student document
     let student;
-    if (userRole === "student") { 
+    if (userRole === "student") {
       // Generate a unique student ID (e.g., use the user ID or a custom method)
       // const studentId = new mongoose.Types.ObjectId();
 
@@ -75,12 +75,20 @@ exports.signup = async (req, res) => {
         student_id: user._id,
         user_id: user._id,
         role: "student",
-        class:class_id,
-        phone_number:phone_number,
-        profile_image:profile_image,
-        gender:studentGender,
+        class: class_id,
+        phone_number: phone_number,
+        profile_image: profile_image,
+        gender: studentGender,
         dateOfBirth: studentDOB,
-        board_id:board_id
+        board_id: board_id,
+        subject_id: {
+          _id: subject_id,
+          duration: duration
+        },
+        type_of_batch: type_of_batch,
+        amount: amount,
+        duration: duration
+
       });
       await student.save();
     }

@@ -11,20 +11,20 @@ const teacherApplicationController = require("../controllers/teacherApplicationC
 // Routes
 router.post(
   "/apply",
-  authMiddleware,
-  upload.fields([
-    { name: "resume", maxCount: 1 },
-    { name: "profileImage", maxCount: 1 },
-  ]),
-  [
-    body("state").notEmpty().withMessage("State is required"),
-    body("city").notEmpty().withMessage("City is required"),
-    body("pincode").isNumeric().withMessage("Pincode must be a number"),
-    body("language").notEmpty().withMessage("Language is required"),
-    body("current_position")
-      .notEmpty()
-      .withMessage("Current position is required"),
-  ],
+  // authMiddleware,
+  // upload.fields([
+  //   { name: "resume", maxCount: 1 },
+  //   { name: "profileImage", maxCount: 1 },
+  // ]),
+  // [
+  //   body("state").notEmpty().withMessage("State is required"),
+  //   body("city").notEmpty().withMessage("City is required"),
+  //   body("pincode").isNumeric().withMessage("Pincode must be a number"),
+  //   body("language").notEmpty().withMessage("Language is required"),
+  //   body("current_position")
+  //     .notEmpty()
+  //     .withMessage("Current position is required"),
+  // ],
   teacherApplicationController.createTeacherApplication // Correct reference
 );
 

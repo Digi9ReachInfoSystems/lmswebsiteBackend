@@ -19,7 +19,11 @@ const boardSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    icon:{
+      type: String
+    },
   },
+  
   {
     timestamps: true, // Automatically adds createdAt and updatedAt fields
   }

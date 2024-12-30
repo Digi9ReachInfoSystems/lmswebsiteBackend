@@ -40,6 +40,8 @@ const {
 
   getAllPayments,
   createCustomPackageOrder,
+  createOrderRenewal,
+  getPaymentsByStudentId,
 
 
 } = require('../controllers/paymentController');
@@ -47,6 +49,7 @@ const authMiddleware = require('../middlewares/authMiddleware'); // Ensure you h
 
 // Apply authentication middleware to protect these routes except for webhook
 router.post('/create-order', authMiddleware, createOrder);
+router.post('/create-order-renewal', authMiddleware, createOrderRenewal);
 router.post('/verify-payment-webhook', verifyPayment);
 
 
@@ -55,7 +58,7 @@ router.get('/allPayments',getAllPayments);
 // Route to create Razorpay order and send payment link via email
 router.post('/customPackage/create-order', createCustomPackageOrder);
 
-
+router.get ("/getPayoutByStudentId/:studentId",getPaymentsByStudentId)
 
 
 module.exports = router;

@@ -5,7 +5,7 @@ const teacherApplicationSchema = new mongoose.Schema({
   teacher_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User", 
-    required: true,
+   
   },
   resume_link: {
     type: String,
@@ -17,6 +17,14 @@ const teacherApplicationSchema = new mongoose.Schema({
     default: "pending",
   },
   state: {
+    type: String,
+    required: true,
+  },
+   teacher_name: {
+    type: String,
+    required: true,
+  },
+  email:{
     type: String,
     required: true,
   },
@@ -41,7 +49,7 @@ const teacherApplicationSchema = new mongoose.Schema({
   },
   language: {
     type: String,
-    required: true,
+   
   },
 
   profileImage:{

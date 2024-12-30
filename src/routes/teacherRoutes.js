@@ -16,6 +16,8 @@ const {
   clockOut,
   getTeacherAttendance,
   getTeacherByMeetingId,
+  getTeacherScheduleNext7Days,
+  createTeacher,
 } = require("../controllers/teacherController");
 
 // Import authentication middleware
@@ -37,6 +39,7 @@ router.get("/:id", authMiddleware, getTeacherById);
  * @access  Private (Admin only)
  */
 router.get("/", authMiddleware, getAllTeachers);
+router.post("/", createTeacher);
 router.get("/subject/:subject", getTeachersBySubjectId);
 
 router.put("/update/:id", authMiddleware, updateTeacherDetails);
@@ -56,5 +59,6 @@ router.post("/clock-out", clockOut);
 router.get("/teacher/attendance", getTeacherAttendance);
 
 router.get("/getTeacherByMeetingId/one/:meetingId",getTeacherByMeetingId)
+router.get("/teacher/:id/scheduleSevenDays", getTeacherScheduleNext7Days);
 
 module.exports = router;

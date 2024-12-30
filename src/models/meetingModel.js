@@ -30,5 +30,9 @@ const meetingSchema = new mongoose.Schema({
       required: true,
     },
   ],
+  meetingId: {
+    type: String,
+    required: true,
+  },
 });
 module.exports = mongoose.model("Meeting", meetingSchema);

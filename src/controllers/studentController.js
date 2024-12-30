@@ -263,11 +263,12 @@ exports.getPaymentStatusChartData = async (req, res) => {
  */
 exports.updateStudent = async (req, res) => {
   const { studentId } = req.params; // Get student ID from route params
-  const { class_id, ...updateData } = req.body; // Extract class_id and other update data
-
+  const { class_id, updateData } = req.body; // Extract class_id and other update data
+  console.log(req.body);
+  console.log(updateData);
   try {
     // Find the student by ID
-    let student = await Student.findOne({ user_id: studentId });
+    let student = await Student.findById(studentId);
     if (!student) {
       return res.status(404).json({ error: "Student not found" });
     }
@@ -300,7 +301,8 @@ exports.updateStudent = async (req, res) => {
     student.payment_id = updateData.payment_id || student.payment_id;
     student.last_online = updateData.last_online || student.last_online;
     student.phone_number = updateData.phone_number || student.phone_number;
-
+    student.type_of_batch = updateData.type_of_batch || student.type_of_batch;
+    student.duration = updateData.duration || student.duration;
     // Save the updated student
     const updatedStudent = await student.save();
 
@@ -401,7 +403,8 @@ exports.getStudentSchedule = async (req, res) => {
         meeting_url: item.meeting_url,
         meeting_title: item.meeting_title,
         meeting_id: item.meeting_id,
-        meeting_reschedule:item.meeting_reschedule,
+        meeting_reschedule: item.meeting_reschedule,
+        batch_id: item.batch_id
       })),
     });
   } catch (error) {
@@ -554,6 +557,12 @@ exports.clockOut = async (req, res) => {
   }
 };
 
+// controllers/studentController.js
+
+// controllers/studentController.js
+
+// controllers/studentController.js
+
 exports.getStudentAttendance = async (req, res) => {
   try {
     const { studentId } = req.query; // Extract student ID from request parameters
@@ -571,24 +580,31 @@ exports.getStudentAttendance = async (req, res) => {
         return res.status(200).json({
           message: "No attendance found for the student",
           attendance: [],
+          classesAttended: 0, // Add count as 0
         });
       }
 
-      // Return the student's attendance
+      // **Updated Calculation: Use 'clock_out_time' to determine attendance**
+      const classesAttended = student.attendance.filter(item => item.clock_out_time !== null).length;
+
+      // Return the student's attendance along with the count
       return res.status(200).json({
         message: "Student attendance fetched successfully",
         attendance: student.attendance.map((item) => ({
-          date: item.Date,
+          date: item.Date, // Ensure this field exists and is correctly capitalized
           clock_in_time: item.clock_in_time,
           clock_out_time: item.clock_out_time,
-          meeting_attended: item.Meeting_attended,
+          // Remove 'meeting_attended' as it doesn't exist
           meeting_id: item.meeting_id,
-          meeting_title: item?.meeting_title,
+          meeting_title: item.meeting_title,
         })),
+        classesAttended, // Include the count
       });
     } else {
       // If studentId is not provided, fetch attendance for all students
-      const students = await Student.find().select("attendance").populate({ path: "student_id", select: "name email" });
+      const students = await Student.find()
+        .select("attendance student_id")
+        .populate({ path: "student_id", select: "name email" });
 
       if (!students || students.length === 0) {
         return res.status(200).json({
@@ -597,20 +613,25 @@ exports.getStudentAttendance = async (req, res) => {
         });
       }
 
-      // Map through each student and their attendance
-      const allAttendances = students.map((student) => ({
-        studentId: student._id,
-        name: student.student_id?.name,
-        email: student.student_id?.email,
-        attendance: student.attendance.map((item) => ({
-          date: item.Date,
-          clock_in_time: item.clock_in_time,
-          clock_out_time: item.clock_out_time,
-          meeting_attended: item.Meeting_attended,
-          meeting_id: item.meeting_id,
-          meeting_title: item?.meeting_title,
-        })),
-      }));
+      // Map through each student and their attendance, including the count
+      const allAttendances = students.map((student) => {
+        const classesAttended = student.attendance.filter(item => item.clock_out_time !== null).length;
+
+        return {
+          studentId: student._id,
+          name: student.student_id?.name,
+          email: student.student_id?.email,
+          attendance: student.attendance.map((item) => ({
+            date: item.Date, // Ensure correct field name
+            clock_in_time: item.clock_in_time,
+            clock_out_time: item.clock_out_time,
+
+            meeting_id: item.meeting_id,
+            meeting_title: item.meeting_title,
+          })),
+          classesAttended, // Include the count for each student
+        };
+      });
 
       return res.status(200).json({
         message: "All students' attendance fetched successfully",
@@ -622,6 +643,76 @@ exports.getStudentAttendance = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
+
+// exports.getStudentAttendance = async (req, res) => {
+//   try {
+//     const { studentId } = req.query; // Extract student ID from request parameters
+
+//     if (studentId) {
+//       // If studentId is provided, fetch attendance for the specific student
+//       const student = await Student.findById(studentId).select("attendance");
+
+//       if (!student) {
+//         return res.status(404).json({ error: "Student not found" });
+//       }
+
+//       // Check if the attendance array exists and has data
+//       if (!student.attendance || student.attendance.length === 0) {
+//         return res.status(200).json({
+//           message: "No attendance found for the student",
+//           attendance: [],
+//         });
+//       }
+
+//       // Return the student's attendance
+//       return res.status(200).json({
+//         message: "Student attendance fetched successfully",
+//         attendance: student.attendance.map((item) => ({
+//           date: item.Date,
+//           clock_in_time: item.clock_in_time,
+//           clock_out_time: item.clock_out_time,
+//           meeting_attended: item.Meeting_attended,
+//           meeting_id: item.meeting_id,
+//           meeting_title: item?.meeting_title,
+//         })),
+//       });
+//     } else {
+//       // If studentId is not provided, fetch attendance for all students
+//       const students = await Student.find().select("attendance").populate({ path: "student_id", select: "name email" });
+
+//       if (!students || students.length === 0) {
+//         return res.status(200).json({
+//           message: "No students found",
+//           attendance: [],
+//         });
+//       }
+
+//       // Map through each student and their attendance
+//       const allAttendances = students.map((student) => ({
+//         studentId: student._id,
+//         name: student.student_id?.name,
+//         email: student.student_id?.email,
+//         attendance: student.attendance.map((item) => ({
+//           date: item.Date,
+//           clock_in_time: item.clock_in_time,
+//           clock_out_time: item.clock_out_time,
+//           meeting_attended: item.Meeting_attended,
+//           meeting_id: item.meeting_id,
+//           meeting_title: item?.meeting_title,
+//         })),
+//       }));
+
+//       return res.status(200).json({
+//         message: "All students' attendance fetched successfully",
+//         attendance: allAttendances,
+//       });
+//     }
+//   } catch (error) {
+//     console.error("Error fetching student attendance:", error);
+//     res.status(500).json({ error: "Server error" });
+//   }
+// };
 
 
 
@@ -700,21 +791,242 @@ exports.updateModeToPersonal = async (req, res) => {
  * 
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
+//  */
+// exports.getStudentsforBatchBySubject = async (req, res) => {
+//   try {
+//     const { mode } = req.query; // Extract 'mode' from query parameters
+//     const subjectId= new mongoose.Types.ObjectId(req.params.subjectId);
+//     // Validate subjectId
+//     if (!mongoose.Types.ObjectId.isValid(subjectId)) {
+//       return res.status(400).json({ error: "Invalid subject ID" });
+//     }
+
+//     // Convert subjectId to ObjectId
+//     const subjectObjectId =  new mongoose.Types.ObjectId(subjectId);
+
+//     // Validate mode if provided
+//     const validModes = ['normal', 'personal'];
+//     if (mode && !validModes.includes(mode)) {
+//       return res.status(400).json({ error: "Invalid mode value. Allowed values are 'normal' or 'personal'." });
+//     }
+
+//     // Verify that the subject exists
+//     const subjectExists = await Subject.exists({ _id: subjectObjectId });
+//     if (!subjectExists) {
+//       return res.status(404).json({ error: "Subject not found" });
+//     }
+
+//     // Build the aggregation pipeline
+//     const aggregationPipeline = [
+//       {
+//         $match: {
+//           $or: [
+//            { subscribed_Package: { $exists: true, $ne: null }, is_paid: true,},
+//             { custom_package_id: { $exists: true, $ne: null }, custom_package_status: "approved" }
+//           ]
+//         }
+//       },
+//       // Lookup for subscribed_Package
+//       {
+//         $lookup: {
+//           from: "packages",
+//           localField: "subscribed_Package",
+//           foreignField: "_id",
+//           as: "subscribed_Package"
+//         }
+//       },
+//       {
+//         $unwind: {
+//           path: "$subscribed_Package",
+//           preserveNullAndEmptyArrays: true
+//         }
+//       },
+//       // Lookup for custom_package
+//       {
+//         $lookup: {
+//           from: "custompackages", // Ensure the collection name is correct
+//           localField: "custom_package_id",
+//           foreignField: "_id",
+//           as: "custom_package"
+//         }
+//       },
+//       {
+//         $unwind: {
+//           path: "$custom_package",
+//           preserveNullAndEmptyArrays: true
+//         }
+//       },
+//       // Match students where either subscribed_Package or custom_package contains the subject_id
+//       {
+//         $match: {
+//           $or: [
+//             { "subscribed_Package.subject_id": subjectObjectId },
+//             { "custom_package.subject_id": subjectObjectId }
+//           ]
+//         }
+//       },
+//       // Ensure batch_creation does not already include this subject with status true
+//       {
+//         $match: {
+//           $or: [
+//             { batch_creation: { $exists: false } }, // No batch_creation field
+//             { batch_creation: { $size: 0 } }, // Empty batch_creation array
+//             {
+//               batch_creation: {
+//                 $not: {
+//                   $elemMatch: {
+//                     subject_id: subjectObjectId,
+//                     status: true
+//                   }
+//                 }
+//               }
+//             }
+//           ]
+//         }
+//       },
+//     ];
+
+//     // If mode is provided, add an additional match stage
+//     if (mode) {
+//       aggregationPipeline.push({
+//         $match: {
+//           mode: mode
+//         }
+//       });
+//     }
+
+//     // Continue with the rest of the pipeline
+//     aggregationPipeline.push(
+//       {
+//         $lookup: {
+//           from: "users",
+//           localField: "user_id",
+//           foreignField: "_id",
+//           as: "user"
+//         }
+//       },
+//       {
+//         $unwind: { path: "$user", preserveNullAndEmptyArrays: true }
+//       },
+//       {
+//         $project: {
+//           _id: 1,
+//           auth_id: 1,
+//           student_id: 1,
+//           user_id: 1,
+//           user: {
+//             _id: 1,
+//             name: 1,
+//             email: 1,
+//             // Add other user fields you want to include
+//           },
+//           subscribed_Package: 1,
+//           is_paid: 1,
+//           custom_package_status: 1,
+//           batch_creation: 1,
+//           role: 1,
+//           created_at: 1,
+//           last_online: 1,
+//           mode: 1
+//         }
+//       }
+//     );
+
+//     // Execute the aggregation pipeline
+//     const students = await Student.aggregate(aggregationPipeline);
+
+//     // Return the aggregated students
+//     return res.status(200).json({ students });
+//   } catch (error) {
+//     console.error("Error fetching students for batch creation:", error);
+//     return res.status(500).json({ error: "Server error" });
+//   }
+// };
+
+
+
+/**
+ * Controller to fetch a student's schedule from today to the next 7 days.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
  */
+exports.getStudentScheduleNext7Days = async (req, res) => {
+  try {
+    const { id } = req.params; // Extract student ID from request parameters
+
+    // Validate the ID format (optional but recommended)
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ error: 'Invalid student ID format' });
+    }
+
+    // Find the student by their ID and select the 'schedule' field
+    const student = await Student.findById(id).select('schedule');
+
+    if (!student) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+
+    // Check if the schedule array exists and has data
+    if (!student.schedule || student.schedule.length === 0) {
+      return res.status(200).json({
+        message: 'No schedule found for the student',
+        schedule: [],
+      });
+    }
+
+    // Define the date range: today to next 7 days
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to start of today
+
+    const sevenDaysFromNow = new Date();
+    sevenDaysFromNow.setDate(today.getDate() + 7);
+    sevenDaysFromNow.setHours(23, 59, 59, 999); // Set to end of the 7th day
+    // Filter the schedule for entries within the date range
+    const filteredSchedule = student.schedule.filter((item) => {
+      const itemDate = new Date(item.date);
+      return itemDate >= today && itemDate <= sevenDaysFromNow;
+    });
+
+    // Return the filtered schedule with meeting details
+    res.status(200).json({
+      message: 'Student schedule fetched successfully',
+      schedule: filteredSchedule.map((item) => ({
+        date: item.date,
+        meeting_url: item.meeting_url,
+        meeting_title: item.meeting_title,
+        meeting_id: item.meeting_id,
+        meeting_reschedule: item.meeting_reschedule,
+        batch_id: item?.batch_id,
+      })),
+    });
+  } catch (error) {
+    console.error('Error fetching student schedule for next 7 days:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+
+/**
+ * Controller to get students for batch creation based on subject and mode.
+ * 
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+
 exports.getStudentsforBatchBySubject = async (req, res) => {
   try {
     const { mode } = req.query; // Extract 'mode' from query parameters
-    const subjectId= new mongoose.Types.ObjectId(req.params.subjectId);
+    const subjectId = req.params.subjectId;
+
     // Validate subjectId
     if (!mongoose.Types.ObjectId.isValid(subjectId)) {
       return res.status(400).json({ error: "Invalid subject ID" });
     }
 
-    // Convert subjectId to ObjectId
-    const subjectObjectId =  new mongoose.Types.ObjectId(subjectId);
+    const subjectObjectId = new mongoose.Types.ObjectId(subjectId);
 
     // Validate mode if provided
-    const validModes = ['normal', 'personal'];
+    const validModes = ["normal", "personal"];
     if (mode && !validModes.includes(mode)) {
       return res.status(400).json({ error: "Invalid mode value. Allowed values are 'normal' or 'personal'." });
     }
@@ -724,56 +1036,195 @@ exports.getStudentsforBatchBySubject = async (req, res) => {
     if (!subjectExists) {
       return res.status(404).json({ error: "Subject not found" });
     }
-
-    // Build the aggregation pipeline
-    const aggregationPipeline = [
+    //  Basic Query: Find students with packages
+    const studentStandard = await Student.aggregate([
       {
         $match: {
           $or: [
-           { subscribed_Package: { $exists: true, $ne: null }, is_paid: true,},
-            { custom_package_id: { $exists: true, $ne: null }, custom_package_status: "approved" }
+            {
+              // Student has at least one subscribed package and is_paid = true
+              is_paid: true,
+              subscribed_Package: { $exists: true, $ne: [] }
+            },
+            {
+              // Student has at least one custom package and status = "approved"
+              custom_package_id: { $exists: true, $ne: [] },
+              custom_package_status: "approved"
+            }
           ]
         }
       },
-      // Lookup for subscribed_Package
-      {
-        $lookup: {
-          from: "packages",
-          localField: "subscribed_Package",
-          foreignField: "_id",
-          as: "subscribed_Package"
-        }
-      },
+
+      // Unwind subscribed_Package
       {
         $unwind: {
           path: "$subscribed_Package",
           preserveNullAndEmptyArrays: true
         }
       },
-      // Lookup for custom_package
+      // Only consider active standard packages
+      {
+        $match: {
+          $or: [
+            { "subscribed_Package.is_active": true },
+            { subscribed_Package: { $eq: null } } // In case there's no subscribed package
+          ]
+        }
+      },
       {
         $lookup: {
-          from: "custompackages", // Ensure the collection name is correct
-          localField: "custom_package_id",
+          from: "packages",
+          localField: "subscribed_Package._id",
           foreignField: "_id",
-          as: "custom_package"
+          as: "subscribed_PackageDetail"
         }
       },
       {
         $unwind: {
-          path: "$custom_package",
+          path: "$subscribed_PackageDetail",
           preserveNullAndEmptyArrays: true
         }
       },
-      // Match students where either subscribed_Package or custom_package contains the subject_id
       {
         $match: {
           $or: [
-            { "subscribed_Package.subject_id": subjectObjectId },
-            { "custom_package.subject_id": subjectObjectId }
+            { "subscribed_PackageDetail.subject_id": subjectObjectId },
+
           ]
         }
       },
+      {
+        $match: {
+          $or: [
+            { batch_creation: { $exists: false } }, // No batch_creation field
+            { batch_creation: { $size: 0 } }, // Empty batch_creation array
+            {
+              batch_creation: {
+                $not: {
+                  $elemMatch: {
+                    subject_id: subjectObjectId,
+                    status: true
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        $match: {
+          mode: mode
+        }
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user_id",
+          foreignField: "_id",
+          as: "user"
+        }
+      },
+      {
+        $unwind: { path: "$user", preserveNullAndEmptyArrays: true }
+      },
+      {
+        $project: {
+          _id: 1,
+          auth_id: 1,
+          student_id: 1,
+          user_id: 1,
+          "user._id": 1,
+          "user.name": 1,
+          "user.email": 1,
+          subscribed_Package: 1,
+          is_paid: 1,
+          custom_package_status: 1,
+          batch_creation: 1,
+          role: 1,
+          created_at: 1,
+          last_online: 1,
+          mode: 1
+        }
+      },
+      // Group by student to consolidate if multiple packages matched
+      {
+        $group: {
+          _id: "$_id",
+          auth_id: { $first: "$auth_id" },
+          student_id: { $first: "$student_id" },
+          user_id: { $first: "$user_id" },
+          user: { $first: "$user" },
+          subscribed_Package: { $first: "$subscribed_Package" },
+          is_paid: { $first: "$is_paid" },
+          custom_package_status: { $first: "$custom_package_status" },
+          batch_creation: { $first: "$batch_creation" },
+          role: { $first: "$role" },
+          created_at: { $first: "$created_at" },
+          last_online: { $first: "$last_online" },
+          mode: { $first: "$mode" }
+        }
+      }
+
+    ])
+    console.log("student data", studentStandard);
+    const studentCustom = await Student.aggregate([
+      {
+        $match: {
+          $or: [
+            {
+              // Student has at least one subscribed package and is_paid = true
+              is_paid: true,
+              subscribed_Package: { $exists: true, $ne: [] }
+            },
+            {
+              // Student has at least one custom package and status = "approved"
+              custom_package_id: { $exists: true, $ne: [] },
+              custom_package_status: "approved"
+            }
+          ]
+        }
+      },
+      // Unwind custom_package_id
+      {
+        $unwind: {
+          path: "$custom_package_id",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      // Only consider active custom packages
+      {
+        $match: {
+          $or: [
+            { "custom_package_id.is_active": true },
+            { custom_package_id: { $eq: null } } // In case there's no custom package
+          ]
+        }
+      },
+      {
+        $lookup: {
+          from: "custompackages",
+          localField: "custom_package_id._id",
+          foreignField: "_id",
+          as: "custom_packageDetail"
+        }
+      },
+      {
+        $unwind: {
+          path: "$custom_packageDetail",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+
+      // Match students where either subscribed_PackageDetail or custom_packageDetail contains the subject_id
+      {
+        $match: {
+          $or: [
+
+            { "custom_packageDetail.subject_id": subjectObjectId }
+          ]
+        }
+      },
+
       // Ensure batch_creation does not already include this subject with status true
       {
         $match: {
@@ -793,19 +1244,11 @@ exports.getStudentsforBatchBySubject = async (req, res) => {
           ]
         }
       },
-    ];
-
-    // If mode is provided, add an additional match stage
-    if (mode) {
-      aggregationPipeline.push({
+      {
         $match: {
           mode: mode
         }
-      });
-    }
-
-    // Continue with the rest of the pipeline
-    aggregationPipeline.push(
+      },
       {
         $lookup: {
           from: "users",
@@ -823,12 +1266,9 @@ exports.getStudentsforBatchBySubject = async (req, res) => {
           auth_id: 1,
           student_id: 1,
           user_id: 1,
-          user: {
-            _id: 1,
-            name: 1,
-            email: 1,
-            // Add other user fields you want to include
-          },
+          "user._id": 1,
+          "user.name": 1,
+          "user.email": 1,
           subscribed_Package: 1,
           is_paid: 1,
           custom_package_status: 1,
@@ -838,16 +1278,573 @@ exports.getStudentsforBatchBySubject = async (req, res) => {
           last_online: 1,
           mode: 1
         }
+      },
+      // Group by student to consolidate if multiple packages matched
+      {
+        $group: {
+          _id: "$_id",
+          auth_id: { $first: "$auth_id" },
+          student_id: { $first: "$student_id" },
+          user_id: { $first: "$user_id" },
+          user: { $first: "$user" },
+          subscribed_Package: { $first: "$subscribed_Package" },
+          is_paid: { $first: "$is_paid" },
+          custom_package_status: { $first: "$custom_package_status" },
+          batch_creation: { $first: "$batch_creation" },
+          role: { $first: "$role" },
+          created_at: { $first: "$created_at" },
+          last_online: { $first: "$last_online" },
+          mode: { $first: "$mode" }
+        }
       }
-    );
+    ])
+    console.log("student data", studentCustom.concat(studentStandard));
+    // const aggregationPipeline = [
+    //   {
+    //     $match: {
+    //       $or: [
+    //         {
+    //           // Student has at least one subscribed package and is_paid = true
+    //           is_paid: true,
+    //           subscribed_Package: { $exists: true, $ne: [] }
+    //         },
+    //         {
+    //           // Student has at least one custom package and status = "approved"
+    //           custom_package_id: { $exists: true, $ne: [] },
+    //           custom_package_status: "approved"
+    //         }
+    //       ]
+    //     }
+    //   },
 
-    // Execute the aggregation pipeline
-    const students = await Student.aggregate(aggregationPipeline);
+    //   // Unwind subscribed_Package
+    //   {
+    //     $unwind: {
+    //       path: "$subscribed_Package",
+    //       preserveNullAndEmptyArrays: true
+    //     }
+    //   },
+    //   // Only consider active standard packages
+    //   {
+    //     $match: {
+    //       $or: [
+    //         { "subscribed_Package.is_active": true },
+    //         { subscribed_Package: { $eq: null } } // In case there's no subscribed package
+    //       ]
+    //     }
+    //   },
+    //   {
+    //     $lookup: {
+    //       from: "packages",
+    //       localField: "subscribed_Package._id",
+    //       foreignField: "_id",
+    //       as: "subscribed_PackageDetail"
+    //     }
+    //   },
+    //   {
+    //     $unwind: {
+    //       path: "$subscribed_PackageDetail",
+    //       preserveNullAndEmptyArrays: true
+    //     }
+    //   },
+
+    //   // Unwind custom_package_id
+    //   {
+    //     $unwind: {
+    //       path: "$custom_package_id",
+    //       preserveNullAndEmptyArrays: true
+    //     }
+    //   },
+    //   // Only consider active custom packages
+    //   {
+    //     $match: {
+    //       $or: [
+    //         { "custom_package_id.is_active": true },
+    //         { custom_package_id: { $eq: null } } // In case there's no custom package
+    //       ]
+    //     }
+    //   },
+    //   {
+    //     $lookup: {
+    //       from: "custompackages",
+    //       localField: "custom_package_id._id",
+    //       foreignField: "_id",
+    //       as: "custom_packageDetail"
+    //     }
+    //   },
+    //   {
+    //     $unwind: {
+    //       path: "$custom_packageDetail",
+    //       preserveNullAndEmptyArrays: true
+    //     }
+    //   },
+
+    //   // Match students where either subscribed_PackageDetail or custom_packageDetail contains the subject_id
+    //   {
+    //     $match: {
+    //       $or: [
+    //         { "subscribed_PackageDetail.subject_id": subjectObjectId },
+    //         { "custom_packageDetail.subject_id": subjectObjectId }
+    //       ]
+    //     }
+    //   },
+
+    //   // Ensure batch_creation does not already include this subject with status true
+    //   {
+    //     $match: {
+    //       $or: [
+    //         { batch_creation: { $exists: false } }, // No batch_creation field
+    //         { batch_creation: { $size: 0 } }, // Empty batch_creation array
+    //         {
+    //           batch_creation: {
+    //             $not: {
+    //               $elemMatch: {
+    //                 subject_id: subjectObjectId,
+    //                 status: true
+    //               }
+    //             }
+    //           }
+    //         }
+    //       ]
+    //     }
+    //   },
+    // ];
+
+    // // If mode is provided, add an additional match stage
+    // if (mode) {
+    //   aggregationPipeline.push({
+    //     $match: {
+    //       mode: mode
+    //     }
+    //   });
+    // }
+
+    // // Lookup user details
+    // aggregationPipeline.push(
+    //   {
+    //     $lookup: {
+    //       from: "users",
+    //       localField: "user_id",
+    //       foreignField: "_id",
+    //       as: "user"
+    //     }
+    //   },
+    //   {
+    //     $unwind: { path: "$user", preserveNullAndEmptyArrays: true }
+    //   },
+    //   {
+    //     $project: {
+    //       _id: 1,
+    //       auth_id: 1,
+    //       student_id: 1,
+    //       user_id: 1,
+    //       "user._id": 1,
+    //       "user.name": 1,
+    //       "user.email": 1,
+    //       subscribed_Package: 1,
+    //       is_paid: 1,
+    //       custom_package_status: 1,
+    //       batch_creation: 1,
+    //       role: 1,
+    //       created_at: 1,
+    //       last_online: 1,
+    //       mode: 1
+    //     }
+    //   },
+    //   // Group by student to consolidate if multiple packages matched
+    //   {
+    //     $group: {
+    //       _id: "$_id",
+    //       auth_id: { $first: "$auth_id" },
+    //       student_id: { $first: "$student_id" },
+    //       user_id: { $first: "$user_id" },
+    //       user: { $first: "$user" },
+    //       subscribed_Package: { $first: "$subscribed_Package" },
+    //       is_paid: { $first: "$is_paid" },
+    //       custom_package_status: { $first: "$custom_package_status" },
+    //       batch_creation: { $first: "$batch_creation" },
+    //       role: { $first: "$role" },
+    //       created_at: { $first: "$created_at" },
+    //       last_online: { $first: "$last_online" },
+    //       mode: { $first: "$mode" }
+    //     }
+    //   }
+    // );
+
+    // // Execute the aggregation pipeline
+    // const students = await Student.aggregate(aggregationPipeline);
 
     // Return the aggregated students
-    return res.status(200).json({ students });
+    // return res.status(200).json({ students });
+
+    return res.status(200).json({ students: studentCustom.concat(studentStandard) });
   } catch (error) {
-    console.error("Error fetching students for batch creation:", error);
+    console.error("Error fetching students for batch creation:", error.message);
     return res.status(500).json({ error: "Server error" });
+  }
+};
+
+
+
+
+// exports.getEligibleStudents = async (req, res) => {
+//   try {
+//     const { subject_id, type_of_batch, duration } = req.body;
+//     console.log("fdfd",req.body);
+
+//     if (!subject_id || !type_of_batch || !duration) {
+//       return res.status(400).json({
+//         error: "subject_id, type_of_batch, and duration are required.",
+//       });
+//     }
+
+//     // Query to find eligible students
+//     const students = await Student.find({
+//       is_paid: true,
+//       subject_id: subject_id,
+//       $or: [
+//         {
+//           "batch_creation.subject_id": { $ne: subject_id },
+//           type_of_batch: type_of_batch,
+//           duration: duration,
+//         },
+//         {
+//           custom_package_status: "approved",
+//           "custom_package_id.is_active": true,
+//           "batch_creation.subject_id": { $ne: subject_id },
+//           type_of_batch: type_of_batch,
+//           duration: duration,
+//         },
+//       ],
+//     })
+//       .populate("type_of_batch", "mode price duration")
+//       .populate({
+//         path: "custom_package_id",
+//         match: { is_active: true },
+//         populate: { path: "subject_id" },
+//       })
+//       .select("student_name phone_number profile_image type_of_batch custom_package_id duration batch_creation");
+
+//     // Filter the results to ensure the subject is valid
+//     const filteredStudents = students.filter((student) => {
+//       const customPackageHasSubject =
+//         student.custom_package_id &&
+//         student.custom_package_id.some((pkg) =>
+//           pkg.subject_id.includes(subject_id)
+//         );
+
+//       // Ensure batch_creation exists and check the condition safely
+//       const batchCreationHasSubject =
+//         student.batch_creation &&
+//         student.batch_creation.every(
+//           (batch) => batch.subject_id.toString() !== subject_id
+//         );
+
+//       return customPackageHasSubject || batchCreationHasSubject;
+//     });
+
+//     // Response
+//     if (filteredStudents.length === 0) {
+//       return res
+//         .status(404)
+//         .json({ message: "No eligible students found with given criteria." });
+//     }
+
+//     res.status(200).json({
+//       message: "Eligible students fetched successfully.",
+//       students: filteredStudents,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching eligible students:", error.message);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// };
+
+// exports.getEligibleStudents = async (req, res) => {
+//   try {
+//     // Extract and validate required fields from the request body
+//     const { subject_id: subjectIdStr, type_of_batch: typeOfBatchStr } = req.body;
+//     console.log("Received Data:", req.body);
+
+//     // Convert to ObjectId
+//     if (!subjectIdStr || !typeOfBatchStr) {
+//       return res
+//         .status(400)
+//         .json({ error: "subject_id and type_of_batch are required." });
+//     }
+
+//     const subject_id = new mongoose.Types.ObjectId(subjectIdStr);
+//     const type_of_batch = new mongoose.Types.ObjectId(typeOfBatchStr);
+
+//     // Main query to find eligible students
+//     // 1) Normal criteria: Student has paid (is_paid = true)
+//     //    AND subject_id array contains subdoc with matching _id
+//     //    AND batch_creation does not already contain this subject
+//     //    AND matching type_of_batch
+//     //
+//     // 2) Custom package criteria: custom_package_status = "approved"
+//     //    AND custom_package_id subdoc is active
+//     //    AND batch_creation does not already contain this subject
+//     //    AND matching type_of_batch
+//     const students = await Student.find({
+//       $or: [
+//         {
+//           is_paid: true,
+//           // subject_id array must contain a subdocument with _id = subject_id
+//           subject_id: {
+//             $elemMatch: {
+//               _id: subject_id,
+//             },
+//           },
+//           // Exclude students who have this subject in batch_creation
+//           "batch_creation.subject_id": { $ne: subject_id },
+//           type_of_batch,
+//         },
+//         {
+//           custom_package_status: "approved",
+//           "custom_package_id.is_active": true,
+//           subject_id: {
+//             $elemMatch: {
+//               _id: subject_id,
+//             },
+//           },
+//           // "batch_creation.subject_id": { $ne: subject_id },
+//           type_of_batch,
+//         },
+//       ],
+//     })
+//       .populate("type_of_batch", "mode price duration")
+//       .populate({
+//         path: "custom_package_id",
+//         match: { is_active: true },
+//         populate: { path: "_id", select: "subject_id" }, // or adjust if needed
+//       })
+//       .populate("user_id") // Populate user details
+//       .select(
+//         "auth_id phone_number profile_image type_of_batch custom_package_id duration batch_creation user_id is_paid subject_id"
+//       );
+//       console.log("students",students);
+
+//     // Now filter the results to ensure the subject is actually present
+//     // in the array (for normal criteria), or in the custom package
+//     const filteredStudents = students.filter((student) => {
+//       // 1) Check if subject_id array includes the given subject
+//       const normalSubjectMatch =
+//         student.subject_id &&
+//         student.subject_id.some(
+//           (subdoc) => subdoc._id.toString() === subject_id.toString()
+//         );
+
+         
+//       // 2) Check if custom_package_id includes the subject
+//       //    (If your customPackage model has subject array, adjust accordingly)
+//       const customPackageHasSubject =
+//         student.custom_package_id &&
+//         student.custom_package_id.some(
+//           (cp) =>
+//             // If the custom package references Subject IDs in a field `subject_id`,
+//             // we must check cp._id.subject_id or similar structure. Adjust as needed.
+//             cp._id &&
+//             cp._id.subject_id &&
+//             cp._id.subject_id.includes(subject_id)
+//         );
+
+//       // 3) Check that `batch_creation` does NOT have this subject
+//       //    (or ensure it's not 'active' if that's the logic)
+//       const batchCreationExcludesSubject = !(
+//         student.batch_creation &&
+//         student.batch_creation.some(
+//           (bc) => bc?.subject_id.toString() === subject_id.toString() && bc.status
+//         )
+//       );
+
+//       // The student is valid if either:
+//       // - Normal criteria (paid, has subdoc in subject_id) AND not in batch_creation
+//       // - Custom package criteria (approved, is_active) AND not in batch_creation
+//       // We'll let the next step separate them
+//       return (
+//         batchCreationExcludesSubject &&
+//         (normalSubjectMatch || customPackageHasSubject)
+//       );
+//     });
+
+//     // Separate into normal vs. custom package arrays
+//     const normalCriteria = [];
+//     const customPackageCriteria = [];
+//     console.log("filteredStudents", filteredStudents);
+
+//     filteredStudents.forEach((student) => {
+//       // Check if the student qualifies for normal criteria
+//       const hasNormalSubject =
+//         student.subject_id &&
+//         student?.subject_id.some(
+//           (subdoc) => subdoc._id.toString() === subject_id.toString()
+//         ) &&
+//         student.is_paid &&
+//         student.type_of_batch &&
+//         student.type_of_batch._id.toString() === type_of_batch.toString();
+
+//         console.log("hasNormalSubject", hasNormalSubject);
+
+//       // Check if the student qualifies for custom package
+//       const hasCustomSubject =
+//         student.custom_package_status === "approved" &&
+//         student.custom_package_id &&
+//         student.custom_package_id.some(
+//           (cp) =>
+//             cp.is_active === true &&
+//             cp._id &&
+//             cp._id.subject_id &&
+//             cp._id.subject_id.includes(subject_id)
+//         ) &&
+//         student.type_of_batch &&
+//         student.type_of_batch._id.toString() === type_of_batch.toString();
+//         console.log("hasCustomSubject", hasCustomSubject);
+
+//       if (hasNormalSubject) {
+//         normalCriteria.push(student);
+//       }
+//       if (hasCustomSubject) {
+//         customPackageCriteria.push(student);
+//       }
+//     });
+// console.log("normalCriteria", normalCriteria);
+// console.log("customPackageCriteria", customPackageCriteria);
+//     if (normalCriteria.length === 0 && customPackageCriteria.length === 0) {
+//       return res.status(404).json({
+//         message: "No eligible students found with the given criteria.",
+//       });
+//     }
+
+//     // Final response
+//     res.status(200).json({
+//       message: "Eligible students fetched successfully.",
+//       normalCriteria,
+//       customPackageCriteria,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching eligible students:", error.message);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// };
+
+
+
+exports.getEligibleStudents = async (req, res) => {
+  try {
+    const { subject_id: subjectIdStr, type_of_batch: typeOfBatchStr } = req.body;
+console.log("req.body", req.body);
+    // Validate required inputs
+    if (!subjectIdStr || !typeOfBatchStr) {
+      return res.status(400).json({
+        error: "subject_id and type_of_batch are required in the request body.",
+      });
+    }
+
+    // Convert strings to ObjectId
+    const subject_id = new mongoose.Types.ObjectId(subjectIdStr);
+    const type_of_batch = new mongoose.Types.ObjectId(typeOfBatchStr);
+
+    // Query conditions:
+    // 1) subject_id array has a subdocument with `_id = subject_id`
+    // 2) batch_creation array does NOT have this subject
+    // 3) Matches the passed type_of_batch
+    // 4) (is_paid = true) OR (custom_package_status = "approved")
+    const students = await Student.find({
+      // Must have subject_id subdoc with the given subject
+      "subject_id._id": subject_id,
+
+      // Must NOT have this subject in batch_creation
+      "batch_creation.subject_id": { $ne: subject_id },
+
+      // Must match type_of_batch
+      type_of_batch,
+
+      // Either paid or custom package is approved
+      $or: [
+        { is_paid: true },
+        { custom_package_status: "approved" },
+      ],
+    })
+      // Optional populate if you want user details
+      .populate("user_id", "name email")
+      // .populate("type_of_batch", "mode price duration") // If needed
+      .select("auth_id user_id is_paid custom_package_status subject_id batch_creation type_of_batch");
+ console.log("students", students);
+    // If no students found
+    if (!students || students.length === 0) {
+      return res.status(404).json({
+        message: "No eligible students found with the given criteria.",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Eligible students fetched successfully.",
+      students,
+    });
+  } catch (error) {
+    console.error("Error fetching eligible students:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+exports.checkBatchStatus = async (req, res) => {
+  try {
+    const { studentId, batchId } = req.body;
+
+    // Validate input
+    if (!studentId || !batchId) {
+      return res.status(400).json({
+        error: "Both studentId and batchId are required in the request body.",
+      });
+    }
+
+    // Validate ObjectId format
+    if (
+      !mongoose.Types.ObjectId.isValid(studentId) ||
+      !mongoose.Types.ObjectId.isValid(batchId)
+    ) {
+      return res.status(400).json({
+        error: "Invalid studentId or batchId format.",
+      });
+    }
+
+    // Query using $elemMatch to find the matching subdocument
+    const student = await Student.findOne({
+      _id: studentId,
+      subject_id: {
+        $elemMatch: { batch_id: batchId },
+      },
+    }).select("subject_id");
+
+    if (!student) {
+      return res.status(404).json({
+        error: "Student not found or batch not associated with the student.",
+      });
+    }
+
+    // Use $filter to get the specific subdocument
+    const batchSubdoc = student.subject_id.find(
+      (sub) => sub.batch_id.toString() === batchId
+    );
+
+    if (!batchSubdoc) {
+      return res.status(404).json({
+        error: "Batch not found in the student's subject array.",
+      });
+    }
+
+    const isActive = batchSubdoc.batch_status === "active";
+
+    return res.status(200).json({
+      status: isActive,
+      message: isActive
+        ? "The batch is active for the student."
+        : "The batch is not active for the student.",
+    });
+  } catch (error) {
+    console.error("Error in checkBatchStatus:", error);
+    return res.status(500).json({
+      error: "Internal Server Error.",
+    });
   }
 };

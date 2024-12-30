@@ -1,4 +1,6 @@
 const Subject = require("../models/subjectModel");
+const mongoose = require("mongoose");
+const TypeOfBatch = require("../models/typeOfBatchModel");
 
 exports.createSubject = async (req, res) => {
   try {
@@ -9,19 +11,20 @@ exports.createSubject = async (req, res) => {
       approval_status,
       is_grammar_subject,
       subject_image,
-
+      icon
     } = req.body;
 
-    if (!subject_name || !class_id || !language) {
+    if (!subject_name || !class_id ) {
       return res.status(400).json({ error: "All fields are required" });
     }
     const newSubject = new Subject({
       subject_name,
       subject_image,
       class_id,
-      language,
+      // language,
       approval_status,
-      is_grammar_subject,
+      // is_grammar_subject,
+      icon
     });
     await newSubject.save();
     res
@@ -45,7 +48,8 @@ exports.getallSubjects = async (req, res) => {
 };
 exports.getSubjectsByClassId = async (req, res) => {
   try {
-    const { class_id } = req.params; // Extract class_id from URL parameters
+    // const { class_id } = req.params; // Extract class_id from URL parameters
+    const class_id= new mongoose.Types.ObjectId(req.params.class_id);
     const subjects = await Subject.find({ class_id }); // Find subjects with the matching class_id
 
     if (!subjects || subjects.length === 0) {
@@ -98,6 +102,7 @@ exports.updateSubjects = async (req, res) => {
 exports.deleteSubject = async (req, res) => {
   try {
     const { subject_id } = req.params;
+    await TypeOfBatch.deleteMany({ subject_id: subject_id });
     const deletedSubject = await Subject.findByIdAndDelete(subject_id);
     if (!deletedSubject) {
       return res.status(404).json({ error: "Subject not found" });

@@ -39,25 +39,33 @@ const refreshTokenRoutes = require('./src/routes/refreshTokenRoutes');
 const adminDasboardRoutes = require('./src/routes/adminDashboardRoutes');
 const teacherDashboardRoutes = require('./src/routes/teacherDashboardRoutes');
 const rescheduleMeetingRoutes = require('./src/routes/rescheduleMeetingRoutes');
+// const schedulePackageExpiryJob = require("./src/Jobs/packageExpiryJob");
+const typeOfBatchRoutes= require("./src/routes/typeOfBatchRoutes");
+const blogRoutes = require("./src/routes/blogRoutes");
+const assignmentRoutes= require("./src/routes/assignmentRoutes")
+const cronRoutes= require("./src/routes/cronRoutes")
+
 require("dotenv").config();
 
 const app = express();
 
 // Connect to MongoDB
-connectDB();
+// connectDB();
 
 // Middleware
-// app.use(cors());
-app.use(cors({
-  origin: 'http://localhost:5173', // Replace with your frontend URL
-  credentials: true,
-}));
+app.use(cors());
+// app.use(cors({
+//   origin: 'http://localhost:5173', // Replace with your frontend URL
+//   credentials: true,
+// }));
 app.use(express.json());
 app.use(helmet());
 
 // Routes
 app.use("/auth", authRoutes);
 const teacherApplicationRoutes = require("./src/routes/teacherApplicationRoutes");
+// const scheduleBatchExpiryJob = require("./src/Jobs/completeBatchExpiryJob");
+
 
 // Error Handling
 app.use((err, req, res, next) => {
@@ -101,9 +109,32 @@ app.use("/refreshToken",refreshTokenRoutes);
 app.use("/adminDashboard",adminDasboardRoutes);
 app.use("/teacherDashboard",teacherDashboardRoutes);
 app.use("/reschedule",rescheduleMeetingRoutes);
-
+app.use("/typeOfBatch",typeOfBatchRoutes);
+app.use("/blogs",blogRoutes);
+app.use("/assignments",assignmentRoutes);
+app.use("/cron",cronRoutes);
 // Start Server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// const PORT = process.env.PORT || 5000;
+// app.listen(PORT, () => {
+//   console.log(`Server running on port ${PORT}`);
+// });
+
+connectDB()
+  .then(() => {
+    console.log("Connected to MongoDB");
+
+    // Start the Cron Job
+    // schedulePackageExpiryJob();
+    // scheduleBatchExpiryJob();
+
+
+    // Start the Server
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+    process.exit(1); // Exit process with failure
+  });
