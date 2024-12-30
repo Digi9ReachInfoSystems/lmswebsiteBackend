@@ -27,42 +27,45 @@
 
 // module.exports = mongoose.model("Payment", paymentSchema);
 
-
 // models/Payment.js
 
 const mongoose = require("mongoose");
 
-const paymentSchema = new mongoose.Schema({
-  amount: { type: Number, required: true },
-  currency: { type: String, default: "INR" },
-  status: { 
-    type: String, 
-    enum: ["created", "paid", "failed", "refunded"], 
-    default: "created" 
+const paymentSchema = new mongoose.Schema(
+  {
+    amount: { type: Number, required: true },
+    currency: { type: String, default: "INR" },
+    status: {
+      type: String,
+      enum: ["created", "paid", "failed", "refunded"],
+      default: "created",
+    },
+    payment_id: { type: String, unique: true, sparse: true },
+    order_id: { type: String, unique: true, sparse: true },
+    razorpay_signature: { type: String },
+    receipt: { type: String },
+    student_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Student",
+      required: true,
+    },
+    subject_id: [{ type: mongoose.Schema.Types.ObjectId, ref: "Subject" }],
+    package_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Package",
+      // required: true
+    },
+    custom_package_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CustomPackage", // Link to the custom package
+    },
+    payment_method: { type: String },
+    description: { type: String },
+    refund_id: { type: String }, // Optional
   },
-  payment_id: { type: String, unique: true, sparse: true },
-  order_id: { type: String, unique: true, sparse: true },
-  razorpay_signature: { type: String },
-  receipt: { type: String },
-  student_id: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: "Student", 
-    required: true 
-  },
-  package_id: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: "Package", 
-    // required: true 
-  },
-  custom_package_id: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: "CustomPackage",  // Link to the custom package
-  },
-  payment_method: { type: String },
-  description: { type: String },
-  refund_id: { type: String }, // Optional
-}, {
-  timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' }
-});
+  {
+    timestamps: { createdAt: "createdAt", updatedAt: "updatedAt" },
+  }
+);
 
 module.exports = mongoose.model("Payment", paymentSchema);

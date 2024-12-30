@@ -466,11 +466,15 @@ exports.getAllPayments = async (req, res) => {
     const payments = await Payment.find()
       .populate({
         path: "student_id",
-        populate: { path: "user_id", select: "name email" },
-      })
-      .populate({
-        path: "student_id",
-        populate: { path: "class", select: "className classLevel" },
+        populate: [
+          { path: "user_id", select: "name email" },
+          { path: "class", select: "className classLevel" },
+          {
+            path: "subject_id._id", // Populate from the _id field of subject_id
+            model: "Subject", // Ensure this points to the Subject model
+            select: "subject_name", // Fetch only the subject_name field
+          },
+        ],
       })
       .populate("package_id");
     res.status(200).json(payments);
