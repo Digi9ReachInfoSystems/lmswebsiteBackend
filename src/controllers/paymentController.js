@@ -470,6 +470,8 @@ exports.getAllPayments = async (req, res) => {
           { path: "user_id", select: "name email" },
           { path: "class", select: "className classLevel" },
           { path: "subject_id._id", select: "subject_name" },
+          { path: "board_id", select: "name" },
+          { path: "type_of_batch", select: "mode" },
         ],
       })
       .populate("package_id");
