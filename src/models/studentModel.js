@@ -16,7 +16,6 @@ const studentSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Subject",
       },
-
       batch_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Batch",
@@ -33,7 +32,7 @@ const studentSchema = new mongoose.Schema({
   ],
   type_of_batch: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "TypeOfBatch",
+    ref: "TypeOfBatch"
   },
   user_id: {
     type: mongoose.Schema.Types.ObjectId,
@@ -48,18 +47,16 @@ const studentSchema = new mongoose.Schema({
   duration: { type: String },
   amount: { type: Number },
 
-  subscribed_Package: [
-    {
-      _id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Package",
-      },
-      is_active: { type: Boolean },
+  subscribed_Package: [{
+    _id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Package"
     },
-  ],
+    is_active: { type: Boolean },
+  }],
   is_paid: {
     type: Boolean,
-    default: false,
+    default: false
   },
   subscription_id: {
     type: mongoose.Schema.Types.ObjectId,
@@ -76,24 +73,20 @@ const studentSchema = new mongoose.Schema({
   dateOfBirth: { type: Date },
   board_id: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Board",
+    ref: "Board"
   },
 
-  payment_id: [
-    {
+  payment_id: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Payment",
+  }],
+  custom_package_id: [{
+    _id: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Payment",
+      ref: "CustomPackage",
     },
-  ],
-  custom_package_id: [
-    {
-      _id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "CustomPackage",
-      },
-      is_active: { type: Boolean },
-    },
-  ],
+    is_active: { type: Boolean },
+  }],
   package_expiry: { type: Date },
   custom_package_expiry: { type: Date },
   custom_package_status: {
@@ -101,16 +94,16 @@ const studentSchema = new mongoose.Schema({
     enum: ["pending", "approved", "rejected", "no_package", "expired"],
     default: "no_package",
   },
-  batch_creation: [
-    {
-      subject_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Subject",
-      },
-      status: {
-        type: Boolean,
-      },
+  batch_creation: [{
+    subject_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Subject",
     },
+    status: {
+      type: Boolean,
+
+    }
+  }
   ],
   schedule: [
     {
@@ -143,8 +136,8 @@ const studentSchema = new mongoose.Schema({
   },
   mode: {
     type: String,
-    enum: ["normal", "personal"],
-    default: "normal",
+    enum: ['normal', 'personal'],
+    default: 'normal'
   },
   created_at: { type: Date, default: Date.now },
   last_online: { type: Date, default: Date.now },

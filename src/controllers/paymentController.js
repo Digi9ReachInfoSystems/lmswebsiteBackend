@@ -469,11 +469,7 @@ exports.getAllPayments = async (req, res) => {
         populate: [
           { path: "user_id", select: "name email" },
           { path: "class", select: "className classLevel" },
-          {
-            path: "subject_id._id", // Populate from the _id field of subject_id
-            model: "Subject", // Ensure this points to the Subject model
-            select: "subject_name", // Fetch only the subject_name field
-          },
+          { path: "subject_id._id", select: "subject_name" },
         ],
       })
       .populate("package_id");

@@ -49,7 +49,6 @@ const paymentSchema = new mongoose.Schema(
       ref: "Student",
       required: true,
     },
-    subject_id: [{ type: mongoose.Schema.Types.ObjectId, ref: "Subject" }],
     package_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Package",
