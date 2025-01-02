@@ -119,7 +119,7 @@ exports.teacherApplicationApproved = async (req, res) => {
 
 exports.subscriptionDoneAdmin = async (req, res) => {
     try {
-        const { name, email, Amount, payment_id } = req.body;
+        const { name, email, Amount, payment_id,board,className,subject,typeOfBatch } = req.body;
         const users = await User.find({ role: "admin" });
         users.map(async (user) => {
         
@@ -135,7 +135,7 @@ exports.subscriptionDoneAdmin = async (req, res) => {
                 notification_id: savedNotification._id
             })
             userNotifications.save();
-            const html = studentPaymentRecievedAdmin(name, email, Amount, payment_id);
+            const html = studentPaymentRecievedAdmin(name, email, Amount, payment_id,board,className,subject,typeOfBatch);
             await sendMailFunctionAdmin(user.email, 'Subscription Done', html);
         })
         
@@ -148,7 +148,7 @@ exports.subscriptionDoneAdmin = async (req, res) => {
 exports.subscriptionDoneStudent = async (req, res) => {
     try {
         const { name, email, Amount, payment_id } = req.body;
-        const html = studentPaymentRecievedStudent(name, email, Amount, payment_id);
+        const html = studentPaymentRecievedStudent(name, email, Amount, payment_id,board,className,subject,typeOfBatch);
         await sendMailFunctionTA(email, 'Subscription Done', html);
         res.status(200).json({ message: 'Subscription Done Successfully' });
     } catch (error) {

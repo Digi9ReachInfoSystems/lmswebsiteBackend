@@ -1066,14 +1066,14 @@ function studentSignUpAdmin(name, email) {
   `;
 }
 
-function studentPaymentRecievedAdmin(name, email, amount, payment_id) {
+function studentPaymentRecievedAdmin(name, email, amount, payment_id,board,className,subject,typeOfBatch) {
   //new student payment recieved admin
   const currentDate = new Date();
   const dateString = `${currentDate.getDate()}/${currentDate.getMonth() + 1}/${currentDate.getFullYear()}`;
 
 
   return `
-  <!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="utf-8"> 
@@ -1145,6 +1145,7 @@ function studentPaymentRecievedAdmin(name, email, amount, payment_id) {
 
     .social-links {
       margin-bottom: 30px;
+      margin-top: 10px;
     }
 
     .social-links img {
@@ -1186,6 +1187,10 @@ function studentPaymentRecievedAdmin(name, email, amount, payment_id) {
         <span class="highlight">Student Name:</span> ${name}<br>
         <span class="highlight">Student Email:</span> ${email}<br>
         <span class="highlight">Amount Paid:</span> ₹${amount}<br>
+        <span class="highlight">Board:</span> ${board}<br>
+        <span class="highlight">class :</span> ${className}<br>
+        <span class="highlight">Subject :</span> ${subject}<br>
+        <span class="highlight">Type of Batch :</span> ${typeOfBatch}<br>
         <span class="highlight">Payment Date:</span> ${dateString}<br>
       </p>
       <p class="message">
@@ -1218,10 +1223,11 @@ function studentPaymentRecievedAdmin(name, email, amount, payment_id) {
   </div>
 </body>
 </html>
+  
   `;
 }
 
-function studentPaymentRecievedStudent(name, email, amount, payment_id) {
+function studentPaymentRecievedStudent(name, email, amount, payment_id,board,className,subject,typeOfBatch) {
   //new student payment recieved to student
   const currentDate = new Date();
   const dateString = `${currentDate.getDate()}/${currentDate.getMonth() + 1}/${currentDate.getFullYear()}`;
@@ -1298,6 +1304,7 @@ function studentPaymentRecievedStudent(name, email, amount, payment_id) {
 
         .social-links {
           margin-bottom: 30px;
+          margin-top: 10px;
         }
 
         .social-links img {
@@ -1339,6 +1346,10 @@ function studentPaymentRecievedStudent(name, email, amount, payment_id) {
             <span class="highlight">Student Name:</span> ${name}<br>
             <span class="highlight">Student Email:</span> ${email}<br>
             <span class="highlight">Amount Paid:</span> ₹${amount}<br>
+            <span class="highlight">Board:</span> ${board}<br>
+            <span class="highlight">class :</span> ${className}<br>
+            <span class="highlight">Subject :</span> ${subject}<br>
+            <span class="highlight">Type of Batch :</span> ${typeOfBatch}<br>
             <span class="highlight">Date:</span> ${dateString}<br>
           </p>
           <p class="message">
