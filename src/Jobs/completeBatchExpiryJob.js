@@ -19,7 +19,7 @@ const sendEmail = async (emailContent) => {
 
     const mailOptions = {
         from: "Info@gully2global.com",
-        to: "jayanthbychana@gmail.com", // Replace with the recipient's email
+        to: "abc@gmail.com", // Replace with the recipient's email
         subject: "Batch Expiry Notification",
         html: emailContent,
     };
