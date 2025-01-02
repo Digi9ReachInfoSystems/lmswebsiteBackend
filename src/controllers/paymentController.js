@@ -1,15 +1,11 @@
-
-
-const razorpayInstance = require('../services/razorpayService');
-const crypto = require('crypto');
-const Payment = require('../models/paymentModel');
-const Student = require('../models/studentModel');
-const Package = require('../models/packagesModel');
-const CustomPackage = require('../models/customPackageModels');
-const nodemailer = require('nodemailer');
-const axios = require('axios');
-
-
+const razorpayInstance = require("../services/razorpayService");
+const crypto = require("crypto");
+const Payment = require("../models/paymentModel");
+const Student = require("../models/studentModel");
+const Package = require("../models/packagesModel");
+const CustomPackage = require("../models/customPackageModels");
+const nodemailer = require("nodemailer");
+const axios = require("axios");
 
 // Create Razorpay Order
 exports.createOrder = async (req, res) => {
@@ -17,14 +13,16 @@ exports.createOrder = async (req, res) => {
 
   // Validate input
   if (!studentId || !amount) {
-    return res.status(400).json({ error: 'Missing required fields: studentId, amount' });
+    return res
+      .status(400)
+      .json({ error: "Missing required fields: studentId, amount" });
   }
 
   try {
     // Check if student exists
     const student = await Student.findById(studentId);
     if (!student) {
-      return res.status(404).json({ error: 'Student not found' });
+      return res.status(404).json({ error: "Student not found" });
     }
 
     // Check if package exists
@@ -36,38 +34,38 @@ exports.createOrder = async (req, res) => {
     // Create Razorpay order
     const orderOptions = {
       amount: amount * 100, // Amount in paise
-      currency: 'INR',
+      currency: "INR",
       receipt: `receipt_${Date.now()}`,
       payment_capture: 1, // Auto-capture
       notes: {
         student_id: studentId,
         // package_id: packageId,
-        description: description || 'Payment for course package'
+        description: description || "Payment for course package",
       },
     };
 
     const order = await razorpayInstance.orders.create(orderOptions);
-    // console.log("order",order)
+    console.log("order", order);
 
     // Save order details in Payment model
     const payment = new Payment({
       amount: amount,
       currency: order.currency,
-      status: 'created',
+      status: "created",
       order_id: order.id,
       student_id: studentId,
       // package_id: packageId,
-      description: description || 'Payment for course package',
+      description: description || "Payment for course package",
       receipt: order.receipt,
-      razorpay_signature: order.razorpay_signature
+      razorpay_signature: order.razorpay_signature,
     });
 
     await payment.save();
 
     res.status(200).json(order);
   } catch (error) {
-    console.error('Error creating order:', error);
-    res.status(500).json({ error: 'Unable to create order' });
+    console.error("Error creating order:", error);
+    res.status(500).json({ error: "Unable to create order" });
   }
 };
 
@@ -168,7 +166,6 @@ exports.createOrder = async (req, res) => {
 //   res.json({ status: "ok" });
 // }
 
-
 exports.verifyPayment = async (req, res) => {
   const signature = req.headers["x-razorpay-signature"];
   const secrete = "FPs-kRnkuFXq8tG-course-Payment";
@@ -193,9 +190,17 @@ exports.verifyPayment = async (req, res) => {
       payment.payment_id = req.body.payload.payment.entity.id;
       payment.status = "paid";
       await payment.save();
-      if (req.body.payload.payment.entity.notes.batchId && req.body.payload.payment.entity.notes.subjectId && req.body.payload.payment.entity.notes.duration) {
-        const { batchId, subjectId, duration } = req.body.payload.payment.entity.notes || {};
-        const durationInt = parseInt(req.body.payload.payment.entity.notes.duration, 10);
+      if (
+        req.body.payload.payment.entity.notes.batchId &&
+        req.body.payload.payment.entity.notes.subjectId &&
+        req.body.payload.payment.entity.notes.duration
+      ) {
+        const { batchId, subjectId, duration } =
+          req.body.payload.payment.entity.notes || {};
+        const durationInt = parseInt(
+          req.body.payload.payment.entity.notes.duration,
+          10
+        );
         if (isNaN(durationInt) || durationInt <= 0) {
           console.error("Invalid duration provided:", duration);
           return res.status(400).json({ error: "Invalid duration provided" });
@@ -218,7 +223,8 @@ exports.verifyPayment = async (req, res) => {
             `Subject subdocument not found for subjectId: ${subjectId} and batchId: ${batchId} in student: ${student._id}`
           );
           return res.status(404).json({
-            error: "Subject and Batch combination not found in student's subject array",
+            error:
+              "Subject and Batch combination not found in student's subject array",
           });
         }
         // Update the subdocument fields
@@ -237,17 +243,13 @@ exports.verifyPayment = async (req, res) => {
 
         // Save the updated student document
         await student.save();
-        console.log(
-          `Updated subject_id subdoc for student ${student._id}:`,
-          {
-            subjectId,
-            batchId,
-            duration: durationInt,
-            batch_expiry_date: newExpiryDate,
-            batch_status: "active",
-          }
-        );
-
+        console.log(`Updated subject_id subdoc for student ${student._id}:`, {
+          subjectId,
+          batchId,
+          duration: durationInt,
+          batch_expiry_date: newExpiryDate,
+          batch_status: "active",
+        });
       }
 
       // Update student: set is_paid, push payment_id, etc.
@@ -360,61 +362,60 @@ exports.verifyPayment = async (req, res) => {
   res.json({ status: "ok" });
 };
 
-
 exports.createCustomPackageOrder = async (req, res) => {
   const { amount, package_id, student_id, duration } = req.body;
   try {
     // Create Razorpay order
     // Validate input
     if (!student_id || !package_id || !amount) {
-      return res.status(400).json({ error: 'Missing required fields: studentId, packageId, amount' });
+      return res.status(400).json({
+        error: "Missing required fields: studentId, packageId, amount",
+      });
     }
     // Check if student exists
     const student = await Student.findById(student_id).populate("user_id");
     if (!student) {
-      return res.status(404).json({ error: 'Student not found' });
+      return res.status(404).json({ error: "Student not found" });
     }
     // Check if package exists
     const package = await CustomPackage.findById(package_id);
     if (!package) {
-      return res.status(404).json({ error: 'Package not found' });
+      return res.status(404).json({ error: "Package not found" });
       // Create Razorpay order
-
     }
     package.duration = duration;
     await package.save();
     const orderOptions = {
       amount: amount * 100, // Amount in paise
-      currency: 'INR',
+      currency: "INR",
       receipt: `receipt_${Date.now()}`,
       payment_capture: 1, // Auto-capture
       notes: {
         student_id: student_id,
         package_id: package_id,
-        description: 'Payment for course package'
+        description: "Payment for course package",
       },
     };
     const order = await razorpayInstance.orders.create(orderOptions);
-
 
     // Save order details in Payment model
     const payment = new Payment({
       amount: amount,
       currency: order.currency,
-      status: 'created',
+      status: "created",
       order_id: order.id,
       student_id: student_id,
       custom_package_id: order.notes.package_id,
-      description: 'Payment for course package',
-      receipt: order.receipt
+      description: "Payment for course package",
+      receipt: order.receipt,
     });
     // // callback_url: 'https://example-callback-url.com/',
     await payment.save();
     const paymentLinkResponse = await axios.post(
-      'https://api.razorpay.com/v1/payment_links',
+      "https://api.razorpay.com/v1/payment_links",
       {
         amount: amount * 100, // Amount in paise (1 INR = 100 paise)
-        currency: 'INR',
+        currency: "INR",
         accept_partial: true,
         first_min_partial_amount: 100, // Optional, for partial payments
         expire_by: Math.floor(Date.now() / 1000) + 3600, // Set expiry to 1 hour from now
@@ -433,8 +434,9 @@ exports.createCustomPackageOrder = async (req, res) => {
         notes: {
           policy_name: "Topper Academy Payament", // Add your custom notes here
         },
-        callback_url: 'http://localhost:5000/api/payments/customPackage/webhook', // Callback URL
-        callback_method: 'get', // HTTP method for the callback
+        callback_url:
+          "http://localhost:5000/api/payments/customPackage/webhook", // Callback URL
+        callback_method: "get", // HTTP method for the callback
       },
       {
         auth: {
@@ -447,44 +449,55 @@ exports.createCustomPackageOrder = async (req, res) => {
     // Respond with success
     res.json({
       success: true,
-      message: 'Payment link sent to the student email.',
-      paymentLink: paymentLink
+      message: "Payment link sent to the student email.",
+      paymentLink: paymentLink,
     });
   } catch (error) {
-    console.error('Error creating Razorpay payment link or sending email:', error);
+    console.error(
+      "Error creating Razorpay payment link or sending email:",
+      error
+    );
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
 
 exports.getAllPayments = async (req, res) => {
   try {
     const payments = await Payment.find()
       .populate({
-        path: 'student_id',
-        populate: { path: "user_id", select: "name email" },
+        path: "student_id",
+        populate: [
+          { path: "user_id", select: "name email" },
+          { path: "class", select: "className classLevel" },
+          { path: "subject_id._id", select: "subject_name" },
+          { path: "board_id", select: "name" },
+          { path: "type_of_batch", select: "mode" },
+        ],
       })
       .populate("package_id");
     res.status(200).json(payments);
   } catch (error) {
-    console.error('Error fetching payments:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error("Error fetching payments:", error);
+    res.status(500).json({ error: "Server error" });
   }
 };
 
 exports.createOrderRenewal = async (req, res) => {
-  const { studentId, amount, description, batchId, subjectId, duration } = req.body;
+  const { studentId, amount, description, batchId, subjectId, duration } =
+    req.body;
 
   // Validate input
   if (!studentId || !amount) {
-    return res.status(400).json({ error: 'Missing required fields: studentId, amount' });
+    return res
+      .status(400)
+      .json({ error: "Missing required fields: studentId, amount" });
   }
 
   try {
     // Check if student exists
     const student = await Student.findById(studentId);
     if (!student) {
-      return res.status(404).json({ error: 'Student not found' });
+      return res.status(404).json({ error: "Student not found" });
     }
 
     // Check if package exists
@@ -496,16 +509,16 @@ exports.createOrderRenewal = async (req, res) => {
     // Create Razorpay order
     const orderOptions = {
       amount: amount * 100, // Amount in paise
-      currency: 'INR',
+      currency: "INR",
       receipt: `receipt_${Date.now()}`,
       payment_capture: 1, // Auto-capture
       notes: {
         student_id: studentId,
         // package_id: packageId,
-        description: description || 'Payment for course package',
+        description: description || "Payment for course package",
         batchId,
         subjectId,
-        duration
+        duration,
       },
     };
 
@@ -515,21 +528,21 @@ exports.createOrderRenewal = async (req, res) => {
     const payment = new Payment({
       amount: amount,
       currency: order.currency,
-      status: 'created',
+      status: "created",
       order_id: order.id,
       student_id: studentId,
       // package_id: packageId,
-      description: description || 'Payment for course package',
+      description: description || "Payment for course package",
       receipt: order.receipt,
-      razorpay_signature: order.razorpay_signature
+      razorpay_signature: order.razorpay_signature,
     });
 
     await payment.save();
 
     res.status(200).json(order);
   } catch (error) {
-    console.error('Error creating order:', error);
-    res.status(500).json({ error: 'Unable to create order' });
+    console.error("Error creating order:", error);
+    res.status(500).json({ error: "Unable to create order" });
   }
 };
 
@@ -547,7 +560,7 @@ exports.getPaymentsByStudentId = async (req, res) => {
     // Fetch payments belonging to the specified student
     const payments = await Payment.find({ student_id: studentId })
       .populate("student_id", "student_id user_id") // fields you want from Student
-      .populate("package_id", "name price")         // fields you want from Package
+      .populate("package_id", "name price") // fields you want from Package
       .populate("custom_package_id", "subject_id duration") // fields from CustomPackage
       .exec();
 
