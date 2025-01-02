@@ -1,9 +1,8 @@
 const mongoose = require("mongoose");
 require("dotenv").config();
 
-const MONGODB_URI =
-  "mongodb+srv://sushanth:CuBG7VbIpsszh9eu@cluster0.xmbzp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-
+const MONGODB_URI ="mongodb+srv://sushanth:CuBG7VbIpsszh9eu@cluster0.xmbzp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"; //production
+// const MONGODB_URI ="mongodb+srv://vasudev082002:digi9%40123@cluster0.zm1sn.mongodb.net/testDatabase?retryWrites=true&w=majority"  //development
 const connectDB = async () => {
   try {
     await mongoose.connect(MONGODB_URI, {

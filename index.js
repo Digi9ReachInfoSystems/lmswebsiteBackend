@@ -44,6 +44,8 @@ const typeOfBatchRoutes= require("./src/routes/typeOfBatchRoutes");
 const blogRoutes = require("./src/routes/blogRoutes");
 const assignmentRoutes= require("./src/routes/assignmentRoutes")
 const cronRoutes= require("./src/routes/cronRoutes")
+const notificationRoutes= require("./src/routes/notificationRoutes")
+const mailRoutes= require("./src/routes/mailRoutes")
 
 require("dotenv").config();
 
@@ -113,6 +115,8 @@ app.use("/typeOfBatch",typeOfBatchRoutes);
 app.use("/blogs",blogRoutes);
 app.use("/assignments",assignmentRoutes);
 app.use("/cron",cronRoutes);
+app.use("/notifications",notificationRoutes);
+app.use("/mail",mailRoutes);
 // Start Server
 // const PORT = process.env.PORT || 5000;
 // app.listen(PORT, () => {
