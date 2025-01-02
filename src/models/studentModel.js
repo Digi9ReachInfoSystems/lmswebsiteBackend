@@ -30,10 +30,6 @@ const studentSchema = new mongoose.Schema({
       duration: { type: Number },
     },
   ],
-  type_of_batch: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "TypeOfBatch"
-  },
   user_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

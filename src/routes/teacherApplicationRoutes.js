@@ -41,6 +41,12 @@ router.put(
   // authorizeRole("admin"),
   teacherApplicationController.approveTeacherApplication // Correct reference
 );
+router.put(
+  "/reject/:applicationId",
+  // authMiddleware,
+  // authorizeRole("admin"),
+  teacherApplicationController.rejectTeacherApplication // Correct reference
+);
 
 // Route to get a single teacher application by ID
 router.get(

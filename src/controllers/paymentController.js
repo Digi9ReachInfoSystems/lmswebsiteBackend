@@ -6,10 +6,16 @@ const Package = require("../models/packagesModel");
 const CustomPackage = require("../models/customPackageModels");
 const nodemailer = require("nodemailer");
 const axios = require("axios");
+const Subject = require("../models/subjectModel");
+const Notification = require('../models/notificationModel');
+const User = require('../models/userModel');
+const UserNotification = require('../models/userNotificationModel');
+const { studentPaymentRecievedAdmin, studentPaymentRecievedStudent } = require("../mailTemplate/mailTemplates");
+const { sendMailFunctionAdmin, sendMailFunctionTA } = require("../Mail/sendMail");
 
 // Create Razorpay Order
 exports.createOrder = async (req, res) => {
-  const { studentId, amount, description } = req.body;
+  const { studentId, amount, description,subjectId } = req.body;
 
   // Validate input
   if (!studentId || !amount) {
@@ -41,6 +47,7 @@ exports.createOrder = async (req, res) => {
         student_id: studentId,
         // package_id: packageId,
         description: description || "Payment for course package",
+        subjectId
       },
     };
 
@@ -257,6 +264,34 @@ exports.verifyPayment = async (req, res) => {
         $push: { payment_id: payment._id },
         is_paid: true,
       });
+
+      const studentOne = await Student.findById(payment.student_id)
+      .populate("user_id")
+      .populate("class" )
+      .populate("board_id" )
+      .populate("type_of_batch" );
+      const subject= await Subject.findById( req.body.payload.payment.entity.notes.subjectId );
+      const users = await User.find({ role: "admin" });
+      users.map(async (user) => {
+      
+          const notification = new Notification({
+              user_id:user._id,
+              message: 'Student Payment Recieved',
+              title: "Amount Recieved",
+              is_all: false,
+          });
+          const savedNotification = await notification.save();
+          const userNotifications = new UserNotification({
+              user_id: user._id,
+              notification_id: savedNotification._id
+          })
+          userNotifications.save();
+          const html = studentPaymentRecievedAdmin(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id,studentOne.board_id.name,studentOne.class.className,subject.subject_name,typeOfBatch.mode);
+          await sendMailFunctionAdmin(user.email, 'Subscription Done', html);
+      })
+      const html = studentPaymentRecievedStudent(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id,studentOne.board_id.name,studentOne.class.className,subject.subject_name,typeOfBatch.mode);
+      await sendMailFunctionTA(studentOne.user_id.email, 'Subscription Done', html);
+
     } else if (req.body.event == "payment_link.paid") {
       console.log("Valid signature inside payment.link.paid", req.body);
       console.log("request", req.body.payload.order.entity);

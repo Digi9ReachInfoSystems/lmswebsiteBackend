@@ -645,3 +645,27 @@ exports.approveTeacherApplication = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
+exports.rejectTeacherApplication = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+
+    // Find the application
+    const application = await TeacherApplication.findById(applicationId);
+    if (!application) {
+      return res.status(404).json({ error: "Application not found" });
+    }
+
+    // Update application status  
+    application.approval_status = "rejected";
+    await application.save();
+
+    res.status(200).json({
+      message: "Application rejected successfully",
+      application,
+    });
+  } catch (error) {
+    console.error("Error rejecting teacher application:", error.response ? error.response.data : error.message);
+    res.status(500).json({ error: "Server error" });
+  }
+}
