@@ -17,7 +17,7 @@ const sendMailFunctionAdmin = async (email, sub, html) => {
 
     const mailOptions = {
       from: "Info@gully2global.com",
-      to: "jayanthbychana@gmail.com",//email
+      to: email,//email
       subject: sub,
       html: html,
     };
