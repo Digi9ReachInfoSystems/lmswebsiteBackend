@@ -304,7 +304,7 @@ exports.verifyPayment = async (req, res) => {
           })
           userNotifications.save();
           const html = studentPaymentRecievedAdmin(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.className, subjets, typeofBatch);
-          await sendMailFunctionAdmin(user.email, 'Subscription Done', html);
+          await sendMailFunctionAdmin("jayanthbychana@gmail.com", 'Subscription Done', html);
         })
         const html = studentPaymentRecievedStudent(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.className,subjets, typeofBatch);
         await sendMailFunctionTA(studentOne.user_id.email, 'Subscription Done', html);
