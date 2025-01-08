@@ -1071,7 +1071,8 @@ function studentPaymentRecievedAdmin(name, email, amount, payment_id,board,class
   const currentDate = new Date();
   const dateString = `${currentDate.getDate()}/${currentDate.getMonth() + 1}/${currentDate.getFullYear()}`;
 
-
+  const subjectList = subject.join(", ");
+  const typeOfBatchList = typeOfBatch.join(", ");
   return `
  <!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
@@ -1189,8 +1190,8 @@ function studentPaymentRecievedAdmin(name, email, amount, payment_id,board,class
         <span class="highlight">Amount Paid:</span> ₹${amount}<br>
         <span class="highlight">Board:</span> ${board}<br>
         <span class="highlight">class :</span> ${className}<br>
-        <span class="highlight">Subject :</span> ${subject}<br>
-        <span class="highlight">Type of Batch :</span> ${typeOfBatch}<br>
+        <span class="highlight">Subject :</span> ${subjectList}<br>
+        <span class="highlight">Type of Batch :</span> ${typeOfBatchList}<br>
         <span class="highlight">Payment Date:</span> ${dateString}<br>
       </p>
       <p class="message">
@@ -1231,6 +1232,8 @@ function studentPaymentRecievedStudent(name, email, amount, payment_id,board,cla
   //new student payment recieved to student
   const currentDate = new Date();
   const dateString = `${currentDate.getDate()}/${currentDate.getMonth() + 1}/${currentDate.getFullYear()}`;
+  const subjectList = subject.join(", ");
+const typeOfBatchList = typeOfBatch.join(", ");
   return `
    <!DOCTYPE html>
     <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
@@ -1348,8 +1351,8 @@ function studentPaymentRecievedStudent(name, email, amount, payment_id,board,cla
             <span class="highlight">Amount Paid:</span> ₹${amount}<br>
             <span class="highlight">Board:</span> ${board}<br>
             <span class="highlight">class :</span> ${className}<br>
-            <span class="highlight">Subject :</span> ${subject}<br>
-            <span class="highlight">Type of Batch :</span> ${typeOfBatch}<br>
+            <span class="highlight">Subject :</span> ${subjectList}<br>
+            <span class="highlight">Type of Batch :</span> ${typeOfBatchList}<br>
             <span class="highlight">Date:</span> ${dateString}<br>
           </p>
           <p class="message">

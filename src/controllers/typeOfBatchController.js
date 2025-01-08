@@ -1,6 +1,7 @@
 // controllers/typeOfBatchController.js
 const { populate } = require("../models/studentModel");
 const TypeOfBatch = require("../models/typeOfBatchModel");
+const mongoose = require("mongoose");
 
 // Helper function to calculate discounted price
 function calculateDiscountedPrice(price, discountPercentage) {
@@ -182,7 +183,9 @@ exports.getBatchByMode = async (req, res) => {
  */
 exports.getTypeOfBatchBySubjectId = async (req, res) => {
   try {
-    const { subjectId } = req.params;
+    // const { subjectId } = req.params;
+    const subjectId = new mongoose.Types.ObjectId( req.params.subjectId);
+    console.log(subjectId);
 
     // Find all TypeOfBatch docs where subject_id matches subjectId
     const batches = await TypeOfBatch.find({ subject_id: subjectId }).populate("subject_id")

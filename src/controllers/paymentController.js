@@ -15,7 +15,7 @@ const { sendMailFunctionAdmin, sendMailFunctionTA } = require("../Mail/sendMail"
 
 // Create Razorpay Order
 exports.createOrder = async (req, res) => {
-  const { studentId, amount, description,subjectId } = req.body;
+  const { studentId, amount, description, subjectIds, subjectId } = req.body;
 
   // Validate input
   if (!studentId || !amount) {
@@ -47,12 +47,13 @@ exports.createOrder = async (req, res) => {
         student_id: studentId,
         // package_id: packageId,
         description: description || "Payment for course package",
+        subjectIds,
         subjectId
       },
     };
 
     const order = await razorpayInstance.orders.create(orderOptions);
-    console.log("order", order);
+    console.log("order", order.notes);
 
     // Save order details in Payment model
     const payment = new Payment({
@@ -264,33 +265,53 @@ exports.verifyPayment = async (req, res) => {
         $push: { payment_id: payment._id },
         is_paid: true,
       });
+      if (req.body.payload.payment.entity.notes.subjectIds) {
+        const studentOne = await Student.findById(payment.student_id)
+          .populate({
+            path: 'subject_id._id',      // The field you want to populate
+            model: 'Subject',            // The model name for the reference
+            select: 'subject_name',      // (optional) which fields to select from Subject
+          })
+          .populate({
+            path: 'subject_id.type_of_batch',
+            model: 'TypeOfBatch',
+            select: 'mode price',        // (optional)
+          })
+          .populate("user_id")
+          .populate("class")
+          .populate("board_id")
+          .populate("type_of_batch");
+        const subjets=studentOne.subject_id.map((data)=>{
+          return data._id.subject_name
+        })
+        const typeofBatch=subjets=studentOne.subject_id.map((data)=>{
+          return data.type_of_batch.mode
+        })
+        // const subject = await Subject.findById(req.body.payload.payment.entity.notes.subjectId);
+        const users = await User.find({ role: "admin" });
+        users.map(async (user) => {
 
-      const studentOne = await Student.findById(payment.student_id)
-      .populate("user_id")
-      .populate("class" )
-      .populate("board_id" )
-      .populate("type_of_batch" );
-      const subject= await Subject.findById( req.body.payload.payment.entity.notes.subjectId );
-      const users = await User.find({ role: "admin" });
-      users.map(async (user) => {
-      
           const notification = new Notification({
-              user_id:user._id,
-              message: 'Student Payment Recieved',
-              title: "Amount Recieved",
-              is_all: false,
+            user_id: user._id,
+            message: 'Student Payment Recieved',
+            title: "Amount Recieved",
+            is_all: false,
           });
           const savedNotification = await notification.save();
           const userNotifications = new UserNotification({
-              user_id: user._id,
-              notification_id: savedNotification._id
+            user_id: user._id,
+            notification_id: savedNotification._id
           })
           userNotifications.save();
-          const html = studentPaymentRecievedAdmin(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id,studentOne.board_id.name,studentOne.class.className,subject.subject_name,typeOfBatch.mode);
+          const html = studentPaymentRecievedAdmin(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.className, subjets, typeofBatch);
           await sendMailFunctionAdmin(user.email, 'Subscription Done', html);
-      })
-      const html = studentPaymentRecievedStudent(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id,studentOne.board_id.name,studentOne.class.className,subject.subject_name,typeOfBatch.mode);
-      await sendMailFunctionTA(studentOne.user_id.email, 'Subscription Done', html);
+        })
+        const html = studentPaymentRecievedStudent(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.className,subjets, typeofBatch);
+        await sendMailFunctionTA(studentOne.user_id.email, 'Subscription Done', html);
+      }
+
+
+
 
     } else if (req.body.event == "payment_link.paid") {
       console.log("Valid signature inside payment.link.paid", req.body);
