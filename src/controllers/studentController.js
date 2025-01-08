@@ -303,8 +303,11 @@ exports.updateStudent = async (req, res) => {
     student.phone_number = updateData.phone_number || student.phone_number;
     student.type_of_batch = updateData.type_of_batch || student.type_of_batch;
     student.duration = updateData.duration || student.duration;
+    student.amount = updateData.amount || student.amount;
+    student.subject_id = updateData.subject_id || student.subject_id;
     // Save the updated student
     const updatedStudent = await student.save();
+    console.log(updatedStudent);
 
     res.status(200).json({
       message: "Student updated successfully",
@@ -743,10 +746,10 @@ exports.getStudentsWithAttendance = async (req, res) => {
 //controller function to get percentage of attendance to display in student dashboard 
 
 exports.getPercentageOfAttendance = async (req, res) => {
-  try{
+  try {
 
-    
-  }catch(error){
+
+  } catch (error) {
     console.error("Error fetching percentage of attendance:", error);
     res.status(500).json({ error: "Server error, unable to fetch percentage of attendance." });
   }
@@ -1635,7 +1638,7 @@ exports.getStudentsforBatchBySubject = async (req, res) => {
 //           (subdoc) => subdoc._id.toString() === subject_id.toString()
 //         );
 
-         
+
 //       // 2) Check if custom_package_id includes the subject
 //       //    (If your customPackage model has subject array, adjust accordingly)
 //       const customPackageHasSubject =
@@ -1729,11 +1732,11 @@ exports.getStudentsforBatchBySubject = async (req, res) => {
 // };
 
 
-
 exports.getEligibleStudents = async (req, res) => {
   try {
     const { subject_id: subjectIdStr, type_of_batch: typeOfBatchStr } = req.body;
-console.log("req.body", req.body);
+    console.log("req.body", req.body);
+
     // Validate required inputs
     if (!subjectIdStr || !typeOfBatchStr) {
       return res.status(400).json({
@@ -1745,33 +1748,31 @@ console.log("req.body", req.body);
     const subject_id = new mongoose.Types.ObjectId(subjectIdStr);
     const type_of_batch = new mongoose.Types.ObjectId(typeOfBatchStr);
 
-    // Query conditions:
-    // 1) subject_id array has a subdocument with `_id = subject_id`
-    // 2) batch_creation array does NOT have this subject
-    // 3) Matches the passed type_of_batch
-    // 4) (is_paid = true) OR (custom_package_status = "approved")
+    // We want to find students where:
+    // 1) There's a subdocument in student.subject_id[] with _id = subject_id
+    //    AND that same subdocument has type_of_batch = type_of_batch
+    // 2) The batch_creation array DOES NOT contain this subject_id
+    // 3) Student is either (is_paid = true) OR (custom_package_status = "approved")
+
     const students = await Student.find({
-      // Must have subject_id subdoc with the given subject
-      "subject_id._id": subject_id,
-
-      // Must NOT have this subject in batch_creation
+      subject_id: {
+        $elemMatch: {
+          _id: subject_id,
+          type_of_batch,
+        },
+      },
       "batch_creation.subject_id": { $ne: subject_id },
-
-      // Must match type_of_batch
-      type_of_batch,
-
-      // Either paid or custom package is approved
       $or: [
         { is_paid: true },
         { custom_package_status: "approved" },
       ],
     })
-      // Optional populate if you want user details
-      .populate("user_id", "name email")
-      // .populate("type_of_batch", "mode price duration") // If needed
-      .select("auth_id user_id is_paid custom_package_status subject_id batch_creation type_of_batch");
- console.log("students", students);
-    // If no students found
+      .populate("user_id", "name email") // optional
+      // .populate("subject_id.type_of_batch", "mode price duration") // if needed
+      .select("auth_id user_id is_paid custom_package_status subject_id batch_creation");
+
+    console.log("students", students);
+
     if (!students || students.length === 0) {
       return res.status(404).json({
         message: "No eligible students found with the given criteria.",

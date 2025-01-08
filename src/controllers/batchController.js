@@ -163,6 +163,7 @@ exports.createBatch = async (req, res) => {
       class_id,
       teacher_id,
       students,
+      start_date:date,
       date:nextFeb,
       type_of_batch,
     });
@@ -198,7 +199,7 @@ exports.createBatch = async (req, res) => {
       const durationValue = parseInt(subdoc.duration, 10) || 0;
 
       // 4) Compute expiry date from 'today + duration (months)'
-      const expiryDate = new Date();
+      const expiryDate = new Date(date);
       expiryDate.setMonth(expiryDate.getMonth() + durationValue);
 
       // 5) Update the subdoc fields
@@ -484,171 +485,9 @@ exports.getBatchesByStudentId = async (req, res) => {
   }
 };
 
-
-/**
- * Add one or multiple students to an existing batch and update their subject_id array accordingly
- * 
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- * @returns {Object} - JSON response with success or error message
- */
-exports.addStudentsToBatch = async (req, res) => {
-  // Start a Mongoose session for transaction
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  
-  try {
-    const { batchId } = req.params; // Extract batchId from URL parameters
-    const { studentIds, subjectId } = req.body; // Extract studentIds and subjectId from request body
-
-    // ----------------------- Input Validation -----------------------
-    
-    // Validate batchId
-    if (!mongoose.Types.ObjectId.isValid(batchId)) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ error: 'Invalid batch ID.' });
-    }
-
-    // Validate subjectId
-    if (!subjectId || !mongoose.Types.ObjectId.isValid(subjectId)) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ error: 'Invalid or missing subject ID.' });
-    }
-
-    // Validate studentIds
-    if (!studentIds || !Array.isArray(studentIds) || studentIds.length === 0) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ error: 'studentIds must be a non-empty array.' });
-    }
-
-    // Validate each studentId
-    for (const id of studentIds) {
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(400).json({ error: `Invalid student ID: ${id}` });
-      }
-    }
-
-    // ----------------------- Fetch Batch -----------------------
-    
-    // Find the batch document
-    const batch = await Batch.findById(batchId).session(session);
-    if (!batch) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(404).json({ error: 'Batch not found.' });
-    }
-
-    // Optionally, verify that the batch's subject_id matches the provided subjectId
-    if (batch.subject_id.toString() !== subjectId) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ error: 'Batch subject does not match the provided subject ID.' });
-    }
-
-    // ----------------------- Fetch and Validate Students -----------------------
-    
-    // Find the students by IDs
-    const existingStudents = await Student.find({ _id: { $in: studentIds } }).session(session);
-    const existingStudentIds = existingStudents.map(student => student._id.toString());
-
-    // Identify non-existent students
-    const nonExistentStudents = studentIds.filter(id => !existingStudentIds.includes(id));
-    if (nonExistentStudents.length > 0) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(404).json({ error: `Students not found: ${nonExistentStudents.join(', ')}` });
-    }
-
-    // ----------------------- Determine Duration -----------------------
-    
-    // For each student, find the duration from their existing subject_id subdocument
-    // If not present, decide how to handle (e.g., set a default duration or return an error)
-    const bulkStudentOps = existingStudents.map(student => {
-      // Find the subject_id subdocument matching the provided subjectId
-      const subjectSubdoc = student.subject_id.find(sub => sub._id.toString() === subjectId);
-
-      if (subjectSubdoc) {
-        // If the student already has this subject, update the existing subdocument
-        return {
-          updateOne: {
-            filter: { _id: student._id, "subject_id._id": subjectId },
-            update: {
-              $set: {
-                "subject_id.$.batch_id": batchId,
-                "subject_id.$.batch_status": "active",
-                "subject_id.$.batch_expiry_date": addMonths(new Date(), subjectSubdoc.duration),
-              },
-            },
-          },
-        };
-      } else {
-        // If the student does not have this subject, add a new subdocument
-        return {
-          updateOne: {
-            filter: { _id: student._id },
-            update: {
-              $push: {
-                subject_id: {
-                  _id: subjectId,
-                  batch_id: batchId,
-                  batch_assigned: true,
-                  batch_expiry_date: addMonths(new Date(), 1), // Default to 1 month if duration is unknown
-                  batch_status: "active",
-                  duration: 1, // Default duration
-                },
-              },
-            },
-          },
-        };
-      }
-    }).filter(op => op !== null); // Remove any null operations if necessary
-
-    // ----------------------- Update Student Documents -----------------------
-    
-    if (bulkStudentOps.length > 0) {
-      await Student.bulkWrite(bulkStudentOps, { session });
-    }
-
-    // ----------------------- Update Batch Document -----------------------
-    
-    // Add students to the batch's students array using Set to prevent duplicates
-    const updatedStudentsSet = new Set([...batch.students.map(id => id.toString()), ...studentIds]);
-    batch.students = Array.from(updatedStudentsSet).map(id => new mongoose.Types.ObjectId(id));
-
-    // Save the updated batch
-    await batch.save({ session });
-
-    // ----------------------- Commit Transaction -----------------------
-    
-    await session.commitTransaction();
-    session.endSession();
-
-    // Optionally, populate the students field to return detailed information
-    await batch.populate('students', 'student_id name email'); // Adjust fields as necessary
-
-    // ----------------------- Send Response -----------------------
-    
-    return res.status(200).json({
-      message: 'Student(s) added to the batch successfully.',
-      batch,
-    });
-  } catch (error) {
-    // Abort transaction in case of error
-    await session.abortTransaction();
-    session.endSession();
-    console.error('Error adding students to batch:', error);
-    return res.status(500).json({ error: 'An error occurred while adding students to the batch.' });
-  }
-};
-
 /**
  * Utility function to add months to a date
- * 
+ *
  * @param {Date} date - The original date
  * @param {Number} months - Number of months to add
  * @returns {Date} - The new date
@@ -658,3 +497,199 @@ function addMonths(date, months) {
   newDate.setMonth(newDate.getMonth() + months);
   return newDate;
 }
+
+/**
+ * Add one or multiple students to an existing batch
+ * and update their student.subject_id and batch_creation accordingly.
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @returns {Object} - JSON response with success or error message
+ */
+exports.addStudentsToBatch = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { batchId } = req.params; // Extract batchId from URL parameters
+    const { studentIds, subjectId } = req.body; // Extract studentIds and subjectId from request body
+ console.log(studentIds,subjectId);
+    // ----------------------- Validation -----------------------
+    if (!mongoose.Types.ObjectId.isValid(batchId)) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ error: "Invalid batch ID." });
+    }
+    if (!subjectId || !mongoose.Types.ObjectId.isValid(subjectId)) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ error: "Invalid or missing subject ID." });
+    }
+    if (!studentIds || !Array.isArray(studentIds) || studentIds.length === 0) {
+      await session.abortTransaction();
+      session.endSession();
+      return res
+        .status(400)
+        .json({ error: "studentIds must be a non-empty array." });
+    }
+    for (const id of studentIds) {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: `Invalid student ID: ${id}` });
+      }
+    }
+
+    // ----------------------- Fetch Batch -----------------------
+    const batch = await Batch.findById(batchId).session(session);
+    if (!batch) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ error: "Batch not found." });
+    }
+
+    // Optionally check if batch.subject_id matches subjectId
+    if (batch.subject_id.toString() !== subjectId) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({
+        error: "Batch subject does not match the provided subject ID.",
+      });
+    }
+
+    // ----------------------- Fetch Students -----------------------
+    const existingStudents = await Student.find({
+      _id: { $in: studentIds },
+    }).session(session);
+
+    // Verify all requested students exist
+    const foundIds = new Set(existingStudents.map((s) => s._id.toString()));
+    const notFound = studentIds.filter((id) => !foundIds.has(id));
+    if (notFound.length > 0) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({
+        error: `Some student IDs not found: ${notFound.join(", ")}`,
+      });
+    }
+
+    // ----------------------- Determine batch_expiry_date -----------------------
+    const now = new Date();
+    const useStartDate = batch.start_date && batch.start_date > now;
+    // If batch.start_date is in the future, we base calculations off that
+    // otherwise use current date
+
+    // We'll build an array of bulk operations
+    const bulkStudentOps = [];
+
+    for (const student of existingStudents) {
+      // 1) Attempt to find an existing subdocument for subjectId
+      const subjectSubdoc = student.subject_id.find(
+        (sub) => sub._id.toString() === subjectId
+      );
+
+      // 2) Decide the duration
+      //    If the subdoc has a .duration, use it, else default to 1 (for 1 month)
+      const duration = subjectSubdoc?.duration || 1;
+
+      // 3) Calculate expiry based on either batch.start_date or now
+      const baseDate = useStartDate ? batch.start_date : now;
+      const expiry = addMonths(baseDate, duration);
+
+      // 4) Create the update operation
+      if (subjectSubdoc) {
+        // The student already has subjectId in subject_id[]: update it
+        bulkStudentOps.push({
+          updateOne: {
+            filter: {
+              _id: student._id,
+              "subject_id._id": subjectId,
+            },
+            update: {
+              $set: {
+                "subject_id.$.batch_id": batchId,
+                "subject_id.$.batch_status": "active",
+                "subject_id.$.batch_expiry_date": expiry,
+                "subject_id.$.batch_assigned": true,
+              },
+            },
+          },
+        });
+      } else {
+        // The student does not have subjectId; push a new subdocument
+        bulkStudentOps.push({
+          updateOne: {
+            filter: { _id: student._id },
+            update: {
+              $push: {
+                subject_id: {
+                  _id: subjectId,
+                  batch_id: batchId,
+                  batch_assigned: true,
+                  batch_expiry_date: expiry,
+                  batch_status: "active",
+                  duration,
+                },
+              },
+            },
+          },
+        });
+      }
+
+      // 5) Also update batch_creation for the student
+      //    We'll add { subject_id, status: true } if not already present
+      //    That might require an update with `$addToSet`
+      bulkStudentOps.push({
+        updateOne: {
+          filter: { _id: student._id },
+          update: {
+            $addToSet: {
+              batch_creation: {
+                subject_id: subjectId,
+                status: true, // or some custom logic
+              },
+            },
+          },
+        },
+      });
+    }
+
+    // ----------------------- Perform Bulk Updates -----------------------
+    if (bulkStudentOps.length > 0) {
+      await Student.bulkWrite(bulkStudentOps, { session });
+    }
+
+    // ----------------------- Update Batch Document -----------------------
+    // Add these students to batch.students if not already present
+    const existingBatchStudentSet = new Set(batch.students.map((id) => id.toString()));
+    for (const sId of studentIds) {
+      existingBatchStudentSet.add(sId);
+    }
+    batch.students = Array.from(existingBatchStudentSet).map(
+      (id) => new mongoose.Types.ObjectId(id)
+    );
+
+    // Save the updated batch
+    await batch.save({ session });
+
+    // ----------------------- Commit Transaction -----------------------
+    await session.commitTransaction();
+    session.endSession();
+
+    // Optionally populate the batch
+    await batch.populate("students", "student_id user_id phone_number"); 
+    // or any other fields you need
+
+    return res.status(200).json({
+      message: "Student(s) added to the batch successfully.",
+      batch,
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error("Error adding students to batch:", error);
+    return res
+      .status(500)
+      .json({ error: "An error occurred while adding students to the batch." });
+  }
+};
