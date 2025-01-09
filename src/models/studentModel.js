@@ -135,6 +135,11 @@ const studentSchema = new mongoose.Schema({
   worked_hours: {
     type: Number,
   },
+  paymentLink_status:{ 
+    type: String,
+    enum: ['pending', 'approved', 'rejected','no_payment_link'],
+    default: 'no_payment_link'
+  },
   mode: {
     type: String,
     enum: ['normal', 'personal'],

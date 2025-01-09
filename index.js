@@ -46,6 +46,7 @@ const assignmentRoutes= require("./src/routes/assignmentRoutes")
 const cronRoutes= require("./src/routes/cronRoutes")
 const notificationRoutes= require("./src/routes/notificationRoutes")
 const mailRoutes= require("./src/routes/mailRoutes")
+const pricingRoutes=require("./src/routes/pricingRoutes")
 
 require("dotenv").config();
 
@@ -117,6 +118,7 @@ app.use("/assignments",assignmentRoutes);
 app.use("/cron",cronRoutes);
 app.use("/notifications",notificationRoutes);
 app.use("/mail",mailRoutes);
+app.use("/pricing",pricingRoutes)
 // Start Server
 // const PORT = process.env.PORT || 5000;
 // app.listen(PORT, () => {

@@ -27,7 +27,7 @@ const User = require("../models/userModel");
  */
 exports.signup = async (req, res) => {
   const authHeader = req.headers.authorization;
-  const { access_token, class_id, phone_number, profile_image, refresh_token, role, studentDOB, studentGender, student_name, board_id, subject_id, type_of_batch, amount, duration,is_paid } = req.body; // Get role from request body
+  const { access_token, class_id, phone_number, profile_image, refresh_token, role, studentDOB, studentGender, student_name, board_id, subject_id, type_of_batch, amount, duration,is_paid,paymentLink_status } = req.body; // Get role from request body
   console.log(req.body);
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Unauthorized: No token provided" });
@@ -90,6 +90,7 @@ exports.signup = async (req, res) => {
         amount: amount,
         duration: duration,
         is_paid: is_paid,
+        paymentLink_status:paymentLink_status||'no_payment_link',
 
       });
       await student.save();

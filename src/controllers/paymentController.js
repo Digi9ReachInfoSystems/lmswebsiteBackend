@@ -287,78 +287,11 @@ exports.verifyPayment = async (req, res) => {
       // Update student details
       await Student.findByIdAndUpdate(payment.student_id, {
         $push: {
-          custom_package_id: {
-            _id: payment.custom_package_id,
-            is_active: true,
-          },
           payment_id: payment._id,
         },
-        custom_package_status: "approved",
+        is_paid: true,
+        paymentLink_status: "approved",
       });
- 
-      // Fetch the custom package to get duration and subject_id
-      const pkg = await CustomPackage.findById(payment.custom_package_id);
-      if (!pkg) {
-        return res
-          .status(400)
-          .json({ error: "Associated custom package not found" });
-      }
- 
-      // Calculate package_expiry: payment date + duration months
-      const paymentDate = new Date(); // Payment is processed now
-      const packageExpiryDate = new Date(
-        paymentDate.setMonth(paymentDate.getMonth() + (pkg.duration || 0))
-      );
- 
-      // Update student with custom_package_expiry
-      await Student.findByIdAndUpdate(payment.student_id, {
-        custom_package_expiry: packageExpiryDate,
-      });
- 
-      // update custom package details
-      await CustomPackage.findByIdAndUpdate(payment.custom_package_id, {
-        is_active: true,
-        is_approved: true,
-        is_price_finalized: true,
-        admin_contacted: true,
-        package_price: payment.amount,
-      });
- 
-      // -------------- NEW CODE: ADD CUSTOM PACKAGE SUBJECTS TO STUDENT --------------
-      // Retrieve the student's document so we can insert subject subdocs
-      const studentDoc = await Student.findById(payment.student_id);
-      console.log("studentDoc", studentDoc?.subject_id);
-      studentDoc.subject_id = [];
-      console.log("studentDoc.subject_id", studentDoc?.subject_id);
-      if (!studentDoc) {
-        return res.status(404).json({ error: "Student not found" });
-      }
- 
-      // pkg.subject_id is assumed to be an array of Subject _ids (from your customPackage model)
-      // We'll push them into studentDoc.subject_id if they don't already exist
-      pkg.subject_id.forEach((subjectId) => {
-        // const alreadyExists = studentDoc.subject_id.some(
-        //   (sub) => sub._id.toString() === subjectId.toString()
-        // );
-        // if (!alreadyExists) {
-        // Add a new subdocument with default fields
-        console.log("subjectId", subjectId);
-        studentDoc.subject_id.push({
-          _id: subjectId,
-          batch_assigned: false,
-          batch_expiry_date: null,
-          batch_status: "new",
-          duration: pkg.duration || 0, // store same duration as custom package if desired
-        });
-        // }
-      });
- 
-      // Save the updated student
-      await studentDoc.save();
- 
-      console.log(
-        `Added subjects from custom package ${pkg._id} to student ${studentDoc._id}`
-      );
       // -------------- END OF NEW CODE -----------------------------------------------
  
       console.log("Payment link paid, custom package updated successfully");
@@ -371,11 +304,11 @@ exports.verifyPayment = async (req, res) => {
 };
 
 exports.createCustomPackageOrder = async (req, res) => {
-  const { amount, package_id, student_id, duration } = req.body;
+  const { amount, student_id } = req.body;
   try {
     // Create Razorpay order
     // Validate input
-    if (!student_id || !package_id || !amount) {
+    if (!student_id || !amount) {
       return res.status(400).json({
         error: "Missing required fields: studentId, packageId, amount",
       });
@@ -385,14 +318,8 @@ exports.createCustomPackageOrder = async (req, res) => {
     if (!student) {
       return res.status(404).json({ error: "Student not found" });
     }
-    // Check if package exists
-    const package = await CustomPackage.findById(package_id);
-    if (!package) {
-      return res.status(404).json({ error: "Package not found" });
-      // Create Razorpay order
-    }
-    package.duration = duration;
-    await package.save();
+    
+    
     const orderOptions = {
       amount: amount * 100, // Amount in paise
       currency: "INR",
@@ -400,7 +327,6 @@ exports.createCustomPackageOrder = async (req, res) => {
       payment_capture: 1, // Auto-capture
       notes: {
         student_id: student_id,
-        package_id: package_id,
         description: "Payment for course package",
       },
     };
@@ -413,7 +339,6 @@ exports.createCustomPackageOrder = async (req, res) => {
       status: "created",
       order_id: order.id,
       student_id: student_id,
-      custom_package_id: order.notes.package_id,
       description: "Payment for course package",
       receipt: order.receipt,
     });
@@ -428,11 +353,12 @@ exports.createCustomPackageOrder = async (req, res) => {
         first_min_partial_amount: 100, // Optional, for partial payments
         expire_by: Math.floor(Date.now() / 1000) + 3600, // Set expiry to 1 hour from now
         reference_id: order.receipt, // Reference ID for tracking
-        description: `Payment for Custom Package - Package ID: ${package_id}`,
+        description: `Payment for Custom Package `,
         customer: {
           name: student.user_id.name, // You can replace this with dynamic name if needed
           contact: student.phone_number, // You can replace with dynamic contact if needed
-          email: student.user_id.email, // Student's email
+          // email: student.user_id.email, // Student's email
+          email:"jayanthbychana@gmail.com",
         },
         notify: {
           sms: true,
