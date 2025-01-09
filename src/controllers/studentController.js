@@ -1823,9 +1823,10 @@ exports.checkBatchStatus = async (req, res) => {
       });
     }
 
+    console.log("ss",student)
     // Use $filter to get the specific subdocument
     const batchSubdoc = student.subject_id.find(
-      (sub) => sub.batch_id.toString() === batchId
+      (sub) => sub?.batch_id?.toString() === batchId
     );
 
     if (!batchSubdoc) {

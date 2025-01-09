@@ -180,20 +180,20 @@ exports.verifyPayment = async (req, res) => {
   const generated_signature = crypto.createHmac("sha256", secrete);
   generated_signature.update(JSON.stringify(req.body));
   const digested_signature = generated_signature.digest("hex");
-
+ 
   if (digested_signature === signature) {
     if (req.body.event == "payment.captured") {
       console.log("Valid signature inside payment.captured", req.body);
       console.log("request", req.body.payload.payment);
-      console.log("notes",req.body.payload.payment.entity.notes)
-      // Payment is valid
+ 
+      // Payment is valaid
       const payment = await Payment.findOne({
         order_id: req.body.payload.payment.entity.order_id,
       });
       if (!payment) {
         return res.status(400).json({ error: "Payment not found" });
       }
-
+ 
       // Update payment details
       payment.payment_id = req.body.payload.payment.entity.id;
       payment.status = "paid";
@@ -237,18 +237,18 @@ exports.verifyPayment = async (req, res) => {
         }
         // Update the subdocument fields
         subjectSubdoc.duration = durationInt;
-
+ 
         // Calculate new batch_expiry_date: current date + duration months
         const currentDate = new Date();
         const newExpiryDate = new Date(currentDate);
         newExpiryDate.setMonth(newExpiryDate.getMonth() + durationInt);
-
+ 
         subjectSubdoc.batch_expiry_date = newExpiryDate;
         subjectSubdoc.batch_status = "active";
-
+ 
         // Optionally, set batch_assigned to true if required
         subjectSubdoc.batch_assigned = true;
-
+ 
         // Save the updated student document
         await student.save();
         console.log(`Updated subject_id subdoc for student ${student._id}:`, {
@@ -259,79 +259,31 @@ exports.verifyPayment = async (req, res) => {
           batch_status: "active",
         });
       }
-
+ 
       // Update student: set is_paid, push payment_id, etc.
       await Student.findByIdAndUpdate(payment.student_id, {
         $push: { payment_id: payment._id },
         is_paid: true,
       });
-      // if (req.body.payload.payment.entity.notes.subjectIds) {
-      //   const studentOne = await Student.findById(payment.student_id)
-      //     .populate({
-      //       path: 'subject_id._id',      // The field you want to populate
-      //       model: 'Subject',            // The model name for the reference
-      //       select: 'subject_name',      // (optional) which fields to select from Subject
-      //     })
-      //     .populate({
-      //       path: 'subject_id.type_of_batch',
-      //       model: 'TypeOfBatch',
-      //       select: 'mode price',        // (optional)
-      //     })
-      //     .populate("user_id")
-      //     .populate("class")
-      //     .populate("board_id")
-      //     .populate("type_of_batch");
-      //   const subjets=studentOne.subject_id.map((data)=>{
-      //     return data._id.subject_name
-      //   })
-      //   const typeofBatch=subjets=studentOne.subject_id.map((data)=>{
-      //     return data.type_of_batch.mode
-      //   })
-      //   // const subject = await Subject.findById(req.body.payload.payment.entity.notes.subjectId);
-      //   const users = await User.find({ role: "admin" });
-      //   users.map(async (user) => {
-
-      //     const notification = new Notification({
-      //       user_id: user._id,
-      //       message: 'Student Payment Recieved',
-      //       title: "Amount Recieved",
-      //       is_all: false,
-      //     });
-      //     const savedNotification = await notification.save();
-      //     const userNotifications = new UserNotification({
-      //       user_id: user._id,
-      //       notification_id: savedNotification._id
-      //     })
-      //     userNotifications.save();
-      //     const html = studentPaymentRecievedAdmin(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.className, subjets, typeofBatch);
-      //     await sendMailFunctionAdmin("jayanthbychana@gmail.com", 'Subscription Done', html);
-      //   })
-      //   const html = studentPaymentRecievedStudent(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.className,subjets, typeofBatch);
-      //   await sendMailFunctionTA(studentOne.user_id.email, 'Subscription Done', html);
-      // }
-
-
-
-
     } else if (req.body.event == "payment_link.paid") {
       console.log("Valid signature inside payment.link.paid", req.body);
       console.log("request", req.body.payload.order.entity);
-
+ 
       // Payment is valid
       const payment = await Payment.findOne({
         receipt: req.body.payload.order.entity.receipt,
       });
       console.log("payment", payment);
-
+ 
       if (!payment) {
         return res.status(400).json({ error: "Payment not found" });
       }
-
+ 
       // Update payment details
       payment.payment_id = req.body.payload.payment.entity.id;
       payment.status = "paid";
       await payment.save();
-
+ 
       // Update student details
       await Student.findByIdAndUpdate(payment.student_id, {
         $push: {
@@ -343,7 +295,7 @@ exports.verifyPayment = async (req, res) => {
         },
         custom_package_status: "approved",
       });
-
+ 
       // Fetch the custom package to get duration and subject_id
       const pkg = await CustomPackage.findById(payment.custom_package_id);
       if (!pkg) {
@@ -351,18 +303,18 @@ exports.verifyPayment = async (req, res) => {
           .status(400)
           .json({ error: "Associated custom package not found" });
       }
-
+ 
       // Calculate package_expiry: payment date + duration months
       const paymentDate = new Date(); // Payment is processed now
       const packageExpiryDate = new Date(
         paymentDate.setMonth(paymentDate.getMonth() + (pkg.duration || 0))
       );
-
+ 
       // Update student with custom_package_expiry
       await Student.findByIdAndUpdate(payment.student_id, {
         custom_package_expiry: packageExpiryDate,
       });
-
+ 
       // update custom package details
       await CustomPackage.findByIdAndUpdate(payment.custom_package_id, {
         is_active: true,
@@ -371,7 +323,7 @@ exports.verifyPayment = async (req, res) => {
         admin_contacted: true,
         package_price: payment.amount,
       });
-
+ 
       // -------------- NEW CODE: ADD CUSTOM PACKAGE SUBJECTS TO STUDENT --------------
       // Retrieve the student's document so we can insert subject subdocs
       const studentDoc = await Student.findById(payment.student_id);
@@ -381,7 +333,7 @@ exports.verifyPayment = async (req, res) => {
       if (!studentDoc) {
         return res.status(404).json({ error: "Student not found" });
       }
-
+ 
       // pkg.subject_id is assumed to be an array of Subject _ids (from your customPackage model)
       // We'll push them into studentDoc.subject_id if they don't already exist
       pkg.subject_id.forEach((subjectId) => {
@@ -400,21 +352,21 @@ exports.verifyPayment = async (req, res) => {
         });
         // }
       });
-
+ 
       // Save the updated student
       await studentDoc.save();
-
+ 
       console.log(
         `Added subjects from custom package ${pkg._id} to student ${studentDoc._id}`
       );
       // -------------- END OF NEW CODE -----------------------------------------------
-
+ 
       console.log("Payment link paid, custom package updated successfully");
     }
   } else {
     console.log("Invalid signature");
   }
-
+ 
   res.json({ status: "ok" });
 };
 
@@ -594,6 +546,7 @@ exports.createOrderRenewal = async (req, res) => {
     });
 
     await payment.save();
+    console.log("rrr",order)
 
     res.status(200).json(order);
   } catch (error) {
