@@ -48,8 +48,8 @@ const {
 const authMiddleware = require('../middlewares/authMiddleware'); // Ensure you have an auth middleware
 
 // Apply authentication middleware to protect these routes except for webhook
-router.post('/create-order', authMiddleware, createOrder);
-router.post('/create-order-renewal', authMiddleware, createOrderRenewal);
+router.post('/create-order', createOrder);
+router.post('/create-order-renewal',  createOrderRenewal);
 router.post('/verify-payment-webhook', verifyPayment);
 
 
