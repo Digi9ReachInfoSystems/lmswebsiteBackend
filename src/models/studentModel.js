@@ -33,7 +33,7 @@ const studentSchema = new mongoose.Schema({
         ref: "TypeOfBatch",
       },
     },
-   
+
   ],
   user_id: {
     type: mongoose.Schema.Types.ObjectId,
@@ -77,10 +77,14 @@ const studentSchema = new mongoose.Schema({
     ref: "Board"
   },
 
-  payment_id: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Payment",
-  }],
+  payment_id: [
+    {
+      _id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Payment",
+      },
+      invoice_id: { type: mongoose.Schema.Types.ObjectId, ref: "Invoice" },
+    }],
   custom_package_id: [{
     _id: {
       type: mongoose.Schema.Types.ObjectId,
@@ -135,9 +139,15 @@ const studentSchema = new mongoose.Schema({
   worked_hours: {
     type: Number,
   },
-  paymentLink_status:{ 
+  discountAmount: {
+    type: Number,
+  },
+  gstAmount: {
+    type: Number,
+  },
+  paymentLink_status: {
     type: String,
-    enum: ['pending', 'approved', 'rejected','no_payment_link'],
+    enum: ['pending', 'approved', 'rejected', 'no_payment_link'],
     default: 'no_payment_link'
   },
   mode: {

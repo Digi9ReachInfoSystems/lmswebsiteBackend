@@ -305,6 +305,8 @@ exports.updateStudent = async (req, res) => {
     student.duration = updateData.duration || student.duration;
     student.amount = updateData.amount || student.amount;
     student.subject_id = updateData.subject_id || student.subject_id;
+    student.discountAmount = updateData.discountAmount || student.discountAmount;
+    student.gstAmount = updateData.gstAmount || student.gstAmount;
     // Save the updated student
     const updatedStudent = await student.save();
     console.log(updatedStudent);

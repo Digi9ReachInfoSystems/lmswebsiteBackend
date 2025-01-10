@@ -1,4 +1,4 @@
-
+const moment = require("moment");
 function login(username) {
   var currentdate = new Date();
   var datetime = " " + currentdate.getDay() + "/" + currentdate.getMonth()
@@ -70,6 +70,7 @@ function login(username) {
 
     .social-links {
       margin-bottom: 30px;
+        margin-top: 10px;
     }
 
     .social-links img {
@@ -119,7 +120,7 @@ function login(username) {
       <!-- Replace with your change password link -->
 
       <p class="message">
-        For any assistance or to report suspicious activity, please contact our support team at [Support Email/Link].<br><br>
+        For any assistance or to report suspicious activity, please contact our support team at <a href="mailto:info@thetopperacademy.com">info@thetopperacademy.com</a>.<br><br>
         Stay Safe,<br>
         The Topper Academy Team
       </p>
@@ -127,18 +128,18 @@ function login(username) {
 
     <div class="social-links">
       <!-- Replace these with your own social media icons and links -->
-      <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/facebook-new.png" alt="Facebook"></a>
+      <a href="https://www.facebook.com/people/The-Topper-Academy/61567845897039/"><img src="https://img.icons8.com/ios-filled/50/000000/facebook-new.png" alt="Facebook"></a>
       <!-- Updated to X logo -->
-      <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/x--v1.png" alt="X"></a>
-      <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/linkedin.png" alt="LinkedIn"></a>
-      <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/instagram-new.png" alt="Instagram"></a>
+      <!-- <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/x--v1.png" alt="X"></a> -->
+      <a href="https://www.linkedin.com/company/the-topper-academy"><img src="https://img.icons8.com/ios-filled/50/000000/linkedin.png" alt="LinkedIn"></a>
+      <a href="https://www.instagram.com/thetopperacademy2024/"><img src="https://img.icons8.com/ios-filled/50/000000/instagram-new.png" alt="Instagram"></a>
     </div>
 
     <div class="footer">
       <p>
-        © 2022 
-        <span class="product-name">ProductName</span><br>
-        ProductName tagline
+        © ${moment().format("YYYY")} 
+        <span class="product-name">The Topper Academy</span><br>
+        Unlock Your Future !
       </p>
     </div>
   </div>
@@ -219,6 +220,7 @@ function loginAdmin(username) {
 
     .social-links {
       margin-bottom: 30px;
+        margin-top: 10px;
     }
 
     .social-links img {
@@ -366,6 +368,7 @@ function createUser(name, email, password) {
 
     .social-links {
       margin-bottom: 30px;
+        margin-top: 10px;
     }
 
     .social-links img {
@@ -421,7 +424,7 @@ function createUser(name, email, password) {
         <span class="highlight">Password:</span> ${password}<br>
       </p>
       <p class="message">
-        If you have any questions or need assistance, feel free to reach out to our support team at [Support Email] or [Support Phone Number].
+        If you have any questions or need assistance, feel free to reach out to our support team at <a href="mailto:info@thetopperacademy.com">info@thetopperacademy.com</a>.
       </p>
       <p class="message">
         Thank you for choosing <span class="highlight">The Topper Academy</span>. We’re committed to helping you achieve your academic goals!
@@ -434,18 +437,18 @@ function createUser(name, email, password) {
 
     <div class="social-links">
       <!-- Replace these with your own social media icons and links -->
-      <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/facebook-new.png" alt="Facebook"></a>
+      <a href="https://www.facebook.com/people/The-Topper-Academy/61567845897039/"><img src="https://img.icons8.com/ios-filled/50/000000/facebook-new.png" alt="Facebook"></a>
       <!-- Updated to X logo -->
-      <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/x--v1.png" alt="X"></a>
-      <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/linkedin.png" alt="LinkedIn"></a>
-      <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/instagram-new.png" alt="Instagram"></a>
+      <!-- <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/x--v1.png" alt="X"></a> -->
+      <a href="https://www.linkedin.com/company/the-topper-academy"><img src="https://img.icons8.com/ios-filled/50/000000/linkedin.png" alt="LinkedIn"></a>
+      <a href="https://www.instagram.com/thetopperacademy2024/"><img src="https://img.icons8.com/ios-filled/50/000000/instagram-new.png" alt="Instagram"></a>
     </div>
 
-    <div class="footer">
+     <div class="footer">
       <p>
-        © 2022 
-        <span class="product-name">ProductName</span><br>
-        ProductName tagline
+        © ${moment().format("YYYY")} 
+        <span class="product-name">The Topper Academy</span><br>
+        Unlock Your Future !
       </p>
     </div>
   </div>
@@ -529,6 +532,7 @@ function approveApplication(name, microsoftPrincipleName, microsoftPassword) {
 
     .social-links {
       margin-bottom: 30px;
+        margin-top: 10px;
     }
 
     .social-links img {
@@ -576,7 +580,7 @@ function approveApplication(name, microsoftPrincipleName, microsoftPassword) {
         For your security, we recommend changing your temporary password immediately after your first login. Never share your password with anyone.
       </p>
       <p class="message">
-        If you have any questions or need assistance, feel free to reach out to our support team at [Support Email] or call us at [Support Phone Number].
+        If you have any questions or need assistance, feel free to reach out to our support team at <a href="mailto:info@thetopperacademy.com">info@thetopperacademy.com</a> or call us at <a href="tel:7667840906">+91 7667840906</a>.
       </p>
       <p class="message">
         Welcome aboard! We look forward to your valuable contributions to our community.
@@ -588,18 +592,19 @@ function approveApplication(name, microsoftPrincipleName, microsoftPassword) {
     </div>
 
     <div class="social-links">
-      <!-- Replace '#' with your actual social media profile links -->
-      <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/facebook-new.png" alt="Facebook"></a>
-      <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/x--v1.png" alt="X"></a>
-      <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/linkedin.png" alt="LinkedIn"></a>
-      <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/instagram-new.png" alt="Instagram"></a>
+      <!-- Replace these with your own social media icons and links -->
+      <a href="https://www.facebook.com/people/The-Topper-Academy/61567845897039/"><img src="https://img.icons8.com/ios-filled/50/000000/facebook-new.png" alt="Facebook"></a>
+      <!-- Updated to X logo -->
+      <!-- <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/x--v1.png" alt="X"></a> -->
+      <a href="https://www.linkedin.com/company/the-topper-academy"><img src="https://img.icons8.com/ios-filled/50/000000/linkedin.png" alt="LinkedIn"></a>
+      <a href="https://www.instagram.com/thetopperacademy2024/"><img src="https://img.icons8.com/ios-filled/50/000000/instagram-new.png" alt="Instagram"></a>
     </div>
 
-    <div class="footer">
+     <div class="footer">
       <p>
-        © 2022 
-        <span class="product-name">ProductName</span><br>
-        ProductName tagline
+        © ${moment().format("YYYY")} 
+        <span class="product-name">The Topper Academy</span><br>
+        Unlock Your Future !
       </p>
     </div>
   </div>
@@ -704,6 +709,7 @@ function teacherApplicationRecievedAdmin(name, email) {
 
         .social-links {
           margin-bottom: 30px;
+            margin-top: 10px;
         }
 
         .social-links img {
@@ -850,6 +856,7 @@ function teacherApplicationRecieved(name) {
 
         .social-links {
           margin-bottom: 30px;
+            margin-top: 10px;
         }
 
         .social-links img {
@@ -886,7 +893,7 @@ function teacherApplicationRecieved(name) {
             Thank you for your interest in joining <span class="highlight">The Topper Academy</span>. We are excited to inform you that we have received your application and will begin reviewing it shortly.
           </p>
           <p class="message">
-            We will notify you about the status of your application once it's been reviewed. If you have any questions or need further assistance, please feel free to contact us.
+            We will notify you about the status of your application once it's been reviewed. If you have any questions or need further assistance, please feel free to contact us  at <a href="mailto:info@thetopperacademy.com">info@thetopperacademy.com</a> or call us at <a href="tel:7667840906">+91 7667840906</a>.
           </p>
           <p class="message">
             Thank you for choosing <span class="highlight">The Topper Academy</span>. We look forward to having you on board!
@@ -897,21 +904,22 @@ function teacherApplicationRecieved(name) {
           </p>
         </div>
 
-        <div class="social-links">
-          <!-- Replace '#' with your actual social media profile links -->
-          <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/facebook-new.png" alt="Facebook"></a>
-          <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/x--v1.png" alt="X"></a>
-          <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/linkedin.png" alt="LinkedIn"></a>
-          <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/instagram-new.png" alt="Instagram"></a>
-        </div>
+      <div class="social-links">
+      <!-- Replace these with your own social media icons and links -->
+      <a href="https://www.facebook.com/people/The-Topper-Academy/61567845897039/"><img src="https://img.icons8.com/ios-filled/50/000000/facebook-new.png" alt="Facebook"></a>
+      <!-- Updated to X logo -->
+      <!-- <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/x--v1.png" alt="X"></a> -->
+      <a href="https://www.linkedin.com/company/the-topper-academy"><img src="https://img.icons8.com/ios-filled/50/000000/linkedin.png" alt="LinkedIn"></a>
+      <a href="https://www.instagram.com/thetopperacademy2024/"><img src="https://img.icons8.com/ios-filled/50/000000/instagram-new.png" alt="Instagram"></a>
+    </div>
 
-        <div class="footer">
-          <p>
-            © 2022 
-            <span class="product-name">The Topper Academy</span><br>
-            The Topper Academy tagline
-          </p>
-        </div>
+         <div class="footer">
+      <p>
+        © ${moment().format("YYYY")} 
+        <span class="product-name">The Topper Academy</span><br>
+        Unlock Your Future !
+      </p>
+    </div>
       </div>
     </body>
     </html>
@@ -993,6 +1001,7 @@ function studentSignUpAdmin(name, email) {
 
         .social-links {
           margin-bottom: 30px;
+            margin-top: 10px;
         }
 
         .social-links img {
@@ -1356,7 +1365,7 @@ const typeOfBatchList = typeOfBatch.join(", ");
             <span class="highlight">Date:</span> ${dateString}<br>
           </p>
           <p class="message">
-            If you have any questions or need assistance, feel free to reach out to our support team at [Support Email] or call us at [Support Phone Number].
+            If you have any questions or need assistance, feel free to reach out to our support team at <a href="mailto:info@thetopperacademy.com">info@thetopperacademy.com</a> or call us at <a href="tel:7667840906">+91 7667840906</a>.
           </p>
           <p class="message">
             Thank you for choosing <span class="highlight">The Topper Academy</span>. We look forward to supporting your academic journey!
@@ -1368,20 +1377,21 @@ const typeOfBatchList = typeOfBatch.join(", ");
         </div>
 
         <div class="social-links">
-          <!-- Replace '#' with your actual social media profile links -->
-          <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/facebook-new.png" alt="Facebook"></a>
-          <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/x--v1.png" alt="X"></a>
-          <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/linkedin.png" alt="LinkedIn"></a>
-          <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/instagram-new.png" alt="Instagram"></a>
-        </div>
+      <!-- Replace these with your own social media icons and links -->
+      <a href="https://www.facebook.com/people/The-Topper-Academy/61567845897039/"><img src="https://img.icons8.com/ios-filled/50/000000/facebook-new.png" alt="Facebook"></a>
+      <!-- Updated to X logo -->
+      <!-- <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/x--v1.png" alt="X"></a> -->
+      <a href="https://www.linkedin.com/company/the-topper-academy"><img src="https://img.icons8.com/ios-filled/50/000000/linkedin.png" alt="LinkedIn"></a>
+      <a href="https://www.instagram.com/thetopperacademy2024/"><img src="https://img.icons8.com/ios-filled/50/000000/instagram-new.png" alt="Instagram"></a>
+    </div>
 
-        <div class="footer">
-          <p>
-            © 2022 
-            <span class="product-name">The Topper Academy</span><br>
-            Your tagline here
-          </p>
-        </div>
+         <div class="footer">
+      <p>
+        © ${moment().format("YYYY")} 
+        <span class="product-name">The Topper Academy</span><br>
+        Unlock Your Future !
+      </p>
+    </div>
       </div>
     </body>
     </html>
@@ -1463,6 +1473,7 @@ function customerQueryAdmin(name, email) {
 
     .social-links {
       margin-bottom: 30px;
+        margin-top: 10px;
     }
 
     .social-links img {
@@ -1611,6 +1622,7 @@ function customerQueryCustomer(name, email) {
 
         .social-links {
           margin-bottom: 30px;
+          margin-top: 30px;
         }
 
         .social-links img {
@@ -1652,7 +1664,7 @@ function customerQueryCustomer(name, email) {
             <span class="highlight">Email:</span> ${email}<br>
           </p>
           <p class="message">
-            If you need immediate assistance or have any further questions, feel free to contact us at [Support Email] or call us at [Support Phone Number].
+            If you need immediate assistance or have any further questions, feel free to contact us at <a href="mailto:info@thetopperacademy.com">info@thetopperacademy.com</a> or call us at <a href="tel:7667840906">+91 7667840906</a>.
           </p>
           <p class="message">
             Thank you for choosing <span class="highlight">The Topper Academy</span>. We look forward to assisting you!
@@ -1664,20 +1676,21 @@ function customerQueryCustomer(name, email) {
         </div>
 
         <div class="social-links">
-          <!-- Replace '#' with your actual social media profile links -->
-          <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/facebook-new.png" alt="Facebook"></a>
-          <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/x--v1.png" alt="X"></a>
-          <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/linkedin.png" alt="LinkedIn"></a>
-          <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/instagram-new.png" alt="Instagram"></a>
-        </div>
+      <!-- Replace these with your own social media icons and links -->
+      <a href="https://www.facebook.com/people/The-Topper-Academy/61567845897039/"><img src="https://img.icons8.com/ios-filled/50/000000/facebook-new.png" alt="Facebook"></a>
+      <!-- Updated to X logo -->
+      <!-- <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/x--v1.png" alt="X"></a> -->
+      <a href="https://www.linkedin.com/company/the-topper-academy"><img src="https://img.icons8.com/ios-filled/50/000000/linkedin.png" alt="LinkedIn"></a>
+      <a href="https://www.instagram.com/thetopperacademy2024/"><img src="https://img.icons8.com/ios-filled/50/000000/instagram-new.png" alt="Instagram"></a>
+    </div>
 
-        <div class="footer">
-          <p>
-            © 2022 
-            <span class="product-name">The Topper Academy</span><br>
-            The Topper Academy tagline
-          </p>
-        </div>
+         <div class="footer">
+      <p>
+        © ${moment().format("YYYY")} 
+        <span class="product-name">The Topper Academy</span><br>
+        Unlock Your Future !
+      </p>
+    </div>
       </div>
     </body>
     </html>
@@ -1760,6 +1773,7 @@ function newMeetingcreated(batchName) {
 
         .social-links {
           margin-bottom: 30px;
+            margin-top: 10px;
         }
 
         .social-links img {
@@ -1796,7 +1810,7 @@ function newMeetingcreated(batchName) {
             We're excited to inform you that a new meeting has been created for your batch <span class="highlight">${batchName}</span> at <span class="highlight">The Topper Academy</span>.
           </p>
           <p class="message">
-            Please check the details in your account and attend the meeting at the scheduled time. If you have any questions or need assistance, feel free to reach out to our support team.
+            Please check the details in your account and attend the meeting at the scheduled time. If you have any questions or need assistance, feel free to reach out to our support team at <a href="mailto:info@thetopperacademy.com">info@thetopperacademy.com</a> or call us at <a href="tel:7667840906">+91 7667840906</a>.
           </p>
           <p class="message">
             Thank you for being a part of <span class="highlight">The Topper Academy</span>! We look forward to your participation in the meeting.
@@ -1808,20 +1822,21 @@ function newMeetingcreated(batchName) {
         </div>
 
         <div class="social-links">
-          <!-- Replace '#' with your actual social media profile links -->
-          <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/facebook-new.png" alt="Facebook"></a>
-          <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/x--v1.png" alt="X"></a>
-          <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/linkedin.png" alt="LinkedIn"></a>
-          <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/instagram-new.png" alt="Instagram"></a>
-        </div>
+      <!-- Replace these with your own social media icons and links -->
+      <a href="https://www.facebook.com/people/The-Topper-Academy/61567845897039/"><img src="https://img.icons8.com/ios-filled/50/000000/facebook-new.png" alt="Facebook"></a>
+      <!-- Updated to X logo -->
+      <!-- <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/x--v1.png" alt="X"></a> -->
+      <a href="https://www.linkedin.com/company/the-topper-academy"><img src="https://img.icons8.com/ios-filled/50/000000/linkedin.png" alt="LinkedIn"></a>
+      <a href="https://www.instagram.com/thetopperacademy2024/"><img src="https://img.icons8.com/ios-filled/50/000000/instagram-new.png" alt="Instagram"></a>
+    </div>
 
-        <div class="footer">
-          <p>
-            © 2022 
-            <span class="product-name">The Topper Academy</span><br>
-            The Topper Academy tagline
-          </p>
-        </div>
+         <div class="footer">
+      <p>
+        © ${moment().format("YYYY")} 
+        <span class="product-name">The Topper Academy</span><br>
+        Unlock Your Future !
+      </p>
+    </div>
       </div>
     </body>
     </html>

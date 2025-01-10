@@ -600,7 +600,7 @@ exports.approveTeacherApplication = async (req, res) => {
   <p style="font-size: 0.9em;">Please keep your credentials safe and do not share them with others. If you did not apply for this role, please contact our support immediately.</p>
 `;
 
-    await sendEmail(emailContent, application.email);
+    // await sendEmail(emailContent, application.email);
 
 
     // Create a new Teacher document with Microsoft credentials

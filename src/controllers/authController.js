@@ -27,7 +27,7 @@ const User = require("../models/userModel");
  */
 exports.signup = async (req, res) => {
   const authHeader = req.headers.authorization;
-  const { access_token, class_id, phone_number, profile_image, refresh_token, role, studentDOB, studentGender, student_name, board_id, subject_id, type_of_batch, amount, duration,is_paid,paymentLink_status } = req.body; // Get role from request body
+  const { access_token, class_id, phone_number, profile_image, refresh_token, role, studentDOB, studentGender, student_name, board_id, subject_id, type_of_batch, amount, duration,is_paid,paymentLink_status,gstAmount,discountAmount } = req.body; // Get role from request body
   console.log(req.body);
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Unauthorized: No token provided" });
@@ -67,6 +67,12 @@ exports.signup = async (req, res) => {
     // If the role is 'student', create a Student document
     let student;
     if (userRole === "student") {
+      // Correctly format the subject_id array
+    // const formattedSubjects = subject_id.map(subject => ({
+    //   subject_id: mongoose.Types.ObjectId(subject.subject_id), // Ensure it's an ObjectId
+    //   typeOfBatch: mongoose.Types.ObjectId(subject.typeOfBatch),
+    //   duration: subject.duration
+    // }));
       // Generate a unique student ID (e.g., use the user ID or a custom method)
       // const studentId = new mongoose.Types.ObjectId();
 
@@ -81,16 +87,19 @@ exports.signup = async (req, res) => {
         gender: studentGender,
         dateOfBirth: studentDOB,
         board_id: board_id,
-        subject_id: {
-          _id: subject_id,
-          duration: duration,
-          type_of_batch: type_of_batch,
-        },
+        // subject_id: {
+        //   _id: subject_id,
+        //   duration: duration,
+        //   type_of_batch: type_of_batch,
+        // },
+        subject_id: subject_id,
         type_of_batch: type_of_batch,
         amount: amount,
         duration: duration,
         is_paid: is_paid,
         paymentLink_status:paymentLink_status||'no_payment_link',
+        gstAmount:gstAmount||null,
+        discountAmount:discountAmount||null
 
       });
       await student.save();

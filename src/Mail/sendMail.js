@@ -1,26 +1,48 @@
 const nodemailer = require("nodemailer");
 const bodyParser = require("body-parser");
+const { getInvoice, getInvoicePDF } = require("../controllers/invoiceController");
 
 // From Digi9
+// const transporterAdmin = nodemailer.createTransport({
+//   host: "smtp.hostinger.com",
+//   port: 465,
+//   secure: true,
+//   auth: {
+//     user: "Info@gully2global.com",
+//     pass: "Shasudigi@217",
+//   },
+// });
 const transporterAdmin = nodemailer.createTransport({
-  host: "smtp.hostinger.com",
+  host: "smtpout.secureserver.net",
   port: 465,
   secure: true,
   auth: {
-    user: "Info@gully2global.com",
-    pass: "Shasudigi@217",
+    user: "info@thetopperacademy.com",
+    pass: "Mousumeeray1!",
   },
 });
 
-const sendMailFunctionAdmin = async (email, sub, html) => {
+const sendMailFunctionAdmin = async (email, sub, html, pdfPath = "") => {
   try {
 
     const mailOptions = {
-      from: "Info@gully2global.com",
+      from: "info@thetopperacademy.com",
       to: email,//email
       subject: sub,
       html: html,
     };
+    // Check if the pdfPath is provided and valid
+    if (pdfPath) {
+      mailOptions.attachments = [
+        {
+          filename: "Invoice.pdf",
+          content: pdfPath, // Buffer can be used directly
+          encoding: 'base64',
+          contentType: "application/pdf",
+        },
+      ];
+    }
+
 
     await transporterAdmin.sendMail(mailOptions);
 
@@ -35,24 +57,36 @@ const sendMailFunctionAdmin = async (email, sub, html) => {
 
 // From Toppers Academy
 const transporterTA = nodemailer.createTransport({
-  host: "smtp.hostinger.com",
+  host: "smtpout.secureserver.net",
   port: 465,
   secure: true,
   auth: {
-    user: "Info@gully2global.com",
-    pass: "Shasudigi@217",
+    user: "info@thetopperacademy.com",
+    pass: "Mousumeeray1!",
   },
 });
 
-const sendMailFunctionTA = async (email, sub, html) => {
+const sendMailFunctionTA = async (email, sub, html, pdfPath = "") => {
   try {
-
+    //  const pdfPath1 = await getInvoicePDF("67812e52cb1d90e19f16f422")
+    //  console.log(pdfPath1);
     const mailOptions = {
-      from: "Info@gully2global.com",
+      from: "info@thetopperacademy.com",
       to: email,
       subject: sub,
       html: html,
     };
+    // Check if the pdfPath is provided and valid
+    if (pdfPath) {
+      mailOptions.attachments = [
+        {
+          filename: "Invoice.pdf",
+          content: pdfPath, // Buffer can be used directly
+          encoding: 'base64',
+          contentType: "application/pdf",
+        },
+      ];
+    }
 
     await transporterTA.sendMail(mailOptions);
 
