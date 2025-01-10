@@ -12,7 +12,7 @@ const User = require('../models/userModel');
 const UserNotification = require('../models/userNotificationModel');
 const { studentPaymentRecievedAdmin, studentPaymentRecievedStudent } = require("../mailTemplate/mailTemplates");
 const { sendMailFunctionAdmin, sendMailFunctionTA } = require("../Mail/sendMail");
-const { getInvoicePDF } = require("./invoiceController");
+const { getInvoicePDF, createInvoice } = require("./invoiceController");
 
 // Create Razorpay Order
 exports.createOrder = async (req, res) => {
