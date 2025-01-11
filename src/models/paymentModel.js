@@ -61,6 +61,7 @@ const paymentSchema = new mongoose.Schema(
     payment_method: { type: String },
     description: { type: String },
     refund_id: { type: String }, // Optional
+    invoice_id: { type: mongoose.Schema.Types.ObjectId, ref: "Invoice" },
   },
   {
     timestamps: { createdAt: "createdAt", updatedAt: "updatedAt" },

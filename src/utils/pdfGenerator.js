@@ -3,12 +3,21 @@ const axios = require("axios");
 const path = require("path");
 const fs = require("fs");
 
+const formatDate = (date) => {
+  const day = String(date.getDate()).padStart(2, '0'); // Add leading zero if day is single digit
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // getMonth is zero-indexed, so add 1
+  const year = date.getFullYear();
+  
+  return `${day}-${month}-${year}`;
+};
+
 /**
  * Generates an Invoice PDF with the specified formatting.
  * @param {Object} invoice - The invoice data.
  * @returns {Promise<Buffer>} - A promise that resolves to the PDF buffer.
  */
 function generateInvoicePDF(invoice) {
+  console.log("invoice",invoice);
   const discountPer= (invoice.discount/invoice.subtotal)*100;
   return new Promise(async (resolve, reject) => {
     try {
@@ -34,9 +43,9 @@ function generateInvoicePDF(invoice) {
       doc.registerFont("DejaVuSans-Bold", boldFontPath);
 
       // -------------------- INVOICE HEADER --------------------
-      doc.font("DejaVuSans").fontSize(20).text("Invoice", 400, 50, { align: "right" });
-      doc.fontSize(10).fillColor("gray").text(`Invoice No: ${invoice.invoiceNumber}`, 400, 80, { align: "right" })
-        .text(`Invoice Date: ${invoice.invoiceDate}`, 400, 95, { align: "right" });
+      doc.font("DejaVuSans").fontSize(20).text("Invoice", 400, 45, { align: "right" });
+      doc.fontSize(10).fillColor("gray").text(`Invoice No    : ${invoice.invoiceNumber}`, 370, 80, { align: "left" })
+        .text(`Invoice Date : ${formatDate(invoice.invoiceDate)}`, 370, 95, { align: "left" });
 
       // -------------------- FROM & BILL TO --------------------
       const fromX = 50, billToX = 400, currentY = 150;

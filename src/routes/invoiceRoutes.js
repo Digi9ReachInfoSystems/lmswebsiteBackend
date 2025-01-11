@@ -11,6 +11,6 @@ router.post("/create", invoiceController.createInvoice);
 router.get("/getInvoiceBYId/:id", invoiceController.getInvoice);
 
 // GET /api/invoices/:id/pdf -> Download invoice PDF
-router.get("/downloadInvoicePDF/:id/pdf", invoiceController.getInvoicePDF);
+router.post("/downloadInvoicePDF/pdf", invoiceController.getInvoicePDF);
 
 module.exports = router;
