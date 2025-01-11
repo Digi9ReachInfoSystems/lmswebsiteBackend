@@ -305,8 +305,7 @@ exports.verifyPayment = async (req, res) => {
       const typeofBatchs = [batchType.mode];
 
       const html = studentPaymentRecievedStudent(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.className, subjets, typeofBatchs);
-      // await sendMailFunctionTA(studentOne.user_id.email, 'Subscription Done', html);
-      await sendMailFunctionTA("jayanthbychana@gmail.com", 'Subscription Done', html, pdfData);
+      await sendMailFunctionTA(studentOne.user_id.email, 'Subscription Done', html);
 
       const users = await User.find({ role: "admin" });
       users.map(async (user) => {
@@ -324,7 +323,7 @@ exports.verifyPayment = async (req, res) => {
         })
         userNotifications.save();
         const html = studentPaymentRecievedAdmin(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.className, subjets, typeofBatchs);
-        await sendMailFunctionAdmin("jayanthbychana@gmail.com", 'Subscription Done', html, pdfData);
+        await sendMailFunctionAdmin(user.email, 'Subscription Done', html, pdfData);
       })
 
 
@@ -396,8 +395,7 @@ exports.verifyPayment = async (req, res) => {
       const pdfData = await getInvoicePDF({ body: { id: searchId, mode: "function" } });
 
       const html = studentPaymentRecievedStudent(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.className, subjets, typeofBatchs);
-      // await sendMailFunctionTA(studentOne.user_id.email, 'Subscription Done', html);
-      await sendMailFunctionTA("jayanthbychana@gmail.com", 'Subscription Done', html, pdfData);
+      await sendMailFunctionTA(studentOne.user_id.email, 'Subscription Done', html);
 
       const users = await User.find({ role: "admin" });
       users.map(async (user) => {
@@ -415,7 +413,7 @@ exports.verifyPayment = async (req, res) => {
         })
         userNotifications.save();
         const html = studentPaymentRecievedAdmin(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.className, subjets, typeofBatchs);
-        await sendMailFunctionAdmin("jayanthbychana@gmail.com", 'Subscription Done', html, pdfData);
+        await sendMailFunctionAdmin(user.email, 'Subscription Done', html, pdfData);
       })
 
 
@@ -508,8 +506,7 @@ exports.verifyPayment = async (req, res) => {
     const pdfData = await getInvoicePDF({ body: { id: searchId, mode: "function" } });
 
     const html = studentPaymentRecievedStudent(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.className, subjets, typeofBatchs);
-    // await sendMailFunctionTA(studentOne.user_id.email, 'Subscription Done', html);
-    await sendMailFunctionTA("jayanthbychana@gmail.com", 'Subscription Done', html, pdfData);
+    await sendMailFunctionTA(studentOne.user_id.email, 'Subscription Done', html);
 
     const users = await User.find({ role: "admin" });
     users.map(async (user) => {
@@ -527,7 +524,7 @@ exports.verifyPayment = async (req, res) => {
       })
       userNotifications.save();
       const html = studentPaymentRecievedAdmin(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.className, subjets, typeofBatchs);
-      await sendMailFunctionAdmin("jayanthbychana@gmail.com", 'Subscription Done', html, pdfData);
+      await sendMailFunctionAdmin(user.email, 'Subscription Done', html, pdfData);
     })
 
 
@@ -605,8 +602,7 @@ exports.createCustomPackageOrder = async (req, res) => {
         customer: {
           name: student.user_id.name, // You can replace this with dynamic name if needed
           contact: student.phone_number, // You can replace with dynamic contact if needed
-          // email: student.user_id.email, // Student's email
-          email: "jayanthbychana@gmail.com",
+          email: student.user_id.email, // Student's email
         },
         notify: {
           sms: true,
