@@ -273,7 +273,11 @@ exports.verifyPayment = async (req, res) => {
         quantity: 1
       }
       items.push(itemData)
-      const studentOne = await Student.findById(payment.student_id).populate("user_id");
+      const studentOne = await Student.findById(payment.student_id)
+      .populate("user_id")
+      .populate("class")
+      .populate("board_id")
+      .populate("type_of_batch");
       console.log("studentOne", studentOne);
       let billTo = {
         name: studentOne.user_id.name,
@@ -304,8 +308,8 @@ exports.verifyPayment = async (req, res) => {
       const subjets = [subject.subject_name];
       const typeofBatchs = [batchType.mode];
 
-      const html = studentPaymentRecievedStudent(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.className, subjets, typeofBatchs);
-      await sendMailFunctionTA(studentOne.user_id.email, 'Subscription Done', html);
+      const html = studentPaymentRecievedStudent(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.classLevel, subjets, typeofBatchs);
+      await sendMailFunctionTA(studentOne.user_id.email, 'Subscription Done', html,pdfData);
 
       const users = await User.find({ role: "admin" });
       users.map(async (user) => {
@@ -322,7 +326,7 @@ exports.verifyPayment = async (req, res) => {
           notification_id: savedNotification._id
         })
         userNotifications.save();
-        const html = studentPaymentRecievedAdmin(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.className, subjets, typeofBatchs);
+        const html = studentPaymentRecievedAdmin(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.classLevel, subjets, typeofBatchs);
         await sendMailFunctionAdmin(user.email, 'Subscription Done', html, pdfData);
       })
 
@@ -394,8 +398,8 @@ exports.verifyPayment = async (req, res) => {
       const searchId = invoiceData._id;
       const pdfData = await getInvoicePDF({ body: { id: searchId, mode: "function" } });
 
-      const html = studentPaymentRecievedStudent(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.className, subjets, typeofBatchs);
-      await sendMailFunctionTA(studentOne.user_id.email, 'Subscription Done', html);
+      const html = studentPaymentRecievedStudent(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.classLevel, subjets, typeofBatchs);
+      await sendMailFunctionTA(studentOne.user_id.email, 'Subscription Done', html,pdfData);
 
       const users = await User.find({ role: "admin" });
       users.map(async (user) => {
@@ -412,7 +416,7 @@ exports.verifyPayment = async (req, res) => {
           notification_id: savedNotification._id
         })
         userNotifications.save();
-        const html = studentPaymentRecievedAdmin(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.className, subjets, typeofBatchs);
+        const html = studentPaymentRecievedAdmin(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.classLevel, subjets, typeofBatchs);
         await sendMailFunctionAdmin(user.email, 'Subscription Done', html, pdfData);
       })
 
@@ -505,8 +509,8 @@ exports.verifyPayment = async (req, res) => {
     const searchId = invoiceData._id;
     const pdfData = await getInvoicePDF({ body: { id: searchId, mode: "function" } });
 
-    const html = studentPaymentRecievedStudent(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.className, subjets, typeofBatchs);
-    await sendMailFunctionTA(studentOne.user_id.email, 'Subscription Done', html);
+    const html = studentPaymentRecievedStudent(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.classLevel, subjets, typeofBatchs);
+    await sendMailFunctionTA(studentOne.user_id.email, 'Subscription Done', html,pdfData);
 
     const users = await User.find({ role: "admin" });
     users.map(async (user) => {
@@ -523,7 +527,7 @@ exports.verifyPayment = async (req, res) => {
         notification_id: savedNotification._id
       })
       userNotifications.save();
-      const html = studentPaymentRecievedAdmin(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.className, subjets, typeofBatchs);
+      const html = studentPaymentRecievedAdmin(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.classLevel, subjets, typeofBatchs);
       await sendMailFunctionAdmin(user.email, 'Subscription Done', html, pdfData);
     })
 
