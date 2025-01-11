@@ -3,6 +3,7 @@
 const { generateInvoicePDF } = require("../utils/pdfGenerator");
 const Pricing = require("../models/pricingModel");
 const Invoice = require("../models/invoiceModel");
+const mongoose = require("mongoose");
 
 // In-memory storage for invoices (not persisted!)
 // let invoices = [];
@@ -104,10 +105,15 @@ exports.getInvoice = (req, res) => {
 /**
  * Generate and serve a PDF of the invoice
  */
-exports.getInvoicePDF = async (id) => {
+exports.getInvoicePDF = async (req,res) => {
   try {
     // const id = req.params.id;
+    console.log(req);
+    const{id,mode} = req.body;
+    // const id= new mongoose.Types.ObjectId(req.body.id) ;
+    // const mode= req.body.mode;
     const invoice = await Invoice.findById(id);
+    console.log("invoiceFound",invoice);
 
     if (!invoice) {
       // return res.status(404).json({ message: "Invoice not found" });
@@ -118,18 +124,23 @@ exports.getInvoicePDF = async (id) => {
 
     // Sanitize invoice number so it doesn't contain invalid characters (e.g., ₹)
     const safeInvoiceNumber = (invoice.invoiceNumber || "unknown").replace(/[^\w.-]/g, "");
-
-    // Set headers to download
-    // res.setHeader("Content-Type", "application/pdf");
-    // res.setHeader(
-    //   "Content-Disposition",
-    //   `attachment; filename=invoice-${safeInvoiceNumber}.pdf`
-    // );
+    if(mode=="api"){
+       // Set headers to download
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=invoice-${safeInvoiceNumber}.pdf`
+    );
     // console.log(pdfBuffer);
-    return pdfBuffer;
-    // return res.send(pdfBuffer);
+    // return pdfBuffer;
+    return res.send(pdfBuffer);
+    }else{
+      return pdfBuffer;
+    }
+   
   } catch (error) {
     console.error(error);
-    // res.status(500).json({ message: "Error generating PDF" });
+    console.log("Error generating PDF",error);
+    res.status(200).json({ message: "Error generating PDF" });
   }
 };

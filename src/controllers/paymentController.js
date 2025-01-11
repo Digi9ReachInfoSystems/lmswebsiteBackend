@@ -13,6 +13,9 @@ const UserNotification = require('../models/userNotificationModel');
 const { studentPaymentRecievedAdmin, studentPaymentRecievedStudent } = require("../mailTemplate/mailTemplates");
 const { sendMailFunctionAdmin, sendMailFunctionTA } = require("../Mail/sendMail");
 const { getInvoicePDF, createInvoice } = require("./invoiceController");
+const { body } = require("express-validator");
+const TypeOfBatch = require("../models/typeOfBatchModel");
+
 
 // Create Razorpay Order
 exports.createOrder = async (req, res) => {
@@ -54,7 +57,7 @@ exports.createOrder = async (req, res) => {
     };
 
     const order = await razorpayInstance.orders.create(orderOptions);
-    console.log("order", order.notes);
+    // console.log("order", order.notes);
 
     // Save order details in Payment model
     const payment = new Payment({
@@ -181,85 +184,153 @@ exports.verifyPayment = async (req, res) => {
   const generated_signature = crypto.createHmac("sha256", secrete);
   generated_signature.update(JSON.stringify(req.body));
   const digested_signature = generated_signature.digest("hex");
+  console.log("body", req.body);
 
   if (digested_signature === signature) {
-    if (req.body.event == "payment.captured") {
-      console.log("Valid signature inside payment.captured", req.body);
-      console.log("request", req.body.payload.payment);
+  if (req.body.event == "payment.captured") {
+    console.log("Valid signature inside payment.captured", req.body);
+    console.log("request", req.body.payload.payment);
 
-      // Payment is valaid
-      const payment = await Payment.findOne({
-        order_id: req.body.payload.payment.entity.order_id,
-      });
-      if (!payment) {
-        return res.status(400).json({ error: "Payment not found" });
+    // Payment is valaid
+    const payment = await Payment.findOne({
+      order_id: req.body.payload.payment.entity.order_id,
+    });
+    if (!payment) {
+      return res.status(400).json({ error: "Payment not found" });
+    }
+
+    // Update payment details
+    payment.payment_id = req.body.payload.payment.entity.id;
+    payment.status = "paid";
+    await payment.save();
+    if (
+      req.body.payload.payment.entity.notes?.batchId &&
+      req.body.payload.payment.entity.notes?.subjectId &&
+      req.body.payload.payment.entity.notes?.duration
+    ) {
+      const { batchId, subjectId, duration } =
+        req.body.payload.payment.entity.notes || {};
+      const durationInt = parseInt(
+        req.body.payload.payment.entity.notes.duration,
+        10
+      );
+      if (isNaN(durationInt) || durationInt <= 0) {
+        console.error("Invalid duration provided:", duration);
+        return res.status(400).json({ error: "Invalid duration provided" });
       }
-
-      // Update payment details
-      payment.payment_id = req.body.payload.payment.entity.id;
-      payment.status = "paid";
-      await payment.save();
-      if (
-        req.body.payload.payment.entity.notes.batchId &&
-        req.body.payload.payment.entity.notes.subjectId &&
-        req.body.payload.payment.entity.notes.duration
-      ) {
-        const { batchId, subjectId, duration } =
-          req.body.payload.payment.entity.notes || {};
-        const durationInt = parseInt(
-          req.body.payload.payment.entity.notes.duration,
-          10
+      // Find the student document
+      const student = await Student.findById(payment.student_id);
+      if (!student) {
+        console.error("Student not found with ID:", payment.student_id);
+        return res.status(404).json({ error: "Student not found" });
+      }
+      // Find the matching subject subdocument
+      const subjectSubdoc = student.subject_id.find(
+        (sub) =>
+          sub._id.toString() === subjectId.toString() &&
+          sub.batch_id &&
+          sub.batch_id.toString() === batchId.toString()
+      );
+      if (!subjectSubdoc) {
+        console.error(
+          `Subject subdocument not found for subjectId: ${subjectId} and batchId: ${batchId} in student: ${student._id}`
         );
-        if (isNaN(durationInt) || durationInt <= 0) {
-          console.error("Invalid duration provided:", duration);
-          return res.status(400).json({ error: "Invalid duration provided" });
-        }
-        // Find the student document
-        const student = await Student.findById(payment.student_id);
-        if (!student) {
-          console.error("Student not found with ID:", payment.student_id);
-          return res.status(404).json({ error: "Student not found" });
-        }
-        // Find the matching subject subdocument
-        const subjectSubdoc = student.subject_id.find(
-          (sub) =>
-            sub._id.toString() === subjectId.toString() &&
-            sub.batch_id &&
-            sub.batch_id.toString() === batchId.toString()
-        );
-        if (!subjectSubdoc) {
-          console.error(
-            `Subject subdocument not found for subjectId: ${subjectId} and batchId: ${batchId} in student: ${student._id}`
-          );
-          return res.status(404).json({
-            error:
-              "Subject and Batch combination not found in student's subject array",
-          });
-        }
-        // Update the subdocument fields
-        subjectSubdoc.duration = durationInt;
-
-        // Calculate new batch_expiry_date: current date + duration months
-        const currentDate = new Date();
-        const newExpiryDate = new Date(currentDate);
-        newExpiryDate.setMonth(newExpiryDate.getMonth() + durationInt);
-
-        subjectSubdoc.batch_expiry_date = newExpiryDate;
-        subjectSubdoc.batch_status = "active";
-
-        // Optionally, set batch_assigned to true if required
-        subjectSubdoc.batch_assigned = true;
-
-        // Save the updated student document
-        await student.save();
-        console.log(`Updated subject_id subdoc for student ${student._id}:`, {
-          subjectId,
-          batchId,
-          duration: durationInt,
-          batch_expiry_date: newExpiryDate,
-          batch_status: "active",
+        return res.status(404).json({
+          error:
+            "Subject and Batch combination not found in student's subject array",
         });
       }
+      // Update the subdocument fields
+      subjectSubdoc.duration = durationInt;
+
+      // Calculate new batch_expiry_date: current date + duration months
+      const currentDate = new Date();
+      const newExpiryDate = new Date(currentDate);
+      newExpiryDate.setMonth(newExpiryDate.getMonth() + durationInt);
+
+      subjectSubdoc.batch_expiry_date = newExpiryDate;
+      subjectSubdoc.batch_status = "active";
+
+      // Optionally, set batch_assigned to true if required
+      subjectSubdoc.batch_assigned = true;
+
+      // Save the updated student document
+      await student.save();
+      console.log(`Updated subject_id subdoc for student ${student._id}:`, {
+        subjectId,
+        batchId,
+        duration: durationInt,
+        batch_expiry_date: newExpiryDate,
+        batch_status: "active",
+      });
+      let items = [];
+      const subject = await Subject.findById(subjectId);
+      const batchType = await TypeOfBatch.findById(subjectSubdoc.type_of_batch);
+      const itemData =
+      {
+        description: subject.subject_name,
+        price: (batchType.price) * duration,
+        quantity: 1
+      }
+      items.push(itemData)
+      const studentOne = await Student.findById(payment.student_id).populate("user_id");
+      console.log("studentOne", studentOne);
+      let billTo = {
+        name: studentOne.user_id.name,
+        email: studentOne.user_id.email,
+        phone: studentOne.phone_number,
+      }
+      let invoiceDate = new Date();
+      let invoiceNumber = payment.payment_id;
+      let discount = req.body.payload.payment.entity.notes?.discount || 0;
+      const invoiceData = await createInvoice({
+        body: {
+          invoiceNumber,
+          invoiceDate,
+          billTo,
+          items,
+          discount
+        }
+      })
+      payment.invoice_id = invoiceData._id;
+      payment.save();
+      const searchId = invoiceData._id;
+      // Update student: set is_paid, push payment_id, etc.
+      await Student.findByIdAndUpdate(payment.student_id, {
+        $push: { payment_id: { _id: payment._id, invoice_id: invoiceData._id } },
+        is_paid: true,
+      });
+      const pdfData = await getInvoicePDF({ body: { id: searchId, mode: "function" } });
+      const subjets = [subject.subject_name];
+      const typeofBatchs = [batchType.mode];
+
+      const html = studentPaymentRecievedStudent(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.className, subjets, typeofBatchs);
+      // await sendMailFunctionTA(studentOne.user_id.email, 'Subscription Done', html);
+      await sendMailFunctionTA("jayanthbychana@gmail.com", 'Subscription Done', html, pdfData);
+
+      const users = await User.find({ role: "admin" });
+      users.map(async (user) => {
+
+        const notification = new Notification({
+          user_id: user._id,
+          message: 'Student Payment Recieved',
+          title: "Amount Recieved",
+          is_all: false,
+        });
+        const savedNotification = await notification.save();
+        const userNotifications = new UserNotification({
+          user_id: user._id,
+          notification_id: savedNotification._id
+        })
+        userNotifications.save();
+        const html = studentPaymentRecievedAdmin(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.className, subjets, typeofBatchs);
+        await sendMailFunctionAdmin("jayanthbychana@gmail.com", 'Subscription Done', html, pdfData);
+      })
+
+
+
+
+    } else {
       const studentOne = await Student.findById(payment.student_id)
         .populate({
           path: 'subject_id._id',      // The field you want to populate
@@ -295,65 +366,185 @@ exports.verifyPayment = async (req, res) => {
       }
       let invoiceDate = new Date();
       let invoiceNumber = payment.payment_id;
-      let discount = studentOne.discountAmount
+      let discount = studentOne?.discountAmount || 0;
       const invoiceData = await createInvoice({
         body: {
           invoiceNumber,
           invoiceDate,
-          from,
           billTo,
           items,
           discount
         }
       })
-      const subjets = studentOne.subject_id.map((data) => {
-        return data._id.subject_name
-      })
-      const typeofBatchs = subjets = studentOne.subject_id.map((data) => {
-        return data.type_of_batch.mode
-      })
-      const pdfData = await getInvoicePDF(invoiceData._id)
-
-      const html = studentPaymentRecievedStudent(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.className, subjets, typeofBatchs);
-      // await sendMailFunctionTA(studentOne.user_id.email, 'Subscription Done', html);
-      await sendMailFunctionTA("jayanthbychana@gmail.com", 'Subscription Done', html,pdfData);
-
+      console.log("invoiceData", invoiceData._id);
+      payment.invoice_id = invoiceData._id;
+      payment.save();
       // Update student: set is_paid, push payment_id, etc.
       await Student.findByIdAndUpdate(payment.student_id, {
         $push: { payment_id: { _id: payment._id, invoice_id: invoiceData._id } },
         is_paid: true,
       });
-    } else if (req.body.event == "payment_link.paid") {
-      console.log("Valid signature inside payment.link.paid", req.body);
-      console.log("request", req.body.payload.order.entity);
+      const subjets = studentOne.subject_id.map((data) => {
+        return data._id.subject_name
+      })
+      const typeofBatchs = studentOne.subject_id.map((data) => {
+        return data.type_of_batch.mode
+      })
+      payment.invoice_id = invoiceData._id;
+      payment.save();
+      const searchId = invoiceData._id;
+      const pdfData = await getInvoicePDF({ body: { id: searchId, mode: "function" } });
 
-      // Payment is valid
-      const payment = await Payment.findOne({
-        receipt: req.body.payload.order.entity.receipt,
-      });
-      console.log("payment", payment);
+      const html = studentPaymentRecievedStudent(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.className, subjets, typeofBatchs);
+      // await sendMailFunctionTA(studentOne.user_id.email, 'Subscription Done', html);
+      await sendMailFunctionTA("jayanthbychana@gmail.com", 'Subscription Done', html, pdfData);
 
-      if (!payment) {
-        return res.status(400).json({ error: "Payment not found" });
-      }
+      const users = await User.find({ role: "admin" });
+      users.map(async (user) => {
 
-      // Update payment details
-      payment.payment_id = req.body.payload.payment.entity.id;
-      payment.status = "paid";
-      await payment.save();
+        const notification = new Notification({
+          user_id: user._id,
+          message: 'Student Payment Recieved',
+          title: "Amount Recieved",
+          is_all: false,
+        });
+        const savedNotification = await notification.save();
+        const userNotifications = new UserNotification({
+          user_id: user._id,
+          notification_id: savedNotification._id
+        })
+        userNotifications.save();
+        const html = studentPaymentRecievedAdmin(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.className, subjets, typeofBatchs);
+        await sendMailFunctionAdmin("jayanthbychana@gmail.com", 'Subscription Done', html, pdfData);
+      })
 
-      // Update student details
-      await Student.findByIdAndUpdate(payment.student_id, {
-        $push: {
-          payment_id: payment._id,
-        },
-        is_paid: true,
-        paymentLink_status: "approved",
-      });
-      // -------------- END OF NEW CODE -----------------------------------------------
 
-      console.log("Payment link paid, custom package updated successfully");
+
+
     }
+
+  } else if (req.body.event == "payment_link.paid") {
+    console.log("Valid signature inside payment.link.paid", req.body);
+    console.log("request", req.body.payload.order.entity);
+
+    // Payment is valid
+    const payment = await Payment.findOne({
+      receipt: req.body.payload.order.entity.receipt,
+    });
+    console.log("payment", payment);
+
+    // if (!payment) {
+    //   return res.status(400).json({ error: "Payment not found" });
+    // }
+
+    // Update payment details
+    payment.payment_id = req.body.payload.payment.entity.id;
+    payment.status = "paid";
+    await payment.save();
+    const studentOne = await Student.findById(payment.student_id)
+      .populate({
+        path: 'subject_id._id',      // The field you want to populate
+        model: 'Subject',            // The model name for the reference
+        select: 'subject_name',      // (optional) which fields to select from Subject
+      })
+      .populate({
+        path: 'subject_id.type_of_batch',
+        model: 'TypeOfBatch',
+        select: 'mode price',        // (optional)
+      })
+      .populate("user_id")
+      .populate("class")
+      .populate("board_id")
+      .populate("type_of_batch");
+    let items = [];
+    // studentOne.map((student) => {
+    studentOne.subject_id.map((data) => {
+      const itemData =
+      {
+        description: data._id.subject_name,
+        price: (data.type_of_batch.price) * data.duration,
+        quantity: 1
+      }
+      items.push(itemData)
+    })
+
+    // })
+    let billTo = {
+      name: studentOne.user_id.name,
+      email: studentOne.user_id.email,
+      phone: studentOne.phone_number,
+    }
+    let invoiceDate = new Date();
+    let invoiceNumber = payment.payment_id;
+    let discount = studentOne?.discountAmount || 0;
+    const invoiceData = await createInvoice({
+      body: {
+        invoiceNumber,
+        invoiceDate,
+        billTo,
+        items,
+        discount
+      }
+    })
+    console.log("invoiceData", invoiceData._id);
+    payment.invoice_id = invoiceData._id;
+    payment.save();
+    // Update student: set is_paid, push payment_id, etc.
+    await Student.findByIdAndUpdate(payment.student_id, {
+      $push: { payment_id: { _id: payment._id, invoice_id: invoiceData._id } },
+      is_paid: true,
+      paymentLink_status: "approved",
+    });
+
+    const subjets = studentOne.subject_id.map((data) => {
+      return data._id.subject_name
+    })
+    const typeofBatchs = studentOne.subject_id.map((data) => {
+      return data.type_of_batch.mode
+    })
+    payment.invoice_id = invoiceData._id;
+    payment.save();
+    const searchId = invoiceData._id;
+    const pdfData = await getInvoicePDF({ body: { id: searchId, mode: "function" } });
+
+    const html = studentPaymentRecievedStudent(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.className, subjets, typeofBatchs);
+    // await sendMailFunctionTA(studentOne.user_id.email, 'Subscription Done', html);
+    await sendMailFunctionTA("jayanthbychana@gmail.com", 'Subscription Done', html, pdfData);
+
+    const users = await User.find({ role: "admin" });
+    users.map(async (user) => {
+
+      const notification = new Notification({
+        user_id: user._id,
+        message: 'Student Payment Recieved',
+        title: "Amount Recieved",
+        is_all: false,
+      });
+      const savedNotification = await notification.save();
+      const userNotifications = new UserNotification({
+        user_id: user._id,
+        notification_id: savedNotification._id
+      })
+      userNotifications.save();
+      const html = studentPaymentRecievedAdmin(studentOne.user_id.name, studentOne.user_id.email, payment.amount, payment.payment_id, studentOne.board_id.name, studentOne.class.className, subjets, typeofBatchs);
+      await sendMailFunctionAdmin("jayanthbychana@gmail.com", 'Subscription Done', html, pdfData);
+    })
+
+
+
+
+    // Update student details
+    // await Student.findByIdAndUpdate(payment.student_id, {
+    //   $push: {
+    //     payment_id: payment._id,
+    //   },
+    //   is_paid: true,
+
+    // });
+    // -------------- END OF NEW CODE -----------------------------------------------
+
+    console.log("Payment link paid, custom package updated successfully");
+  }
   } else {
     console.log("Invalid signature");
   }
