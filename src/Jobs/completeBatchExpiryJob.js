@@ -5,26 +5,27 @@ const Batch = require("../models/batchModel");
 const Student = require("../models/studentModel");
 const Subject = require("../models/subjectModel");
 const TypeOfBatch = require("../models/typeOfBatchModel");
+const User = require("../models/userModel");
 
-const sendEmail = async (emailContent) => {
-    const transporter = nodemailer.createTransport({
-        host: "smtp.hostinger.com",
+const sendEmail = async (emailContent,toMail) => {
+    const transporterAdmin = nodemailer.createTransport({
+        host: "smtpout.secureserver.net",
         port: 465,
         secure: true,
         auth: {
-            user: "Info@gully2global.com",
-            pass: "Shasudigi@217",
+            user: "info@thetopperacademy.com",
+            pass: "Mousumeeray1!",
         },
     });
 
     const mailOptions = {
-        from: "Info@gully2global.com",
-        to: "abc@gmail.com", // Replace with the recipient's email
+        from: "info@thetopperacademy.com",
+        to: toMail, // Replace with the recipient's email
         subject: "Batch Expiry Notification",
         html: emailContent,
     };
 
-    await transporter.sendMail(mailOptions);
+    await transporterAdmin.sendMail(mailOptions);
 };
 
 const manageExpiredBatches = async () => {
@@ -120,7 +121,7 @@ const manageExpiredBatches = async () => {
                 }
                 console.log("student", student);
                 // Save student changes
-                //   await student.save();
+                  await student.save();
             }
 
             emailContent += `
@@ -128,11 +129,14 @@ const manageExpiredBatches = async () => {
           </table>
         `;
 
-            // Send email
-            await sendEmail(emailContent);
+         const users = await User.find({ role: "admin" });
+         users.map(async (user) => {
 
+            // Send email
+            await sendEmail(emailContent,user.email);
+         });
             // Delete expired batch
-            // await Batch.findByIdAndDelete(batch._id);
+            await Batch.findByIdAndDelete(batch._id);
             console.log(`Batch "${batch.batch_name}" deleted successfully.`);
         }
     } catch (err) {
