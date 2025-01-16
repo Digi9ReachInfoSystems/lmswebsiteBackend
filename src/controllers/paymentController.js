@@ -296,8 +296,11 @@ exports.verifyPayment = async (req, res) => {
           discount
         }
       })
-      payment.invoice_id = invoiceData._id;
-      payment.save();
+      const paymentOne = await Payment.findOne({
+        order_id: req.body.payload.payment.entity.order_id,
+      });
+      paymentOne.invoice_id = invoiceData._id;
+      paymentOne.save();
       const searchId = invoiceData._id;
       // Update student: set is_paid, push payment_id, etc.
       await Student.findByIdAndUpdate(payment.student_id, {
@@ -380,8 +383,11 @@ exports.verifyPayment = async (req, res) => {
         }
       })
       console.log("invoiceData", invoiceData._id);
-      payment.invoice_id = invoiceData._id;
-      payment.save();
+      const paymentOne = await Payment.findOne({
+        order_id: req.body.payload.payment.entity.order_id,
+      });
+      paymentOne.invoice_id = invoiceData._id;
+      paymentOne.save();
       // Update student: set is_paid, push payment_id, etc.
       await Student.findByIdAndUpdate(payment.student_id, {
         $push: { payment_id: { _id: payment._id, invoice_id: invoiceData._id } },
@@ -393,8 +399,8 @@ exports.verifyPayment = async (req, res) => {
       const typeofBatchs = studentOne.subject_id.map((data) => {
         return data.type_of_batch.mode
       })
-      payment.invoice_id = invoiceData._id;
-      payment.save();
+      // payment.invoice_id = invoiceData._id;
+      // payment.save();
       const searchId = invoiceData._id;
       const pdfData = await getInvoicePDF({ body: { id: searchId, mode: "function" } });
 
@@ -489,8 +495,11 @@ exports.verifyPayment = async (req, res) => {
       }
     })
     console.log("invoiceData", invoiceData._id);
-    payment.invoice_id = invoiceData._id;
-    payment.save();
+    const paymentOne = await Payment.findOne({
+      order_id: req.body.payload.payment.entity.order_id,
+    });
+    paymentOne.invoice_id = invoiceData._id;
+    paymentOne.save();
     // Update student: set is_paid, push payment_id, etc.
     await Student.findByIdAndUpdate(payment.student_id, {
       $push: { payment_id: { _id: payment._id, invoice_id: invoiceData._id } },
@@ -504,8 +513,8 @@ exports.verifyPayment = async (req, res) => {
     const typeofBatchs = studentOne.subject_id.map((data) => {
       return data.type_of_batch.mode
     })
-    payment.invoice_id = invoiceData._id;
-    payment.save();
+    // payment.invoice_id = invoiceData._id;
+    // payment.save();
     const searchId = invoiceData._id;
     const pdfData = await getInvoicePDF({ body: { id: searchId, mode: "function" } });
 
