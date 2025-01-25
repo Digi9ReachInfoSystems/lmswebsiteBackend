@@ -138,7 +138,7 @@ exports.updateTeacherDetails = async (req, res) => {
   const { id } = req.params; // Extract teacher ID from params
 
   try {
-    const { bio, language, available_time, subject_id } = req.body;
+    const { bio, language, available_time, subject_id,phone_number } = req.body;
 
     // Validate and retrieve subject details if provided
     let subjectDetails = null;
@@ -154,6 +154,7 @@ exports.updateTeacherDetails = async (req, res) => {
       bio,
       language,
       available_time,
+      phone_number
     };
 
     // If subject is valid, add it to the updates
@@ -166,7 +167,7 @@ exports.updateTeacherDetails = async (req, res) => {
 
     // Query the teacher by `user_id` and update
     const updatedTeacher = await Teacher.findOneAndUpdate(
-      { user_id: id }, // Query by `user_id`
+      { _id: id }, // Query by `user_id`
       { $set: updates },
       { new: true, runValidators: true } // Return updated document
     );
