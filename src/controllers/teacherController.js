@@ -138,16 +138,9 @@ exports.updateTeacherDetails = async (req, res) => {
   const { id } = req.params; // Extract teacher ID from params
 
   try {
-    const { bio, language, available_time, subject_id,phone_number } = req.body;
+    const { bio, language, available_time, phone_number } = req.body;
 
-    // Validate and retrieve subject details if provided
-    let subjectDetails = null;
-    if (subject_id) {
-      subjectDetails = await Subject.findById(subject_id);
-      if (!subjectDetails) {
-        return res.status(404).json({ error: "Subject not found" });
-      }
-    }
+   
 
     // Prepare the updates object
     const updates = {
@@ -157,13 +150,7 @@ exports.updateTeacherDetails = async (req, res) => {
       phone_number
     };
 
-    // If subject is valid, add it to the updates
-    if (subjectDetails) {
-      updates.subject = {
-        id: subjectDetails._id,
-        name: subjectDetails.subject_name,
-      };
-    }
+   
 
     // Query the teacher by `user_id` and update
     const updatedTeacher = await Teacher.findOneAndUpdate(
@@ -176,18 +163,11 @@ exports.updateTeacherDetails = async (req, res) => {
       return res.status(404).json({ error: "Teacher not found" });
     }
 
-    // Fetch the updated teacher with subject details populated
-    const teacherWithSubject = await Teacher.findOne({ user_id: id });
+
 
     res.status(200).json({
       message: "Teacher details updated successfully",
-      teacher: {
-        ...teacherWithSubject.toObject(),
-        subject: {
-          id: teacherWithSubject.subject.id,
-          name: teacherWithSubject.subject.name, // Correctly fetching subject name
-        },
-      },
+      teacher: updatedTeacher,
     });
   } catch (error) {
     console.error("Error updating teacher details:", error);
